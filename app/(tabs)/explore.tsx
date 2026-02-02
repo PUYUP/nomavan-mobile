@@ -1,15 +1,26 @@
 import { Image } from 'expo-image';
 import { Platform, StyleSheet } from 'react-native';
 
-import { Collapsible } from '@/components/ui/collapsible';
 import { ExternalLink } from '@/components/external-link';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Collapsible } from '@/components/ui/collapsible';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Fonts } from '@/constants/theme';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Button, Text, XStack, YStack } from 'tamagui';
 
 export default function TabTwoScreen() {
+  const quickActions = [
+    { label: 'Add Event', icon: 'calendar-plus' as const },
+    { label: 'New PIN', icon: 'map-marker-plus' as const },
+    { label: 'Find Camps', icon: 'tent' as const },
+    { label: 'Fuel Stop', icon: 'gas-station' as const },
+    { label: 'Route Plan', icon: 'map-marker-path' as const },
+    { label: 'Share', icon: 'share-variant' as const },
+  ];
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
@@ -30,6 +41,16 @@ export default function TabTwoScreen() {
           Explore
         </ThemedText>
       </ThemedView>
+      <XStack style={styles.grid}>
+        {quickActions.map((action) => (
+          <Button key={action.label} style={styles.gridButton}>
+            <YStack style={styles.gridButtonContent}>
+              <MaterialCommunityIcons name={action.icon} size={28} color="#1F3D2B" />
+              <Text style={styles.gridButtonText}>{action.label}</Text>
+            </YStack>
+          </Button>
+        ))}
+      </XStack>
       <ThemedText>This app includes example code to help you get started.</ThemedText>
       <Collapsible title="File-based routing">
         <ThemedText>
@@ -108,5 +129,30 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: 'row',
     gap: 8,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 16,
+  },
+  gridButton: {
+    width: '31%',
+    height: 110,
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gridButtonContent: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  gridButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1F3D2B',
+    textAlign: 'center',
   },
 });

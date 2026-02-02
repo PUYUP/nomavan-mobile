@@ -8,6 +8,7 @@ type EventProps = {
     dateRange: string
     locationName: string
     locationCoords: string
+    distance: number
     description: string
     joiners: string[]
     extraJoinLabel: string
@@ -19,6 +20,7 @@ const Event = ({
     dateRange = 'Feb 10, 2026 • 08:00 AM - 12:00 PM',
     locationName = 'Crescent Moon Ranch',
     locationCoords = '34.8697, -111.7610',
+    distance = 1300,
     description = 'Morning coffee, trail stories, and van tours by the creek.',
     joiners = [
         'https://i.pravatar.cc/100?img=21',
@@ -96,8 +98,16 @@ const Event = ({
                         <XStack gap="$2">
                             <Button size="$2" backgroundColor="transparent" onPress={handleOpenDirections}>
                                 <XStack gap="$2" style={{ alignItems: 'center' }}>
-                                    <MaterialCommunityIcons name="directions" size={18} color={directionsColor} />
-                                    <Text fontSize={12} fontWeight="600" color={directionsColor}>Directions</Text>
+                                    <MaterialCommunityIcons name="directions" size={24} color={directionsColor} />
+                                    <YStack>
+                                        <Text fontSize={12} fontWeight="600" color={directionsColor}>
+                                            Directions
+                                        </Text>
+                                        
+                                        <Text fontSize={10} fontWeight={700} opacity={0.8} color={'#333'}>
+                                            {distance / 1000} km
+                                        </Text>
+                                    </YStack>
                                 </XStack>
                             </Button>
                         </XStack>

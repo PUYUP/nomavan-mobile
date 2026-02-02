@@ -31,7 +31,7 @@ const GuessPIN = ({
     ],
     morePhotosLabel = '+7',
     placeLabel = 'Placed near Oak Creek',
-    visitorsLabel = '10 people were here',
+    visitorsLabel = '10 were here',
     viewPinLabel = 'Find the PIN',
     contributorName = 'Samuel Rizal',
     contributorMeta = '1.276 contribs.',
@@ -67,24 +67,25 @@ const GuessPIN = ({
                             <Text style={styles.photoMoreText}>{morePhotosLabel}</Text>
                         </YStack>
                     </XStack>
-
-                    <XStack style={styles.metaRow}>
-                        <XStack style={styles.metaItem}>
-                            <MaterialCommunityIcons name="map-marker-radius" size={14} color="#10b981" />
-                            <Text style={styles.metaText}>{placeLabel}</Text>
+                    
+                    <XStack style={styles.metaContainer}>
+                        <XStack style={styles.metaRow}>
+                            <XStack style={styles.metaItem}>
+                                <MaterialCommunityIcons name="map-marker-radius" size={18} color="#10b981" />
+                                <Text style={styles.metaText}>{placeLabel}</Text>
+                            </XStack>
+                            <XStack style={styles.metaItem}>
+                                <MaterialCommunityIcons name="account-group" size={18} color="#3b82f6" />
+                                <Text style={styles.metaText}>{visitorsLabel}</Text>
+                            </XStack>
                         </XStack>
-                        <XStack style={styles.metaItem}>
-                            <MaterialCommunityIcons name="account-group" size={14} color="#3b82f6" />
-                            <Text style={styles.metaText}>{visitorsLabel}</Text>
-                        </XStack>
+                        <Button size="$2" style={styles.viewLocationButton}>
+                            <XStack style={{ alignItems: 'center', gap: 4 }}>
+                                <MaterialCommunityIcons name="map-search" size={14} color="#2563eb" />
+                                <Text style={styles.viewLocationText}>{viewPinLabel}</Text>
+                            </XStack>
+                        </Button>
                     </XStack>
-
-                    <Button size="$2" style={styles.viewLocationButton}>
-                        <XStack style={{ alignItems: 'center', gap: 4 }}>
-                            <MaterialCommunityIcons name="map-search" size={14} color="#2563eb" />
-                            <Text style={styles.viewLocationText}>{viewPinLabel}</Text>
-                        </XStack>
-                    </Button>
                 </YStack>
                 
                 <Separator my={10} />
@@ -174,10 +175,10 @@ const styles = StyleSheet.create({
         opacity: 0.8,
     },
     metaRow: {
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexDirection: 'row',
-        gap: 10,
+        alignItems: 'flex-start',
+        justifyContent: 'space-around',
+        flexDirection: 'column',
+        gap: 0,
     },
     metaItem: {
         flexDirection: 'row',
@@ -188,7 +189,11 @@ const styles = StyleSheet.create({
     metaText: {
         fontSize: 12,
         opacity: 0.8,
-        flex: 1,
+    },
+    metaContainer: {
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'space-between'
     },
     contributorRow: {
         alignItems: 'center',
@@ -225,35 +230,6 @@ const styles = StyleSheet.create({
     },
     postedTime: {
         fontSize: 11,
-        opacity: 0.7,
-    },
-    thanksButton: {
-        height: 30,
-        paddingHorizontal: 10,
-        borderRadius: 16,
-        backgroundColor: '#f3f4f6',
-    },
-    thanksRow: {
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    thanksLeft: {
-        alignItems: 'center',
-        gap: 8,
-    },
-    thanksContent: {
-        alignItems: 'center',
-        gap: 6,
-    },
-    thanksText: {
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    thanksCount: {
-        alignItems: 'center',
-    },
-    thanksCountText: {
-        fontSize: 12,
         opacity: 0.7,
     },
     viewLocationButton: {

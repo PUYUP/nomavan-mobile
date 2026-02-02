@@ -8,6 +8,7 @@ export default function EventScreen() {
       dateRange: 'Feb 12, 2026 • 07:30 AM - 10:00 AM',
       locationName: 'Oak Creek Canyon',
       locationCoords: '34.9121, -111.7114',
+      distance: 1400,
       description: 'Sunrise coffee, canyon views, and casual campfire stories.',
       joiners: [
         'https://i.pravatar.cc/100?img=31',
@@ -24,6 +25,7 @@ export default function EventScreen() {
       dateRange: 'Feb 14, 2026 • 06:00 PM - 11:00 PM',
       locationName: 'Cathedral Rock',
       locationCoords: '34.8226, -111.7880',
+      distance: 2400,
       description: 'Stargazing, lantern-lit hangs, and a shared potluck dinner.',
       joiners: [
         'https://i.pravatar.cc/100?img=41',
@@ -40,6 +42,7 @@ export default function EventScreen() {
       dateRange: 'Feb 16, 2026 • 01:00 PM - 04:30 PM',
       locationName: 'Tlaquepaque Plaza',
       locationCoords: '34.8653, -111.7635',
+      distance: 7631,
       description: 'Trade gear, share tips, and find your next road companion.',
       joiners: [
         'https://i.pravatar.cc/100?img=51',
@@ -62,6 +65,7 @@ export default function EventScreen() {
           dateRange={event.dateRange}
           locationName={event.locationName}
           locationCoords={event.locationCoords}
+          distance={event.distance}
           description={event.description}
           joiners={event.joiners}
           extraJoinLabel={event.extraJoinLabel}
