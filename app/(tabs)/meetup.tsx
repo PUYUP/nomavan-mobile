@@ -1,8 +1,8 @@
-import Event from '@/components/activity/event';
+import Meetup from '@/components/activity/meetup';
 import Animated from 'react-native-reanimated';
 
-export default function EventScreen() {
-  const events = [
+export default function MeetupScreen() {
+  const items = [
     {
       name: 'Desert Nomad Breakfast',
       dateRange: 'Feb 12, 2026 • 07:30 AM - 10:00 AM',
@@ -19,6 +19,7 @@ export default function EventScreen() {
       ],
       extraJoinLabel: '+6',
       joinButtonLabel: 'Join',
+      spotLeft: '2 spots left',
     },
     {
       name: 'Red Rocks Night Camp',
@@ -36,6 +37,7 @@ export default function EventScreen() {
       ],
       extraJoinLabel: '+18',
       joinButtonLabel: 'Join',
+      spotLeft: '43 spots left',
     },
     {
       name: 'Vanlife Gear Swap',
@@ -53,13 +55,14 @@ export default function EventScreen() {
       ],
       extraJoinLabel: '+9',
       joinButtonLabel: 'Join',
+      spotLeft: '1 spots left',
     },
   ]
 
   return (
     <Animated.ScrollView style={{ padding: 16 }}>
-      {events.map((event) => (
-        <Event
+      {items.map((event) => (
+        <Meetup
           key={event.name}
           name={event.name}
           dateRange={event.dateRange}
@@ -70,6 +73,7 @@ export default function EventScreen() {
           joiners={event.joiners}
           extraJoinLabel={event.extraJoinLabel}
           joinButtonLabel={event.joinButtonLabel}
+          spotLeft={event.spotLeft}
         />
       ))}
     </Animated.ScrollView>

@@ -1,7 +1,7 @@
 import Animated from "react-native-reanimated"
-import Event from "./event"
 import ExpenseUpdate from "./expense-update"
 import GuessPIN from "./guess-pin"
+import Meetup from "./meetup"
 import NetworkUpdate from "./network-update"
 
 const ActivityList = () => {
@@ -11,7 +11,7 @@ const ActivityList = () => {
                 <GuessPIN />
                 <NetworkUpdate />
                 <ExpenseUpdate />
-                <Event />
+                <Meetup />
             </Animated.ScrollView>
         </>
     )

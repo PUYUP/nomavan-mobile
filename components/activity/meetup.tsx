@@ -3,7 +3,7 @@ import { Card } from '@tamagui/card'
 import { Linking, Platform, StyleSheet } from 'react-native'
 import { Avatar, Button, Separator, Text, XStack, YStack, useTheme } from 'tamagui'
 
-type EventProps = {
+type MeetupProps = {
     name: string
     dateRange: string
     locationName: string
@@ -13,9 +13,10 @@ type EventProps = {
     joiners: string[]
     extraJoinLabel: string
     joinButtonLabel: string
+    spotLeft: string
 }
 
-const Event = ({
+const Meetup = ({
     name = 'Sedona Vanlife Meetup',
     dateRange = 'Feb 10, 2026 • 08:00 AM - 12:00 PM',
     locationName = 'Crescent Moon Ranch',
@@ -31,7 +32,8 @@ const Event = ({
     ],
     extraJoinLabel = '+10',
     joinButtonLabel = 'Join',
-}: EventProps) => {
+    spotLeft = '12 spots left',
+}: MeetupProps) => {
     const theme = useTheme()
     const directionsColor = '#00bcd4'
 
@@ -67,17 +69,19 @@ const Event = ({
                         </XStack>
                         <XStack gap="$2" marginTop="$2">
                             <MaterialCommunityIcons name="calendar-range" size={16} color="#ff817b" />
-                            <Text fontSize={12} opacity={0.8}>
-                                {dateRange}
-                            </Text>
+                            <Text fontSize={12} opacity={0.8}>{dateRange}</Text>
                         </XStack>
-                        <XStack gap="$2">
+                        <XStack gap="$2" style={{ marginTop: -2 }}>
                             <MaterialCommunityIcons name="map-marker" size={16} color="#ff817b" />
                             <Text fontSize={12} opacity={0.8}>
                                 {locationName}
                             </Text>
                         </XStack>
-                        <Text fontSize={12} opacity={0.75}>
+                        <XStack gap="$2" style={{ marginTop: -2 }}>
+                            <MaterialCommunityIcons name="account-multiple-outline" size={16} color="#ff817b" />
+                            <Text fontSize={12} opacity={0.8}>{spotLeft}</Text>
+                        </XStack>
+                        <Text fontSize={14} opacity={0.75}>
                             {description}
                         </Text>
                     </YStack>
@@ -130,11 +134,11 @@ const Event = ({
                         <Text style={styles.contributorMeta}>10 contribs.</Text>
                     </YStack>
 
-                    <Text style={styles.onWayText}>72 events</Text>
+                    <Text style={styles.onWayText}>72 meets</Text>
                     
                     <Button size="$2" style={styles.viewLocationButton}>
                         <XStack style={{ alignItems: 'center', gap: 3 }}>
-                            <MaterialCommunityIcons name="calendar-arrow-right" size={16} />
+                            <MaterialCommunityIcons name="database-search-outline" size={16} />
                             <Text style={styles.thanksText}>View</Text>
                         </XStack>
                     </Button>
@@ -144,7 +148,7 @@ const Event = ({
     )
 }
 
-export default Event
+export default Meetup
 
 const styles = StyleSheet.create({
     card: {
@@ -185,5 +189,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         borderRadius: 16,
         backgroundColor: '#eef2ff',
+    },
+    thanksText: {
+        fontSize: 12,
+        fontWeight: '600',
     },
 })
