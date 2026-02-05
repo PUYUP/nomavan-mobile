@@ -52,6 +52,14 @@ export default function TabLayout() {
       case 'locate':
         router.push('/submissions/locate');
         break;
+      
+      case 'post':
+        router.push('/submissions/post');
+        break;
+      
+      case 'add-pin':
+        router.push('/submissions/add-pin');
+        break;
 
       default:
         // not implemented
@@ -121,7 +129,7 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <MaterialCommunityIcons size={28} name="map-search" color={color} />,
             headerTitleAlign: 'left',
             headerRight: () => (
-              <Pressable style={{ marginRight: 16 }} onPress={() => {}}>
+              <Pressable style={{ marginRight: 16 }} onPress={() => {router.push('/submissions/add-pin')}}>
                 <View
                   style={{
                     height: 30,

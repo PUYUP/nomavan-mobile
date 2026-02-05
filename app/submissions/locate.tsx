@@ -82,7 +82,7 @@ const LocateSubmission = () => {
                     showsVerticalScrollIndicator={false}
                     contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'never' : 'automatic'}
                 >
-                    <YStack paddingStart="$4" paddingEnd="$4" flex={1} gap="$3">
+                    <YStack paddingStart="$4" paddingEnd="$4" flex={1} gap="$5">
                         <YStack gap="$1" marginBlockEnd={2}>
                             <Text opacity={0.7}>Keep your vanlife location up to date and share it with fellow vanlifers.</Text>
                         </YStack>
@@ -94,7 +94,7 @@ const LocateSubmission = () => {
                                 </XStack>
                                 <YStack width={'80%'}>
                                     <Text fontSize={12} opacity={0.7}>Previous</Text>
-                                    <Text fontSize={16} numberOfLines={1} ellipsizeMode='tail'>Beaver Meadow Falls</Text>
+                                    <Text fontSize={14} numberOfLines={1} ellipsizeMode='tail'>Beaver Meadow Falls</Text>
                                 </YStack>
                             </XStack>
 
@@ -127,34 +127,45 @@ const LocateSubmission = () => {
                                 </XStack>
                                 <YStack width={'80%'}>
                                     <XStack style={{ justifyContent: 'space-between', marginBlockEnd: 2 }}>
-                                        <Text fontSize={12} opacity={0.7} fontWeight={700}>Last update</Text>
-                                        <Text fontSize={12} opacity={0.7} fontWeight={700}>2 hours ago</Text>
+                                        <Text fontSize={12} opacity={0.7}>Last update</Text>
+                                        <Text fontSize={12} opacity={0.7}>2 hours ago</Text>
                                     </XStack>
-                                    <Text fontSize={16} numberOfLines={1} ellipsizeMode='tail'>Pictured Rocks National Lakeshore</Text>
+                                    <Text fontSize={14} numberOfLines={1} ellipsizeMode='tail'>Pictured Rocks National Lakeshore</Text>
                                 </YStack>
                             </XStack>
 
-                            <YStack paddingStart={12}>
-                                <XStack style={styles.metaRow}>
-                                    <MaterialCommunityIcons name="latitude" size={16} color="#6b7280" />
-                                    <Text fontSize={13} opacity={0.7}>Lat: -140.303636</Text>
-                                </XStack>
+                            <XStack style={{ alignItems: 'flex-end' }}>
+                                <YStack paddingStart={12} flex={1}>
+                                    <XStack style={styles.metaRow}>
+                                        <MaterialCommunityIcons name="latitude" size={16} color="#6b7280" />
+                                        <Text fontSize={13} opacity={0.7}>Lat: -140.303636</Text>
+                                    </XStack>
 
-                                <XStack style={styles.metaRow}>
-                                    <MaterialCommunityIcons name="longitude" size={16} color="#6b7280" />
-                                    <Text fontSize={13} opacity={0.7}>Lng:  0.146626</Text>
-                                </XStack>
-                            
-                                <XStack style={styles.metaRow}>
-                                    <MaterialCommunityIcons name="map-marker-distance" size={16} color="#6b7280" />
-                                    <Text fontSize={13} opacity={0.7}>Distance from previous: 10.3 km</Text>
-                                </XStack>
+                                    <XStack style={styles.metaRow}>
+                                        <MaterialCommunityIcons name="longitude" size={16} color="#6b7280" />
+                                        <Text fontSize={13} opacity={0.7}>Lng:  0.146626</Text>
+                                    </XStack>
+                                
+                                    <XStack style={styles.metaRow}>
+                                        <MaterialCommunityIcons name="map-marker-distance" size={16} color="#6b7280" />
+                                        <Text fontSize={13} opacity={0.7}>From prev: 10.3 km</Text>
+                                    </XStack>
 
-                                <XStack style={styles.metaRow}>
-                                    <MaterialCommunityIcons name="timer-outline" size={16} color="#6b7280" />
-                                    <Text fontSize={13} opacity={0.7}>Time since previous: 1 day 12 hours</Text>
-                                </XStack>
-                            </YStack>
+                                    <XStack style={styles.metaRow}>
+                                        <MaterialCommunityIcons name="timer-outline" size={16} color="#6b7280" />
+                                        <Text fontSize={13} opacity={0.7}>Time spent: 1 day 12 h</Text>
+                                    </XStack>
+                                </YStack>
+
+                                <Button 
+                                    size="$2" 
+                                    icon={<MaterialCommunityIcons name="refresh" size={20} />}
+                                    style={styles.actionButton}
+                                    onPress={async () => await refreshLocation()}
+                                >
+                                    Refresh
+                                </Button>
+                            </XStack>
                         </YStack>
 
                         <View style={styles.dashedArrowRow}>
@@ -173,36 +184,47 @@ const LocateSubmission = () => {
                                 </XStack>
                                 <YStack width={'80%'}>
                                     <Text fontSize={12} opacity={0.7}>Next</Text>
-                                    <Text fontSize={16} numberOfLines={1} ellipsizeMode='tail'>Palisade Point</Text>
+                                    <Text fontSize={14} numberOfLines={1} ellipsizeMode='tail'>Palisade Point</Text>
                                 </YStack>
                             </XStack>
 
-                            <YStack paddingStart={12}>
-                                <XStack style={styles.metaRow}>
-                                    <MaterialCommunityIcons name="latitude" size={16} color="#6b7280" />
-                                    <Text fontSize={13} opacity={0.7}>Lat: -140.303636</Text>
-                                </XStack>
+                            <XStack style={{ alignItems: 'flex-end' }}>
+                                <YStack paddingStart={12} flex={1}>
+                                    <XStack style={styles.metaRow}>
+                                        <MaterialCommunityIcons name="latitude" size={16} color="#6b7280" />
+                                        <Text fontSize={13} opacity={0.7}>Lat: -140.303636</Text>
+                                    </XStack>
 
-                                <XStack style={styles.metaRow}>
-                                    <MaterialCommunityIcons name="longitude" size={16} color="#6b7280" />
-                                    <Text fontSize={13} opacity={0.7}>Lng:  0.146626</Text>
-                                </XStack>
-                            
-                                <XStack style={styles.metaRow}>
-                                    <MaterialCommunityIcons name="map-marker-distance" size={16} color="#6b7280" />
-                                    <Text fontSize={13} opacity={0.7}>Estimated distance: 7.8 km</Text>
-                                </XStack>
+                                    <XStack style={styles.metaRow}>
+                                        <MaterialCommunityIcons name="longitude" size={16} color="#6b7280" />
+                                        <Text fontSize={13} opacity={0.7}>Lng:  0.146626</Text>
+                                    </XStack>
+                                
+                                    <XStack style={styles.metaRow}>
+                                        <MaterialCommunityIcons name="map-marker-distance" size={16} color="#6b7280" />
+                                        <Text fontSize={13} opacity={0.7}>Distance: ±7.8 km</Text>
+                                    </XStack>
 
-                                <XStack style={styles.metaRow}>
-                                    <MaterialCommunityIcons name="timer-outline" size={16} color="#6b7280" />
-                                    <Text fontSize={13} opacity={0.7}>Estimated time: 10 hours</Text>
-                                </XStack>
-                            </YStack>
+                                    <XStack style={styles.metaRow}>
+                                        <MaterialCommunityIcons name="timer-outline" size={16} color="#6b7280" />
+                                        <Text fontSize={13} opacity={0.7}>Time: ±10 hours</Text>
+                                    </XStack>
+                                </YStack>
+
+                                <Button 
+                                    size="$2" 
+                                    icon={<MaterialCommunityIcons 
+                                    name="file-document-edit-outline" size={20} />}
+                                    style={styles.actionButton}
+                                >
+                                    Change
+                                </Button>
+                            </XStack>
                         </YStack>
                     </YStack>
                 </KeyboardAwareScrollView>
 
-                <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
+                {/* <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
                     <XStack style={{ justifyContent: 'stretch', gap: 16 }}>
                         <View style={{ flex: 1 }}>
                             <Button onPress={async () => refreshLocation()}>
@@ -217,7 +239,7 @@ const LocateSubmission = () => {
                             </Button>
                         </View>
                     </XStack>
-                </View>
+                </View> */}
             </SafeAreaView>
 
             <Sheet
@@ -343,5 +365,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         padding: 16,
         width: '100%',
+    },
+    actionButton: {
+        backgroundColor: '#eef2ff',
     }
 });

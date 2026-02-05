@@ -8,6 +8,7 @@ import { PortalProvider } from '@tamagui/portal';
 import { TamaguiProvider } from 'tamagui';
 
 import { Inter_400Regular, Inter_900Black, useFonts } from '@expo-google-fonts/inter';
+import { ToastProvider } from '@tamagui/toast';
 import { useEffect } from 'react';
 import { tamaguiConfig } from '../tamagui.config';
 
@@ -36,11 +37,13 @@ export default function RootLayout() {
     <TamaguiProvider config={tamaguiConfig} defaultTheme="blue">
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <PortalProvider shouldAddRootHost>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          </Stack>
-          <StatusBar style="auto" />
+          <ToastProvider>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+            </Stack>
+            <StatusBar style="auto" />
+          </ToastProvider>
         </PortalProvider>
       </ThemeProvider>
     </TamaguiProvider>

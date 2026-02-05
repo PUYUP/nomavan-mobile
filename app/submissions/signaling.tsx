@@ -156,7 +156,7 @@ const SignalingSubmission = () => {
 							</XStack>
 
                             <XStack style={styles.inputStack}>
-                                <MaterialCommunityIcons name='office-building-marker-outline' size={26} style={styles.inputIcon} />
+                                <MaterialCommunityIcons name='map-marker-radius-outline' size={26} style={styles.inputIcon} />
                                 <Text style={[styles.inputText, { fontSize: 14, flex: 1 }]}>{locationName != '' ? locationName : '-'}</Text>
                             </XStack>
 
@@ -227,7 +227,7 @@ const SignalingSubmission = () => {
 										<XStack style={{justifyContent: 'space-between', alignItems: 'center' }}>
 											<XStack style={{ alignItems: 'center' }}>
 												<MaterialCommunityIcons name='network-strength-4-cog' size={26} style={styles.inputIcon} />
-												<Text style={[styles.inputText, { fontSize: 15 }]}>Select strength </Text>
+												<Text style={[styles.inputText, { fontSize: 15 }]}>Signal strength </Text>
 											</XStack>
 										</XStack>
                                         
