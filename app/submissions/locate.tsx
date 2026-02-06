@@ -1,4 +1,4 @@
-import { getCurrentLocation, reverseGeocodeLocation } from '@/utils/location-service';
+import { getCurrentLocation, reverseGeocodeLocation } from '@/services/location-service';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { LocationGeocodedAddress } from 'expo-location';
 import { Stack } from 'expo-router';
