@@ -82,8 +82,8 @@ const LocateSubmission = () => {
                     showsVerticalScrollIndicator={false}
                     contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'never' : 'automatic'}
                 >
-                    <YStack paddingStart="$4" paddingEnd="$4" flex={1} gap="$5">
-                        <YStack gap="$1" marginBlockEnd={2}>
+                    <YStack paddingStart="$4" paddingEnd="$4" flex={1} gap="$3">
+                        <YStack gap="$1" marginBlockEnd={0}>
                             <Text opacity={0.7}>Keep your vanlife location up to date and share it with fellow vanlifers.</Text>
                         </YStack>
 
@@ -116,7 +116,7 @@ const LocateSubmission = () => {
                                     <MaterialCommunityIcons name="arrow-down" size={22} color="#1F3D2B" />
                                 </View>
 
-                                <Button size="$2" width={100} iconAfter={<MaterialCommunityIcons name="car-traction-control" size={14} />}>View track</Button>
+                                <Button size="$2" width={120} iconAfter={<MaterialCommunityIcons name="car-traction-control" size={14} />}>View track</Button>
                             <View style={styles.dashedLine} />
                         </View>
 
@@ -173,7 +173,7 @@ const LocateSubmission = () => {
                             <View style={styles.arrow}>
                                 <MaterialCommunityIcons name="arrow-down" size={22} color="#1F3D2B" />
                             </View>
-                            <Button size="$2" width={100} iconAfter={<MaterialCommunityIcons name="car-traction-control" size={14} />}>View track</Button>
+                            <Button size="$2" width={120} iconAfter={<MaterialCommunityIcons name="car-traction-control" size={14} />}>View track</Button>
                             <View style={styles.dashedLine} />
                         </View>
 

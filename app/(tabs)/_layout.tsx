@@ -60,6 +60,10 @@ export default function TabLayout() {
       case 'add-pin':
         router.push('/submissions/add-pin');
         break;
+      
+      case 'expense':
+        router.push('/submissions/expenses/submit')
+        break;
 
       default:
         // not implemented

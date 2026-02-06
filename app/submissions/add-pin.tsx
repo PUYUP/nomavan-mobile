@@ -1,10 +1,9 @@
 import { getCurrentLocation, reverseGeocodeLocation } from '@/utils/location-service';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useToastController } from '@tamagui/toast';
 import { Stack } from "expo-router";
 import React, { useEffect, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from "react-hook-form";
-import { ActivityIndicator, Animated, Platform, StyleSheet } from "react-native";
+import { ActivityIndicator, Animated, Platform, Pressable, StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import MapView, { Region } from 'react-native-maps';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,7 +17,6 @@ export interface PIN {
 
 const AddPinSubmission = () => {
     const initialDelta = 0.0025;
-    const toast = useToastController()
     const { handleSubmit, setValue } = useForm<PIN>();
     const [region, setRegion] = useState<Region | null>(null);
     const [centerCoords, setCenterCoords] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -219,30 +217,39 @@ const AddPinSubmission = () => {
                             )}
                         </View>
                         
-                        <YStack flex={1}>
-                            <XStack style={styles.metaRow}>
+                        <YStack gap="$0" marginBlockStart="$2">
+                            <XStack style={[styles.metaRow, { flex: 1, paddingEnd: 16 }]}>
                                 <MaterialCommunityIcons name="map-marker-radius-outline" size={26} color="#6b7280" />
-                                <Text fontSize={13} opacity={0.7} paddingEnd={8}>
-                                    {locationName ? locationName : '-'}
-                                </Text>
+                                <Text fontSize={13}>{locationName ? locationName : '-'}</Text>
                             </XStack>
 
                             <XStack style={styles.metaRow}>
                                 <MaterialCommunityIcons name="latitude" size={26} color="#6b7280" />
-                                <XStack>
-                                    <Text fontSize={13} opacity={0.7} width="$6">Latitude</Text>
-                                    <Text fontSize={13} opacity={0.7}>: {centerCoords?.latitude}</Text>
+                                <XStack style={{ justifyContent: 'space-between', alignItems: 'center', flex: 1 }}>
+                                    <Text fontSize={13}>{centerCoords?.latitude}</Text>
+                                    <Text fontSize={13} opacity={0.7} textTransform={'lowercase'}>Latitude</Text>
                                 </XStack>
                             </XStack>
 
                             <XStack style={styles.metaRow}>
                                 <MaterialCommunityIcons name="longitude" size={26} color="#6b7280" />
-                                <XStack>
-                                    <Text fontSize={13} opacity={0.7} width="$6">Latitude</Text>
-                                    <Text fontSize={13} opacity={0.7}>: {centerCoords?.longitude}</Text>
+                                <XStack style={{ justifyContent: 'space-between', alignItems: 'center', flex: 1 }}>
+                                    <Text fontSize={13}>{centerCoords?.longitude}</Text>
+                                    <Text fontSize={13} opacity={0.7} textTransform={'lowercase'}>Longitude</Text>
                                 </XStack>
                             </XStack>
                         </YStack>
+                    
+                        <View style={styles.povGrid}>
+                            {Array.from({ length: 6 }).map((_, index) => (
+                                <Pressable key={`pov-${index}`} style={styles.povTile}>
+                                    <View style={styles.povContent}>
+                                        <MaterialCommunityIcons name="image-outline" size={22} color="#6b7280" />
+                                        <Text fontSize={12} opacity={0.7}>Take view</Text>
+                                    </View>
+                                </Pressable>
+                            ))}
+                        </View>
                     </YStack>
                 </KeyboardAwareScrollView>
 
@@ -317,4 +324,26 @@ const styles = StyleSheet.create({
 		gap: 6,
         marginTop: 4,
 	},
+    povGrid: {
+        marginTop: 12,
+        paddingLeft: 4,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    povTile: {
+        width: '31%',
+        aspectRatio: 16 / 10,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+        backgroundColor: '#f8fafc',
+        overflow: 'hidden',
+    },
+    povContent: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 4,
+    },
 })

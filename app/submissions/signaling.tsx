@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
 		marginBottom: 10,
 	},
 	inputText: {
-		fontSize: 18,
+		fontSize: 16,
 	},
 	signalItem: {
 		backgroundColor: '#ececec',

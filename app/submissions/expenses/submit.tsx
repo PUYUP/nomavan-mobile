@@ -1,18 +1,25 @@
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { Stack } from "expo-router";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import { Stack, useRouter } from "expo-router";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { Platform, StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, ListItem, Text, TextArea, View, YGroup, YStack } from "tamagui";
+import { Button, Text, View, YStack } from "tamagui";
 
-export interface Post {
-    content: string;
+interface Expense {
+    items: Item[]
 }
 
-const PostSubmission = () => {
-    const { control, handleSubmit, setValue } = useForm<Post>();
-    const onSubmit: SubmitHandler<Post> = (data) => {
+interface Item {
+    name: string
+    price: number
+    quantity: number
+    subtotal: number
+}
+
+const ExpenseSubmission = () => {
+    const router = useRouter();
+    const { control, handleSubmit, setValue } = useForm<Expense>();
+    const onSubmit: SubmitHandler<Expense> = (data) => {
         console.log('Submit!');
         console.log(data);
     };
@@ -22,7 +29,8 @@ const PostSubmission = () => {
             <SafeAreaView style={styles.safeArea} edges={['bottom']}>
                 <Stack.Screen 
                     options={{ 
-                        title: 'Post Update', 
+                        headerShown: true,
+                        title: 'Expense Update', 
                         headerTitleStyle: {
                             fontSize: 22,
                             fontFamily: 'Inter-Black',
@@ -42,25 +50,7 @@ const PostSubmission = () => {
                     contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'never' : 'automatic'}
                 >
                     <YStack paddingStart="$0" paddingEnd="$0" flex={1} gap="$2">
-                        <Controller
-                            control={control}
-                            name={'content'}
-                            rules={{ required: true }}
-                            render={({ field: { onChange, value } }) => (
-                                <TextArea onChange={onChange} size="$3" placeholder="Share something…" borderWidth={1} rows={6} value={value} />
-                            )}
-						/>
-                        
-                        <YGroup>
-                            <YGroup.Item>
-                                <ListItem 
-                                    rounded={8} 
-                                    title="Image/video" 
-                                    icon={<MaterialCommunityIcons name="folder-multiple-image" size={20} />} 
-                                    onPress={() => {alert('Coming soon')}}
-                                />
-                            </YGroup.Item>
-                        </YGroup>
+                        <Button onPress={() => router.push('/submissions/expenses/scan-receipt')}>Scan</Button>
                     </YStack>
                 </KeyboardAwareScrollView>
 
@@ -74,7 +64,7 @@ const PostSubmission = () => {
     )
 }
 
-export default PostSubmission;
+export default ExpenseSubmission;
 
 const styles = StyleSheet.create({
     safeArea: {

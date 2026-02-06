@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Nomavan",
+      "bundleIdentifier": "app.nomavan.mobile",
       "entitlements": {
         "com.apple.developer.networking.wifi-info": true
       },
@@ -30,11 +30,16 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.Nomavan",
+      "package": "app.nomavan.mobile",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "process.env.GOOGLE_MAPS_API_KEY_ANDROID"
+        }
+      }
     },
     "web": {
       "output": "static",
