@@ -72,6 +72,17 @@ const ExpenseSubmission = () => {
         );
     };
 
+    const deleteItem = () => {
+        if (selectedItemIndex === null) {
+            return;
+        }
+        setItems((prev) => prev.filter((_, idx) => idx !== selectedItemIndex));
+        setEditorOpen(false);
+        setSelectedItem(null);
+        setSelectedItemIndex(null);
+        resetItem();
+    };
+
     const updateQtyBy = (index: number, delta: number) => {
         setItems((prev) =>
             prev.map((item, idx) =>
@@ -296,17 +307,27 @@ const ExpenseSubmission = () => {
                                     />
                                 </View>
                             </XStack>
-                                        
-                            <Button 
-                                marginBlockStart="$4" 
-                                onPress={saveItem(onSubmit)} 
-                                bg="$orange9" 
-                                color="$white" 
-                                pressStyle={{ bg: "$orange10"}} 
-                                hoverStyle={{ bg: "$orange10" }}
-                            >
-                                Save
-                            </Button>
+
+                            <XStack gap="$3" marginBlockStart="$4" style={{ justifyContent: 'space-between' }}>
+                                <View flex={1}>
+                                    <Button onPress={deleteItem} width="100%">
+                                        <MaterialCommunityIcons name="delete-empty-outline" size={24} />
+                                        <Text color="$red10">Delete</Text>
+                                    </Button>
+                                </View>
+
+                                <View flex={1}>
+                                    <Button 
+                                        onPress={saveItem(onSubmit)} 
+                                        bg="$orange9" 
+                                        color="$white" 
+                                        pressStyle={{ bg: "$orange10"}} 
+                                        hoverStyle={{ bg: "$orange10" }}
+                                    >
+                                        Save
+                                    </Button>
+                                </View>
+                            </XStack>   
                         </YStack>
                     </Dialog.Content>
                 </Dialog.Portal>
