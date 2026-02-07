@@ -26,6 +26,23 @@ export default function StackLayout() {
                     }
                 }}
             />
+
+            <Stack.Screen
+                name="login"
+                options={{
+                    headerShown: true,
+                    title: '',
+                    headerLeft: () => {
+                        return (
+                            <Button 
+                                circular 
+                                onPress={() => router.push('/')} 
+                                icon={<MaterialCommunityIcons name="close" size={28} />}
+                            />
+                        )
+                    }
+                }}
+            />
         </Stack>
     );
 }

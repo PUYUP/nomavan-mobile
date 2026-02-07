@@ -119,13 +119,15 @@ export default function TabLayout() {
             },
             headerLeft: () => {
               return (
-                <Avatar circular size="$2" style={{ marginHorizontal: 16 }}>
-                  <Avatar.Image
-                    src="https://i.pravatar.cc/100?img=17"
-                    accessibilityLabel="Contributor avatar"
-                  />
-                  <Avatar.Fallback />
-                </Avatar>
+                <Pressable onPress={() => router.push('/')}>
+                  <Avatar circular size="$2" style={{ marginHorizontal: 16 }}>
+                    <Avatar.Image
+                      src="https://i.pravatar.cc/100?img=17"
+                      accessibilityLabel="Contributor avatar"
+                    />
+                    <Avatar.Fallback />
+                  </Avatar>
+                </Pressable>
               )
             }
           }}

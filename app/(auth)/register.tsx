@@ -1,4 +1,5 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
+import { useRouter } from "expo-router"
 import { useState } from "react"
 import { Controller, SubmitHandler, useForm } from "react-hook-form"
 import { Platform, StyleSheet } from "react-native"
@@ -7,12 +8,14 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { Button, Input, Text, XStack, YStack } from "tamagui"
 
 interface Account {
+    name: string
     email: string
     password: string
     confirmPassword: string
 }
 
 const Register = () => {
+    const router = useRouter();
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
@@ -42,6 +45,26 @@ const Register = () => {
                         <Text fontSize="$7" fontWeight={700} marginBlockEnd={6}>Join the Community!</Text>
                         <Text fontSize="$3" lineHeight="$3" opacity={0.8}>Create your free account and start your journey with vanlifers worldwide.</Text>
                     </YStack>
+
+                    <Controller
+                        control={control}
+                        name="name"
+                        rules={{ required: true }}
+                        render={({ field: { onChange, value } }) => (
+                            <XStack style={{ alignItems: 'center', position: 'relative' }} gap="$0">
+                                <MaterialCommunityIcons name="card-account-details-outline" size={26} style={styles.inputIcon} />
+                                <Input 
+                                    flex={1} 
+                                    onChange={onChange} 
+                                    size="$4" 
+                                    placeholder="Legal name" 
+                                    borderWidth={1} 
+                                    value={value} 
+                                    paddingStart="$8"
+                                />
+                            </XStack>
+                        )}
+                    />
 
                     <Controller
                         control={control}
@@ -144,8 +167,14 @@ const Register = () => {
                         hoverStyle={{ bg: "$orange10" }}
                         marginBlockStart="$3"
                     >
-                        <Text color={'white'} fontSize={15}>Submit</Text>
+                        <Text color={'white'} fontSize={16}>Submit</Text>
                     </Button>
+
+                    <XStack marginBlockStart={8} style={{ justifyContent: 'center' }}>
+                        <Button size="$3" onPress={() => router.push('/(auth)/login')} chromeless>
+                            <Text fontSize={15} color="$blue10">Have an account? Log in</Text>
+                        </Button>
+                    </XStack>
                 </YStack>
             </KeyboardAwareScrollView>
         </SafeAreaView>
