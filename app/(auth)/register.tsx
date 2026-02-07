@@ -1,10 +1,12 @@
+import { SignupPayload, useCreateSignupMutation } from "@/services/signup"
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 import { useRouter } from "expo-router"
 import { useState } from "react"
 import { Controller, SubmitHandler, useForm } from "react-hook-form"
-import { Platform, StyleSheet } from "react-native"
+import { ActivityIndicator, Platform, StyleSheet } from "react-native"
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view"
 import { SafeAreaView } from "react-native-safe-area-context"
+import Toast from 'react-native-toast-message'
 import { Button, Input, Text, XStack, YStack } from "tamagui"
 
 interface Account {
@@ -18,7 +20,8 @@ const Register = () => {
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
+    const [signup, { isUninitialized, isLoading }] = useCreateSignupMutation();
+    
     const {
         control,
         handleSubmit,
@@ -26,7 +29,48 @@ const Register = () => {
         formState: { errors },
     } = useForm<Account>()
 
-    const onSubmit: SubmitHandler<Account> = (data) => console.log(data)
+    const generateUsername = (email: string) => {
+        const base = email.split('@')[0] ?? 'user';
+        const safeBase = base.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const suffix = Math.floor(1000 + Math.random() * 9000);
+        return `${safeBase}${suffix}`;
+    };
+
+    const onSubmit: SubmitHandler<Account> = async (data) => {
+        const username = generateUsername(data.email);
+        const payload: SignupPayload = {
+            user_login: username,
+            user_email: data.email,
+            password: data.confirmPassword,
+            signup_field_data: [
+                {
+                    field_id: 1,
+                    value: data.name,
+                }
+            ]
+        }
+
+        const result = await signup(payload);
+        if (result) {
+            if (result.data) {
+                // redirect to login page
+                router.push({
+                    pathname: '/(auth)/login',
+                    params: {
+                        email: result.data.user_email,
+                    }
+                });
+
+                Toast.show({
+                    type: 'success',
+                    position: 'top',
+                    visibilityTime: 10000,
+                    text1: 'Registration successful',
+                    text2: 'You can now log in using your email and password.',
+                });
+            }
+        }
+    };
     const passwordValue = watch('password')
 
     return (
@@ -88,6 +132,8 @@ const Register = () => {
                                     borderWidth={1} 
                                     value={value} 
                                     paddingStart="$8"
+                                    autoCapitalize="none"
+                                    autoComplete="none"
                                 />
                             </XStack>
                         )}
@@ -110,6 +156,7 @@ const Register = () => {
                                     value={value} 
                                     paddingStart="$8"
                                     paddingEnd="$8"
+                                    autoComplete="none"
                                 />
                                 <Button
                                     size="$2"
@@ -145,6 +192,7 @@ const Register = () => {
                                     value={value} 
                                     paddingStart="$8"
                                     paddingEnd="$8"
+                                    autoComplete="none"
                                 />
                                 <Button
                                     size="$2"
@@ -166,7 +214,9 @@ const Register = () => {
                         pressStyle={{ bg: "$orange10"}} 
                         hoverStyle={{ bg: "$orange10" }}
                         marginBlockStart="$3"
+                        disabled={isLoading ? true : false}
                     >
+                        {isLoading ? <ActivityIndicator color={'white'} /> : null}
                         <Text color={'white'} fontSize={16}>Submit</Text>
                     </Button>
 

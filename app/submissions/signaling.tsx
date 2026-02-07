@@ -1,4 +1,4 @@
-import { getCurrentLocation, reverseGeocodeLocation } from '@/services/location-service';
+import { getCurrentLocation, reverseGeocodeLocation } from '@/services/location';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import NetInfo from '@react-native-community/netinfo';
 import { Stack } from 'expo-router';

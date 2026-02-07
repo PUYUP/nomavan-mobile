@@ -151,7 +151,27 @@ const Index = () => {
                                 ]}
                             >
                                 <MaterialCommunityIcons name="truck-off-road" size={20} color="#c30490" />
-                                <Text fontSize={13} opacity={0.8}>Travel together</Text>
+                                <Text fontSize={13} opacity={0.8}>En-route together</Text>
+                            </Animated.View>
+
+                            <Animated.View
+                                style={[
+                                    styles.valueChip,
+                                    styles.chipE,
+                                    {
+                                        transform: [
+                                            {
+                                                translateY: floatB.interpolate({
+                                                    inputRange: [0, 1],
+                                                    outputRange: [0, 10],
+                                                }),
+                                            },
+                                        ],
+                                    },
+                                ]}
+                            >
+                                <MaterialCommunityIcons name="microsoft-internet-explorer" size={20} color="#03b082" />
+                                <Text fontSize={13} opacity={0.8}>Internet coverage info</Text>
                             </Animated.View>
                         </YStack>
                     </View>
@@ -227,6 +247,11 @@ const styles = StyleSheet.create({
     },
     chipD: {
         left: 26,
-        top: 202,
+        top: 170,
+    },
+
+    chipE: {
+        right: 26,
+        top: 255,
     },
 });

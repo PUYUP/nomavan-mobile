@@ -1,4 +1,4 @@
-import { useGetItemsMutation } from "@/services/receipt-extractor-service";
+import { useGetItemsMutation } from "@/services/receipt-extractor";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import type { Block } from "@infinitered/react-native-mlkit-text-recognition";
 import { recognizeText } from "@infinitered/react-native-mlkit-text-recognition";

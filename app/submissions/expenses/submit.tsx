@@ -1,5 +1,5 @@
-import { getCurrentLocation } from "@/services/location-service";
-import { useGetItemsMutation } from "@/services/receipt-extractor-service";
+import { getCurrentLocation } from "@/services/location";
+import { useGetItemsMutation } from "@/services/receipt-extractor";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";

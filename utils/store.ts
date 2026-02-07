@@ -1,12 +1,16 @@
-import { receiptApi } from '@/services/receipt-extractor-service';
+import { receiptApi } from '@/services/receipt-extractor';
+import { signinApi } from '@/services/signin';
+import { signupApi } from '@/services/signup';
 import { configureStore } from '@reduxjs/toolkit';
 
 export const store = configureStore({
     reducer: {
         [receiptApi.reducerPath]: receiptApi.reducer,
+        [signinApi.reducerPath]: signinApi.reducer,
+        [signupApi.reducerPath]: signupApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(receiptApi.middleware),
+        getDefaultMiddleware().concat(receiptApi.middleware, signinApi.middleware, signupApi.middleware),
 })
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

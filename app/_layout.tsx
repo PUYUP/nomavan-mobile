@@ -12,6 +12,8 @@ import { store } from '@/utils/store';
 import { Inter_400Regular, Inter_900Black, useFonts } from '@expo-google-fonts/inter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import { tamaguiConfig } from '../tamagui.config';
 
 export const unstable_settings = {
@@ -21,6 +23,7 @@ export const unstable_settings = {
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
+  const { left, top, right } = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const [loaded, error] = useFonts({
     "Inter": Inter_400Regular,
@@ -54,6 +57,8 @@ export default function RootLayout() {
           </QueryClientProvider>
         </ThemeProvider>
       </TamaguiProvider>
-      </Provider>
+
+      <Toast topOffset={top + 6} />
+    </Provider>
   );
 }
