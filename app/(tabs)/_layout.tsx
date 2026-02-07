@@ -93,7 +93,7 @@ export default function TabLayout() {
           },
         }}>
         <Tabs.Screen
-          name="index"
+          name="feed"
           options={{
             title: 'Nomavan',
             tabBarLabel: 'Feeds',

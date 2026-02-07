@@ -328,7 +328,7 @@ const ExpenseSubmission = () => {
                     />
                     <Dialog.Content width={320}>
                         <XStack marginBlockEnd="$3" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Text fontSize={20} fontFamily={'Inter-Black'}>Item editor</Text>
+                            <Text fontSize={20} style={{ fontFamily: 'Inter-Black' }}>Item editor</Text>
 
                             <Dialog.Close asChild>
                                 <Button
@@ -402,11 +402,10 @@ const ExpenseSubmission = () => {
                                     <Button 
                                         onPress={saveItem(onSubmit)} 
                                         bg="$orange9" 
-                                        color="$white" 
                                         pressStyle={{ bg: "$orange10"}} 
                                         hoverStyle={{ bg: "$orange10" }}
                                     >
-                                        Save
+                                        <Text color="$white">Save</Text>
                                     </Button>
                                 </View>
                             </XStack>   
