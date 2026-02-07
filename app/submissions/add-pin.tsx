@@ -176,7 +176,6 @@ const AddPinSubmission = () => {
                     contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'never' : 'automatic'}
                 >
                     <YStack paddingStart="$0" paddingEnd="$0" flex={1} gap="$2">
-                        <Text fontSize={12} opacity={0.7}>Drag the map to place the pin.</Text>
                         <View style={styles.mapCard}>
                             {isLoading || !region ? (
                                 <View style={styles.mapLoading}>
@@ -185,6 +184,11 @@ const AddPinSubmission = () => {
                                 </View>
                             ) : (
                                 <View style={styles.mapWrapper}>
+                                    <View style={styles.mapHint}>
+                                        <Text fontSize={12} opacity={0.7}>
+                                            Drag the map to place the pin.
+                                        </Text>
+                                    </View>
                                     <MapView
                                         ref={(ref) => { mapRef.current = ref; }}
                                         style={styles.map}
@@ -224,18 +228,11 @@ const AddPinSubmission = () => {
                             </XStack>
 
                             <XStack style={styles.metaRow}>
-                                <MaterialCommunityIcons name="latitude" size={26} color="#6b7280" />
-                                <XStack style={{ justifyContent: 'space-between', alignItems: 'center', flex: 1 }}>
-                                    <Text fontSize={13}>{centerCoords?.latitude}</Text>
-                                    <Text fontSize={13} opacity={0.7} textTransform={'lowercase'}>Latitude</Text>
-                                </XStack>
-                            </XStack>
-
-                            <XStack style={styles.metaRow}>
-                                <MaterialCommunityIcons name="longitude" size={26} color="#6b7280" />
-                                <XStack style={{ justifyContent: 'space-between', alignItems: 'center', flex: 1 }}>
-                                    <Text fontSize={13}>{centerCoords?.longitude}</Text>
-                                    <Text fontSize={13} opacity={0.7} textTransform={'lowercase'}>Longitude</Text>
+                                <MaterialCommunityIcons name="crosshairs-gps" size={26} color="#6b7280" />
+                                <XStack>
+                                    <Text fontSize={13} opacity={0.7}>{centerCoords?.latitude}</Text>
+                                    <Text marginStart={1} marginEnd={3}>,</Text>
+                                    <Text fontSize={13} opacity={0.7}>{centerCoords?.longitude}</Text>
                                 </XStack>
                             </XStack>
                         </YStack>
@@ -302,6 +299,20 @@ const styles = StyleSheet.create({
         right: 10,
         top: 10,
         gap: 6,
+    },
+    mapHint: {
+        position: 'absolute',
+        left: 10,
+        top: 10,
+        zIndex: 2,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        shadowColor: '#000',
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
     },
     zoomButton: {
         backgroundColor: '#fff',

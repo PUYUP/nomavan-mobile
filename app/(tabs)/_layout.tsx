@@ -27,10 +27,10 @@ export default function TabLayout() {
   }, [open]);
 
   const quickActions = [
-    { label: 'New Meetup', key: 'new-meetup', icon: 'account-group' as const },
+    { label: 'New Meetup', key: 'meetup', icon: 'account-group' as const },
     { label: 'Add PIN', key: 'add-pin', icon: 'map-marker-plus' as const },
     { label: 'Locate', key: 'locate', icon: 'map-marker-path' as const },
-    { label: 'Expense', key: 'expense', icon: 'store-plus-outline' as const },
+    { label: 'Expense', key: 'expense', icon: 'basket-plus-outline' as const },
     { label: 'Signaling', key: 'signaling', icon: 'access-point-network' as const },
     { label: 'Post', key: 'post', icon: 'post' as const },
   ];
@@ -62,7 +62,11 @@ export default function TabLayout() {
         break;
       
       case 'expense':
-        router.push('/submissions/expenses/submit')
+        router.push('/submissions/expenses/submit');
+        break;
+      
+      case 'meetup':
+        router.push('/submissions/create-meetup');
         break;
 
       default:
@@ -246,7 +250,7 @@ export default function TabLayout() {
               )
             },
             headerRight: () => (
-              <Pressable onPress={() => {}}>
+              <Pressable onPress={() => router.push('/submissions/create-meetup')}>
                 <View
                   style={{
                     height: 30,

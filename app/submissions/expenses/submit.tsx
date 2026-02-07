@@ -1,3 +1,4 @@
+import { getCurrentLocation } from "@/services/location-service";
 import { useGetItemsMutation } from "@/services/receipt-extractor-service";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Stack, useRouter } from "expo-router";
@@ -6,10 +7,13 @@ import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { BackHandler, Platform, StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Dialog, Input, Text, TextArea, View, XStack, YStack } from "tamagui";
+import { Button, Dialog, Input, Label, Switch, Text, TextArea, View, XStack, YStack } from "tamagui";
 
 interface Expense {
     items: Item[]
+    useLocation: boolean
+    lat: number
+    lng: number
 }
 
 interface Item {
@@ -54,6 +58,11 @@ const ExpenseSubmission = () => {
     const [summary, setSummary] = useState(null);
     const [editorOpen, setEditorOpen] = useState<boolean>(false);
     const { control: controlItem, handleSubmit: saveItem, reset: resetItem } = useForm<Item>();
+    const { control: controlExpense, handleSubmit: saveExpense, reset: resetExpense, getValues: expenseValues, setValue: setExpenseValue } = useForm<Expense>({
+        defaultValues: {
+            useLocation: true,
+        }
+    });
     const [, result] = useGetItemsMutation({
         fixedCacheKey: 'receipt-process',
     });
@@ -62,6 +71,8 @@ const ExpenseSubmission = () => {
         console.log('Save item!');
         if (selectedItemIndex != null) {
             updateItem(selectedItemIndex, data);
+        } else {
+            setItems((prev) => [...prev, data]);
         }
         setEditorOpen(false);
     };
@@ -83,11 +94,16 @@ const ExpenseSubmission = () => {
         resetItem();
     };
 
+    const addItem = () => {
+        setSelectedItemIndex(null);
+        setSelectedItem({ name: '', qty: '1', price: '' });
+    }
+
     const updateQtyBy = (index: number, delta: number) => {
         setItems((prev) =>
             prev.map((item, idx) =>
                 idx === index
-                    ? { ...item, qty: Math.max(0, parseFloat(item.qty) + delta).toString() }
+                    ? { ...item, qty: Math.max(0, parseFloat(item.qty) + delta)?.toString() }
                     : item
             )
         );
@@ -96,6 +112,24 @@ const ExpenseSubmission = () => {
     const editItem = async (index: number, item: Item) => {
         setSelectedItem(item);
         setSelectedItemIndex(index);
+    }
+
+    /**
+     * Share button handler
+     */
+    const shareHandler = async () => {
+        if (expenseValues('useLocation')) {
+            const location = await getCurrentLocation();
+            console.log(location);
+
+            if (location.ok) {
+                const coords = location.data.coords;
+                setExpenseValue('lat', coords.latitude);
+                setExpenseValue('lng', coords.longitude);
+            }
+        }
+        
+        console.log(expenseValues());
     }
 
     useEffect(() => {
@@ -111,6 +145,10 @@ const ExpenseSubmission = () => {
             setSummary(result?.data?.result?.summary);
         }
     }, [result.isSuccess]);
+
+    useEffect(() => {
+        setExpenseValue('items', items);
+    }, [items, setExpenseValue]);
 
     useEffect(() => {
         if (!editorOpen) {
@@ -131,8 +169,8 @@ const ExpenseSubmission = () => {
         if (selectedItem) {
             resetItem({
                 name: selectedItem.name,
-                qty: selectedItem.qty.toString(),
-                price: selectedItem.price.toString(),
+                qty: selectedItem.qty?.toString(),
+                price: selectedItem.price?.toString(),
             });
             setEditorOpen(true);
         }
@@ -163,10 +201,6 @@ const ExpenseSubmission = () => {
                     showsVerticalScrollIndicator={false}
                     contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'never' : 'automatic'}
                 >
-                    {/* <YStack paddingStart="$0" paddingEnd="$0" flex={1} gap="$2">
-                        <Button onPress={() => router.push('/submissions/expenses/scan-receipt')}>Scan</Button>
-                    </YStack> */}
-
                     <YStack gap="$2">
                         {items.map((item: Item, index) => (
                             <XStack 
@@ -175,7 +209,7 @@ const ExpenseSubmission = () => {
                                 marginBlockEnd="$2.5" 
                                 style={styles.item}
                             >
-                                <View paddingEnd="$2">
+                                <View width={12}>
                                     <Text fontSize={14} fontWeight={700}>{index + 1}</Text>
                                 </View>
 
@@ -218,12 +252,58 @@ const ExpenseSubmission = () => {
                                 </View>
                             </XStack>
                         ))}
+
+                        <XStack marginBlockStart={16} gap="$3">
+                            <Button
+                                size="$3"
+                                flex={1}
+                                onPress={() => addItem()}
+                                icon={<MaterialCommunityIcons name="basket-plus-outline" size={24} />}
+                            >
+                                Manual Entry
+                            </Button>
+                            <Button
+                                size="$3"
+                                flex={1}
+                                onPress={() => router.push('/submissions/expenses/scan-receipt')}
+                                icon={<MaterialCommunityIcons name="receipt-text-plus-outline" size={24} />}
+                            >
+                                Scan Receipt
+                            </Button>
+                        </XStack>
                     </YStack>
                 </KeyboardAwareScrollView>
 
                 <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
-                    <Button onPress={saveItem(onSubmit)} style={styles.submitButton}>
-                        <Text color={'white'} fontSize={20}>Share Expense</Text>
+                    <Controller
+                        name="useLocation"
+                        control={controlExpense}
+                        rules={{ required: true }}
+                        render={({ field: { onChange, value } }) => (
+                            <XStack items="center" marginBlockEnd="$3" gap="$4" style={{ justifyContent: 'space-between' }}>
+                                <XStack items="center" gap="$2">
+                                    <MaterialCommunityIcons name="map-marker-radius-outline" size={30} />
+
+                                    <Label pr="$0" minW={90} htmlFor="share-location">
+                                        Use location
+                                    </Label>
+                                </XStack>
+        
+                                <Switch
+                                    id="share-location"
+                                    checked={value}
+                                    backgroundColor="$gray5"
+                                    activeStyle={{ backgroundColor: '$orange3' }}
+                                    onCheckedChange={onChange}
+                                >
+                                    <Switch.Thumb backgroundColor="$gray9" activeStyle={{ bg: "$orange8" }} />
+                                </Switch>
+                            </XStack>
+                        )}
+                    />
+                    
+                    <Button onPress={async () => await shareHandler()} style={styles.submitButton}>
+                        <Text color={'white'} fontSize={20}>Share</Text>
                     </Button>
                 </View>
             </SafeAreaView>
@@ -309,12 +389,14 @@ const ExpenseSubmission = () => {
                             </XStack>
 
                             <XStack gap="$3" marginBlockStart="$4" style={{ justifyContent: 'space-between' }}>
-                                <View flex={1}>
-                                    <Button onPress={deleteItem} width="100%">
-                                        <MaterialCommunityIcons name="delete-empty-outline" size={24} />
-                                        <Text color="$red10">Delete</Text>
-                                    </Button>
-                                </View>
+                                {selectedItemIndex !== null ? (
+                                    <View flex={1}>
+                                        <Button onPress={deleteItem} width="100%">
+                                            <MaterialCommunityIcons name="delete-empty-outline" size={24} />
+                                            <Text color="$red10">Delete</Text>
+                                        </Button>
+                                    </View>
+                                ) : null}
 
                                 <View flex={1}>
                                     <Button 

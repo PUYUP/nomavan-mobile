@@ -136,22 +136,12 @@ const SignalingSubmission = () => {
 							<XStack style={styles.inputStack}>
 								<XStack flex={1} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
 									<XStack style={{ alignItems: 'center' }}>
-										<MaterialCommunityIcons name='latitude' size={26} style={styles.inputIcon} />
+										<MaterialCommunityIcons name='crosshairs-gps' size={26} style={styles.inputIcon} />
+										
 										<Text style={styles.inputText}>{signalInfo?.lat}</Text>
-									</XStack>
-
-									<Text fontSize={12} textTransform='lowercase' opacity={0.8}>Latitude</Text>
-								</XStack>
-							</XStack>
-
-							<XStack style={styles.inputStack}>
-								<XStack flex={1} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-									<XStack style={{ alignItems: 'center' }}>
-										<MaterialCommunityIcons name='longitude' size={26} style={styles.inputIcon} />
+										<Text marginStart={1} marginEnd={3}>,</Text>
 										<Text style={styles.inputText}>{signalInfo?.lng}</Text>
 									</XStack>
-
-									<Text fontSize={12} textTransform='lowercase' opacity={0.8}>Longitude</Text>
 								</XStack>
 							</XStack>
 
@@ -288,7 +278,7 @@ const styles = StyleSheet.create({
 		marginBottom: 10,
 	},
 	inputText: {
-		fontSize: 16,
+		fontSize: 15,
 	},
 	signalItem: {
 		backgroundColor: '#ececec',

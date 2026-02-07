@@ -6,41 +6,47 @@ const ArrivedOnSite = () => {
     return (
         <>
             <Card style={styles.card}>
-                <YStack>
-                    <YStack style={styles.arrivedBlock}>
-                        <XStack style={styles.arrivedRow}>
-                            <MaterialCommunityIcons name="map-marker-check" size={18} color="#22c55e" />
-                            <YStack style={styles.arrivedInfo}>
-                                <Text style={styles.arrivedLabel}>Arrived</Text>
-                                <Text style={styles.arrivedTitle}>Twin Creek Trailhead</Text>
-                                <Text style={styles.arrivedMeta}>Coconino NF</Text>
-                            </YStack>
-                            <Text style={styles.arrivedStatText}>32 minutes ago</Text>
-                        </XStack>
-
-                        <XStack style={styles.arrivedStats}>
-                            <XStack style={styles.arrivedStatItem}>
-                                <MaterialCommunityIcons name="clock-time-four-outline" size={14} color="#6b7280" />
-                                <Text style={styles.arrivedStatText}>2.3 hours</Text>
+                <YStack style={styles.arrivedBlock}>
+                    <XStack flex={1}>
+                        <MaterialCommunityIcons name="map-marker-check" size={28} color="#22c55e" />
+                        <YStack flex={1} paddingStart="$2.5">
+                            <XStack style={styles.arrivedRow}>
+                                <YStack style={styles.arrivedInfo}>
+                                    <Text style={styles.arrivedLabel}>Arrived</Text>
+                                    <Text style={styles.arrivedTitle}>Twin Creek Trailhead</Text>
+                                    <Text style={styles.arrivedMeta}>Coconino NF</Text>
+                                </YStack>
+                                <Text style={styles.arrivedStatText}>32 minutes ago</Text>
                             </XStack>
-                            <XStack style={styles.arrivedStatItem}>
-                                <MaterialCommunityIcons name="road-variant" size={14} color="#6b7280" />
-                                <Text style={styles.arrivedStatText}>18.6 km</Text>
+
+                            <XStack style={styles.arrivedStats} marginBlockStart="$2.5">
+                                <XStack style={styles.arrivedStatItem}>
+                                    <MaterialCommunityIcons name="clock-time-four-outline" size={14} color="#6b7280" />
+                                    <Text style={styles.arrivedStatText}>2.3 hours</Text>
+                                </XStack>
+                                <XStack style={styles.arrivedStatItem}>
+                                    <MaterialCommunityIcons name="road-variant" size={14} color="#6b7280" />
+                                    <Text style={styles.arrivedStatText}>18.6 km</Text>
+                                </XStack>
                             </XStack>
-                        </XStack>
+                        </YStack>
+                    </XStack>
 
-                        <View style={styles.arrivedDivider} />
-
-                        <XStack style={styles.arrivedRow}>
-                            <MaterialCommunityIcons name="map-marker" size={18} color="#ef4444" />
-                            <YStack style={styles.arrivedInfo}>
-                                <Text style={styles.arrivedLabel}>From</Text>
-                                <Text style={styles.arrivedTitle}>Wawa & Sheetz</Text>
-                                <Text style={styles.arrivedMeta}>Sedona, AZ</Text>
-                            </YStack>
-                            <Text style={styles.arrivedStatText}>3 days ago</Text>
-                        </XStack>
-                    </YStack>
+                    <View style={styles.arrivedDivider} />
+                    
+                    <XStack flex={1}>
+                        <MaterialCommunityIcons name="map-marker" size={28} color="#ef4444" />
+                        <YStack flex={1} paddingStart="$2.5">
+                            <XStack style={styles.arrivedRow}>
+                                <YStack style={styles.arrivedInfo}>
+                                    <Text style={styles.arrivedLabel}>From</Text>
+                                    <Text style={styles.arrivedTitle}>Wawa & Sheetz</Text>
+                                    <Text style={styles.arrivedMeta}>Sedona, AZ</Text>
+                                </YStack>
+                                <Text style={styles.arrivedStatText}>3 days ago</Text>
+                            </XStack>
+                        </YStack>
+                    </XStack>
                 </YStack>
 
                 <Separator my={10} />
@@ -208,12 +214,11 @@ const styles = StyleSheet.create({
     arrivedDivider: {
         height: 1,
         backgroundColor: '#e5e5e5',
-        marginLeft: 28,
+        marginLeft: 40,
     },
     arrivedStats: {
         flexDirection: 'row',
         gap: 12,
-        paddingLeft: 26,
     },
     arrivedStatItem: {
         alignItems: 'center',

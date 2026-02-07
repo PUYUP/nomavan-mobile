@@ -15,7 +15,7 @@
         "com.apple.developer.networking.wifi-info": true
       },
       "config": {
-        "googleMapsApiKey":  "process.env.GOOGLE_MAPS_API_KEY_IOS"
+        "googleMapsApiKey": "process.env.GOOGLE_MAPS_API_KEY_IOS"
       },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We use your location to attach GPS coordinates to signal reports."
@@ -72,7 +72,8 @@
         {
           "photosPermission": "The app accesses your photos to let you share them with your friends."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

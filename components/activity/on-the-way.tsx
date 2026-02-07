@@ -7,26 +7,34 @@ const OnTheWay = () => {
         <>
             <Card style={styles.card}>
                 <YStack style={styles.directionBlock}>
-                    <XStack style={styles.directionRow}>
-                        <MaterialCommunityIcons name="map-marker" size={18} color="#ef4444" />
-                        <YStack style={styles.directionInfo}>
-                            <Text style={styles.directionLabel}>From</Text>
-                            <Text style={styles.directionTitle}>Wawa & Sheetz</Text>
-                            <Text style={styles.directionMeta}>Sedona, AZ</Text>
+                    <XStack flex={1}>
+                        <MaterialCommunityIcons name="map-marker" size={28} color="#ef4444" />
+                        <YStack flex={1} paddingStart="$2.5">
+                            <XStack style={styles.directionRow}>
+                                <YStack style={styles.directionInfo}>
+                                    <Text style={styles.directionLabel}>From</Text>
+                                    <Text style={styles.directionTitle}>Wawa & Sheetz</Text>
+                                    <Text style={styles.directionMeta}>Sedona, AZ</Text>
+                                </YStack>
+                                <Text style={styles.directionDistance}>1 day ago</Text>
+                            </XStack>
                         </YStack>
-                        <Text style={styles.directionDistance}>1 day ago</Text>
                     </XStack>
 
                     <View style={styles.directionDivider} />
 
-                    <XStack style={styles.directionRow}>
-                        <MaterialCommunityIcons name="flag-checkered" size={18} color="#22c55e" />
-                        <YStack style={styles.directionInfo}>
-                            <Text style={styles.directionLabel}>To</Text>
-                            <Text style={styles.directionTitle}>Twin Creek Trailhead</Text>
-                            <Text style={styles.directionMeta}>Coconino NF</Text>
+                    <XStack flex={1}>
+                        <MaterialCommunityIcons name="flag" size={28} color="#22c55e" />
+                        <YStack flex={1} paddingStart="$2.5">
+                            <XStack style={styles.directionRow}>
+                                <YStack style={styles.directionInfo}>
+                                    <Text style={styles.directionLabel}>To</Text>
+                                    <Text style={styles.directionTitle}>Twin Creek Trailhead</Text>
+                                    <Text style={styles.directionMeta}>Coconino NF</Text>
+                                </YStack>
+                                <Text style={styles.directionDistance}>6.4 mi</Text>
+                            </XStack>
                         </YStack>
-                        <Text style={styles.directionDistance}>6.4 mi</Text>
                     </XStack>
                 </YStack>
 
@@ -200,6 +208,6 @@ const styles = StyleSheet.create({
     directionDivider: {
         height: 1,
         backgroundColor: '#e5e5e5',
-        marginLeft: 28,
+        marginLeft: 40,
     },
 })

@@ -82,7 +82,7 @@ const LocateSubmission = () => {
                     showsVerticalScrollIndicator={false}
                     contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'never' : 'automatic'}
                 >
-                    <YStack paddingStart="$4" paddingEnd="$4" flex={1} gap="$3">
+                    <YStack paddingStart="$4" paddingEnd="$4" flex={1} gap="$4">
                         <YStack gap="$1" marginBlockEnd={0}>
                             <Text opacity={0.7}>Keep your vanlife location up to date and share it with fellow vanlifers.</Text>
                         </YStack>
@@ -100,12 +100,12 @@ const LocateSubmission = () => {
 
                             <YStack paddingStart={12}>
                                 <XStack style={styles.metaRow}>
-                                    <MaterialCommunityIcons name="latitude" size={16} color="#6b7280" />
-                                    <Text fontSize={13} opacity={0.7}>Lat: -190.303636</Text>
-                                </XStack>
-                                <XStack style={[styles.metaRow, { marginTop: 4 }]}>
-                                    <MaterialCommunityIcons name="longitude" size={16} color="#6b7280" />
-                                    <Text fontSize={13} opacity={0.7}>Lng: 0.356626</Text>
+                                    <MaterialCommunityIcons name="crosshairs-gps" size={16} color="#6b7280" />
+                                    <XStack>
+                                        <Text fontSize={13} opacity={0.7}>-140.303636</Text>
+                                        <Text marginStart={1} marginEnd={3}>,</Text>
+                                        <Text fontSize={13} opacity={0.7}>0.146626</Text>
+                                    </XStack>
                                 </XStack>
                             </YStack>
                         </YStack>
@@ -137,15 +137,14 @@ const LocateSubmission = () => {
                             <XStack style={{ alignItems: 'flex-end' }}>
                                 <YStack paddingStart={12} flex={1}>
                                     <XStack style={styles.metaRow}>
-                                        <MaterialCommunityIcons name="latitude" size={16} color="#6b7280" />
-                                        <Text fontSize={13} opacity={0.7}>Lat: -140.303636</Text>
+                                        <MaterialCommunityIcons name="crosshairs-gps" size={16} color="#6b7280" />
+                                        <XStack>
+                                            <Text fontSize={13} opacity={0.7}>-140.303636</Text>
+                                            <Text marginStart={1} marginEnd={3}>,</Text>
+                                            <Text fontSize={13} opacity={0.7}>0.146626</Text>
+                                        </XStack>
                                     </XStack>
 
-                                    <XStack style={styles.metaRow}>
-                                        <MaterialCommunityIcons name="longitude" size={16} color="#6b7280" />
-                                        <Text fontSize={13} opacity={0.7}>Lng:  0.146626</Text>
-                                    </XStack>
-                                
                                     <XStack style={styles.metaRow}>
                                         <MaterialCommunityIcons name="map-marker-distance" size={16} color="#6b7280" />
                                         <Text fontSize={13} opacity={0.7}>From prev: 10.3 km</Text>
@@ -191,13 +190,12 @@ const LocateSubmission = () => {
                             <XStack style={{ alignItems: 'flex-end' }}>
                                 <YStack paddingStart={12} flex={1}>
                                     <XStack style={styles.metaRow}>
-                                        <MaterialCommunityIcons name="latitude" size={16} color="#6b7280" />
-                                        <Text fontSize={13} opacity={0.7}>Lat: -140.303636</Text>
-                                    </XStack>
-
-                                    <XStack style={styles.metaRow}>
-                                        <MaterialCommunityIcons name="longitude" size={16} color="#6b7280" />
-                                        <Text fontSize={13} opacity={0.7}>Lng:  0.146626</Text>
+                                        <MaterialCommunityIcons name="crosshairs-gps" size={16} color="#6b7280" />
+                                        <XStack>
+                                            <Text fontSize={13} opacity={0.7}>-140.303636</Text>
+                                            <Text marginStart={1} marginEnd={3}>,</Text>
+                                            <Text fontSize={13} opacity={0.7}>0.146626</Text>
+                                        </XStack>
                                     </XStack>
                                 
                                     <XStack style={styles.metaRow}>
