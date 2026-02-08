@@ -2,9 +2,10 @@ import JoinedGroup from '@/components/activity/joined-group';
 import Meetup from '@/components/activity/meetup';
 import PostUpdate from '@/components/activity/post-update';
 import { activityApi, BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
+import { getCurrentLocation } from '@/services/location';
 import { useCreateMeetupMutation, useJoinMeetupMutation, useLeaveMeetupMutation } from '@/services/meetup';
 import { useAppDispatch } from '@/utils/hooks';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Text, YStack } from 'tamagui';
@@ -15,6 +16,7 @@ export default function FeedScreen() {
     page: 1,
     per_page: 50
   };
+  const [location, setLocation] = useState<{ lat: number, lng: number }>();
   const { data, isLoading, error, refetch } = useGetActivitiesQuery(activitiesQueryArgs);
   const [, joinMeetupResult] = useJoinMeetupMutation({ fixedCacheKey: 'join-meetup-process' });
   const [, leaveMeetupResult] = useLeaveMeetupMutation({ fixedCacheKey: 'leave-meetup-process' });
@@ -62,6 +64,18 @@ export default function FeedScreen() {
     createMeetupResult.isSuccess,
   ]);
 
+  useEffect(() => {
+    const mounted = async () => {
+      const location = await getCurrentLocation();
+      if (location.ok) {
+        const coords = location.data.coords;
+        setLocation({ lat: coords.latitude, lng: coords.longitude });
+      }
+    }
+
+    mounted();
+  }, []);
+
   return (
     <Animated.ScrollView contentContainerStyle={styles.container}>
       {isLoading ? (
@@ -86,7 +100,7 @@ export default function FeedScreen() {
               }
 
               {activity.type === 'created_group'
-                ? <Meetup activity={activity} />
+                ? <Meetup activity={activity} userLat={location?.lat} userLng={location?.lng} />
                 : null
               }
 

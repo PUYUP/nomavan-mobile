@@ -1,6 +1,5 @@
 import { BPActivityResponse } from '@/services/activity'
 import { getAuth } from '@/services/auth-storage'
-import { getCurrentLocation } from '@/services/location'
 import { JoinPayload, LeavePayload, MembershipPayload, useJoinMeetupMutation, useLeaveMeetupMutation, useRequestMembershipMutation } from '@/services/meetup'
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { Card } from '@tamagui/card'
@@ -12,10 +11,14 @@ import { Avatar, Button, Paragraph, Separator, Text, XStack, YStack } from 'tama
 
 type MeetupProps = {
     activity: BPActivityResponse | null
+    userLat?: number | null
+    userLng?: number | null
 }
 
 const Meetup = ({
     activity = null,
+    userLat = null,
+    userLng = null,
 }: MeetupProps) => {
     const directionsColor = '#00bcd4'
     const [distanceMeters, setDistanceMeters] = useState<number | null>(null)
@@ -49,27 +52,14 @@ const Meetup = ({
             return
         }
 
-        let isActive = true
-
-        const calculateDistance = async () => {
-            const location = await getCurrentLocation()
-            if (!location.ok || !isActive) {
-                return
-            }
-
-            const { latitude: userLat, longitude: userLng } = location.data.coords
-            const meters = haversineDistanceMeters(userLat, userLng, latitude, longitude)
-            if (isActive) {
-                setDistanceMeters(meters)
-            }
+        if (userLat === null || userLat === undefined || userLng === null || userLng === undefined) {
+            setDistanceMeters(null)
+            return
         }
 
-        calculateDistance()
-
-        return () => {
-            isActive = false
-        }
-    }, [activity?.primary_item?.latitude, activity?.primary_item?.longitude])
+        const meters = haversineDistanceMeters(userLat, userLng, latitude, longitude)
+        setDistanceMeters(meters)
+    }, [activity?.primary_item?.latitude, activity?.primary_item?.longitude, userLat, userLng])
 
     const handleOpenDirections = (item: BPActivityResponse | null) => {
         const latitude = item?.primary_item?.latitude?.trim()
@@ -145,8 +135,8 @@ const Meetup = ({
         <Card style={styles.card}>
             <YStack gap="$3">
                 <YStack gap="$2">
-                    <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Text fontSize={16} fontWeight="700">{activity?.primary_item?.name}</Text>
+                    <XStack style={{ alignItems: 'start', justifyContent: 'space-between' }}>
+                        <Text fontSize={16} fontWeight="700" maxW={'80%'}>{activity?.primary_item?.name}</Text>
                         {activity?.primary_item?.member_detail?.is_creator 
                             ?   <Button size="$2" onPress={async () => {}}>
                                     <XStack gap="$2">
