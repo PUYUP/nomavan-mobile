@@ -1,17 +1,22 @@
+import { MeetupPayload, useCreateMeetupMutation } from "@/services/meetup";
+import { subscribeDateTimeSelected } from "@/utils/datetime-selector";
+import { LocationSelection, subscribeLocationSelected } from '@/utils/location-selector';
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { Stack } from "expo-router";
+import { format } from 'date-fns';
+import { Stack, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import { Platform, StyleSheet } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 import { Button, Input, Text, TextArea, View, XStack, YStack } from "tamagui";
 
 export interface Meetup {
     name: string
     description: string
-    startDate: string
-    endDate: string
-    timezone: string
+    startAt: string
+    endAt: string
     lat: number
     lng: number
     address: string
@@ -20,11 +25,81 @@ export interface Meetup {
 }
 
 const CreateMeetupSubmission = () => {
-    const { control, handleSubmit, setValue } = useForm<Meetup>();
-    const onSubmit: SubmitHandler<Meetup> = (data) => {
-        console.log('Submit!');
-        console.log(data);
+    const router = useRouter();
+    const { control, handleSubmit, setValue, reset } = useForm<Meetup>({
+        defaultValues: {
+            capacity: 10,
+            coverageRadius: 1000,
+        }
+    });
+    const [address, setAddress] = useState<string | undefined>('');
+    const [location, setLocation] = useState<LocationSelection | undefined>();
+    const [startAt, setStartAt] = useState<string>('');
+    const [endAt, setEndAt] = useState<string>('');
+    const [createMeetup, { isLoading }] = useCreateMeetupMutation();
+    const onSubmit: SubmitHandler<Meetup> = async (data) => {
+        const payload: MeetupPayload = {
+            name: data.name,
+            description: data.description,
+            start_at: startAt,
+            end_at: endAt,
+            latitude: data.lat,
+            longitude: data.lng,
+            address: data.address,
+            capacity: data.capacity,
+            coverage_radius: data.coverageRadius,
+            types: 'meetup',
+            status: 'public',
+            invite_status: 'members',
+        }
+        const result = await createMeetup(payload);
+   
+        if (result && result.data) {
+            Toast.show({
+               type: 'success',
+               text1: 'Meetup created' ,
+               text2: 'Nearby vanlifers can now join you'
+            });
+
+            // reset form
+            reset();
+            setAddress('');
+            setLocation(undefined);
+            setStartAt('');
+            setEndAt('');
+
+            // back to prev page
+            router.back();
+        }
     };
+
+    useEffect(() => {
+        const unsubscribeLocation = subscribeLocationSelected((selection) => {
+            if (selection) {
+                setLocation(selection);
+                setAddress(selection.address);
+
+                setValue('address', selection.address as string);
+                setValue('lat', selection.latitude);
+                setValue('lng', selection.longitude);
+            }
+        }, { emitLast: false });
+
+        const unsubscribeDatetime = subscribeDateTimeSelected((selection) => {
+            if (selection) {
+                if (selection.purpose === 'end') {
+                    setEndAt(selection.iso);
+                } else if (selection.purpose === 'start') {
+                    setStartAt(selection.iso);
+                }
+            }
+        }, { emitLast: false });
+
+        return () => {
+            unsubscribeLocation();
+            unsubscribeDatetime();
+        };
+    }, []);
 
     return (
         <>
@@ -57,7 +132,17 @@ const CreateMeetupSubmission = () => {
                                 name={'name'}
                                 rules={{ required: true }}
                                 render={({ field: { onChange, value } }) => (
-                                    <Input onChange={onChange} size="$3" placeholder="Meetup name…" borderWidth={1} value={value} width={'100%'} />
+                                    <Input 
+                                        onChange={onChange} 
+                                        size="$3" 
+                                        placeholder="Meetup name…" 
+                                        borderWidth={1} 
+                                        value={value} 
+                                        width={'100%'} 
+                                        autoCapitalize="none"
+                                        autoComplete="off"
+                                        spellCheck={false}
+                                    />
                                 )}
                             />
                         </XStack>
@@ -68,7 +153,18 @@ const CreateMeetupSubmission = () => {
                                 name={'description'}
                                 rules={{ required: true }}
                                 render={({ field: { onChange, value } }) => (
-                                    <TextArea onChange={onChange} size="$3" rows={4} placeholder="Description" borderWidth={1} value={value} width={'100%'} />
+                                    <TextArea 
+                                        onChange={onChange} 
+                                        size="$3" 
+                                        rows={4} 
+                                        placeholder="Description" 
+                                        borderWidth={1} 
+                                        value={value} 
+                                        width={'100%'} 
+                                        autoCapitalize="none"
+                                        autoComplete="off"
+                                        spellCheck={false}
+                                    />
                                 )}
                             />
                         </XStack>
@@ -80,8 +176,11 @@ const CreateMeetupSubmission = () => {
                             </XStack>
 
                             <XStack style={{ alignItems: 'center'}} gap="$3">
-                                <Text>Sat, Des 25, 25 17:00</Text>
-                                <Button size="$2">Change</Button>
+                                <Text>{startAt ? format(startAt, 'EEE, dd MMM yyyy HH:mm') : 'Not selected yet'}</Text>
+                                <Button width={64} size="$2" onPress={() => router.push({
+                                    pathname: '/modals/datetime',
+                                    params: { purpose: 'start', initialISO: startAt }
+                                })}>{startAt ? 'Change' : 'Select'}</Button>
                             </XStack>
                         </XStack>
 
@@ -92,19 +191,31 @@ const CreateMeetupSubmission = () => {
                             </XStack>
 
                             <XStack style={{ alignItems: 'center'}} gap="$3">
-                                <Text>Sat, Jan 3, 25 17:00</Text>
-                                <Button size="$2">Change</Button>
+                                <Text>{endAt ? format(endAt, 'EEE, dd MMM yyyy HH:mm') : 'Not selected yet'}</Text>
+                                <Button width={64} size="$2" onPress={() => router.push({
+                                    pathname: '/modals/datetime',
+                                    params: { purpose: 'end', initialISO: endAt }
+                                })}>{endAt ? 'Change' : 'Select'}</Button>
                             </XStack>
                         </XStack>
 
                         <XStack gap="$4" style={{ justifyContent: 'space-between' }}>
                             <XStack gap="$3" style={{ alignItems: 'center' }} maxW={'70%'}>
                                 <MaterialCommunityIcons name="map-marker-radius-outline" size={28} />
-                                <Text>Paal Merah, Kec. Jambi Sel., Kota Jambi, Jambi 36128</Text>
+                                <Text>{address ? address : 'Not selected yet'}</Text>
                             </XStack>
 
                             <XStack style={{ alignItems: 'center'}} gap="$3">
-                                <Button size="$2">Change</Button>
+                                <Button width={64} size="$2" onPress={() => router.push({
+                                    pathname: '/modals/map',
+                                    params: {
+                                        address: location?.address,
+                                        initialLat: location?.latitude,
+                                        initialLng: location?.longitude,
+                                    }
+                                })}>
+                                    {address ? 'Change' : 'Select'}
+                                </Button>
                             </XStack>
                         </XStack>
 
@@ -115,7 +226,23 @@ const CreateMeetupSubmission = () => {
                             </XStack>
 
                             <XStack style={{ alignItems: 'center'}} gap="$3">
-                                <Input size="$2" width={80} textAlign="center" value={'10'}></Input>
+                                <Controller
+                                    control={control}
+                                    name={'capacity'}
+                                    rules={{ required: true }}
+                                    render={({ field: { onChange, value } }) => (
+                                        <Input 
+                                            onChange={onChange} 
+                                            size="$2" 
+                                            value={String(value)} 
+                                            width={64} 
+                                            textAlign="center" 
+                                            autoCapitalize="none"
+                                            autoComplete="off"
+                                            spellCheck={false}
+                                        />
+                                    )}
+                                />
                             </XStack>
                         </XStack>
 
@@ -126,14 +253,31 @@ const CreateMeetupSubmission = () => {
                             </XStack>
 
                             <XStack style={{ alignItems: 'center'}} gap="$3">
-                                <Input size="$2" width={80} textAlign="center" value={'100'}></Input>
+                                <Controller
+                                    control={control}
+                                    name={'coverageRadius'}
+                                    rules={{ required: true }}
+                                    render={({ field: { onChange, value } }) => (
+                                        <Input 
+                                            onChange={onChange} 
+                                            size="$2" 
+                                            value={String(value)} 
+                                            width={64} 
+                                            textAlign="center" 
+                                            autoCapitalize="none"
+                                            autoComplete="off"
+                                            spellCheck={false}
+                                        />
+                                    )}
+                                />
                             </XStack>
                         </XStack>
                     </YStack>
                 </KeyboardAwareScrollView>
 
                 <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
-                    <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton}>
+                    <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton} disabled={isLoading ? true : false}>
+                        {isLoading ? <ActivityIndicator color={'white'} /> : null}
                         <Text color={'white'} fontSize={20}>Save</Text>
                     </Button>
                 </View>

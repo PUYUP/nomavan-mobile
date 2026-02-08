@@ -7,6 +7,7 @@ export type SigninPayload = {
 
 export type SigninResponse = {
 	token: string;
+    user_id: string;
 	user_email: string;
 	user_nicename: string;
 	user_display_name: string;

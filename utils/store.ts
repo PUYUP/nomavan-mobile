@@ -1,3 +1,5 @@
+import { activityApi } from '@/services/activity';
+import { meetupApi } from '@/services/meetup';
 import { receiptApi } from '@/services/receipt-extractor';
 import { signinApi } from '@/services/signin';
 import { signupApi } from '@/services/signup';
@@ -8,9 +10,17 @@ export const store = configureStore({
         [receiptApi.reducerPath]: receiptApi.reducer,
         [signinApi.reducerPath]: signinApi.reducer,
         [signupApi.reducerPath]: signupApi.reducer,
+        [meetupApi.reducerPath]: meetupApi.reducer,
+        [activityApi.reducerPath]: activityApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(receiptApi.middleware, signinApi.middleware, signupApi.middleware),
+        getDefaultMiddleware().concat(
+            receiptApi.middleware, 
+            signinApi.middleware, 
+            signupApi.middleware,
+            meetupApi.middleware,
+            activityApi.middleware,
+        ),
 })
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

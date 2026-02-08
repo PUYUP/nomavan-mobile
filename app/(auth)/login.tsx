@@ -1,3 +1,4 @@
+import { saveAuth } from "@/services/auth-storage"
 import { SigninPayload, useCreateSigninMutation } from "@/services/signin"
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 import { useLocalSearchParams, useRouter } from "expo-router"
@@ -34,22 +35,59 @@ const Login = () => {
     })
 
     const onSubmit: SubmitHandler<Account> = async (data) => {
+        // hide previous toast
+        try {
+            Toast.hide();
+        } catch(error) {
+            // pass
+        }
+        
         const payload: SigninPayload = {
             username: data.email,
             password: data.password,
         }
         const result = await signIn(payload);
 
-        if (result && result.data) {
-            router.push('/(tabs)/feed');
+        if (result) {
+            const { data, error } = result;
 
-            Toast.show({
-                type: 'success',
-                position: 'top',
-                visibilityTime: 2000,
-                text1: 'Log in successful',
-                text2: 'Welcome back and continue your journey!',
-            });
+            if (data) {
+                await saveAuth({
+                    token: data.token,
+                    user: {
+                        id: data.user_id,
+                        email: data.user_email,
+                        nicename: data.user_nicename,
+                        displayName: data.user_display_name,
+                    },
+                });
+                router.push('/(tabs)/feed');
+
+                Toast.show({
+                    type: 'success',
+                    position: 'top',
+                    visibilityTime: 2000,
+                    text1: 'Log in successful',
+                    text2: 'Welcome back and continue your journey!',
+                });
+            } 
+            
+            if (error) {
+                if (typeof error === "object" && error !== null && "data" in error) {
+                    const errorData = (error as { data?: { message?: string } }).data;
+                    const errorMsg = errorData?.message ?? "Login failed";
+                
+                    Toast.show({
+                        type: 'error',
+                        position: 'top',
+                        visibilityTime: 10000,
+                        text1: 'Log in failed',
+                        text2: errorMsg,
+                    });
+                } else {
+                    console.log(error)
+                }
+            }
         }
     }
 

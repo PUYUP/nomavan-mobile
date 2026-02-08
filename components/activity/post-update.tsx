@@ -1,13 +1,26 @@
+import { BPActivityResponse } from '@/services/activity';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { formatDistanceToNow } from 'date-fns';
 import { StyleSheet } from 'react-native';
 import { Avatar, Button, Card, Paragraph, Separator, Text, View, XStack, YStack } from 'tamagui';
 
-const PostUpdate = () => {
+type PostUpdateProps = {
+    activity: BPActivityResponse;
+};
+
+const stripHtml = (value: string) => value.replace(/<[^>]*>/g, '').trim();
+
+const PostUpdate = ({ activity }: PostUpdateProps) => {
+    const contentText = activity.content?.rendered
+        ? stripHtml(activity.content.rendered)
+        : activity.content?.raw ?? '';
+    const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
+    const componentLabel = activity.component || 'Activity';
     return (
         <>
             <Card style={styles.card}>
                 <View>
-                    <Paragraph>van life in JAPAN: Van tour + pricing for 11 days! #japan #vanlife #vanlifejapan</Paragraph>
+                    <Paragraph>{contentText || activity.title || '-'}</Paragraph>
                 </View>
 
                 <Separator my={10} />
@@ -15,15 +28,15 @@ const PostUpdate = () => {
                 <XStack style={styles.contributorRow}>
                     <Avatar circular size="$3" style={styles.avatar}>
                         <Avatar.Image
-                            src="https://i.pravatar.cc/100?img=12"
+                            src={'https:' + activity.user_avatar?.thumb}
                             accessibilityLabel="Contributor avatar"
                         />
                         <Avatar.Fallback />
                     </Avatar>
 
                     <YStack style={styles.contributorInfo}>
-                        <Text style={styles.contributorName}>Samuel Rizal</Text>
-                        <Text style={styles.contributorMeta}>1.276 contribs.</Text>
+                        <Text style={styles.contributorName}>{activity.user_profile?.name}</Text>
+                        <Text style={styles.contributorMeta}>10 contribs.</Text>
                     </YStack>
 
                     <YStack style={styles.locationColumn}>
@@ -32,9 +45,9 @@ const PostUpdate = () => {
                                 name="map-marker"
                                 size={16}
                             />
-                            <Text style={styles.locationText}>Sedona, AZ</Text>
+                            <Text style={styles.locationText}>{componentLabel}</Text>
                         </XStack>
-                        <Text style={styles.postedTime}>2 minutes ago</Text>
+                        <Text style={styles.postedTime}>{postedTime}</Text>
                     </YStack>
                 </XStack>
 
@@ -65,7 +78,6 @@ const styles = StyleSheet.create({
     card: {
         padding: 12,
         borderRadius: 12,
-        marginBottom: 16,
         backgroundColor: '#fff',
     },
     row: {

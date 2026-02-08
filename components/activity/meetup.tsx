@@ -1,51 +1,83 @@
+import { BPActivityResponse } from '@/services/activity'
+import { getAuth } from '@/services/auth-storage'
+import { getCurrentLocation } from '@/services/location'
+import { JoinPayload, LeavePayload, useJoinMeetupMutation, useLeaveMeetupMutation } from '@/services/meetup'
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { Card } from '@tamagui/card'
+import { format, isSameDay, isValid } from 'date-fns'
+import { useEffect, useState } from 'react'
 import { Linking, Platform, StyleSheet } from 'react-native'
-import { Avatar, Button, Separator, Text, XStack, YStack, useTheme } from 'tamagui'
+import Toast from 'react-native-toast-message'
+import { Avatar, Button, Paragraph, Separator, Text, XStack, YStack } from 'tamagui'
 
 type MeetupProps = {
-    name: string
-    dateRange: string
-    locationName: string
-    locationCoords: string
-    distance: number
-    description: string
-    joiners: string[]
-    extraJoinLabel: string
-    joinButtonLabel: string
-    spotLeft: string
+    activity: BPActivityResponse | null
 }
 
 const Meetup = ({
-    name = 'Sedona Vanlife Meetup',
-    dateRange = 'Feb 10, 2026 • 08:00 AM - 12:00 PM',
-    locationName = 'Crescent Moon Ranch',
-    locationCoords = '34.8697, -111.7610',
-    distance = 1300,
-    description = 'Morning coffee, trail stories, and van tours by the creek.',
-    joiners = [
-        'https://i.pravatar.cc/100?img=21',
-        'https://i.pravatar.cc/100?img=22',
-        'https://i.pravatar.cc/100?img=23',
-        'https://i.pravatar.cc/100?img=24',
-        'https://i.pravatar.cc/100?img=25',
-    ],
-    extraJoinLabel = '+10',
-    joinButtonLabel = 'Join',
-    spotLeft = '12 spots left',
+    activity = null,
 }: MeetupProps) => {
-    const theme = useTheme()
     const directionsColor = '#00bcd4'
+    const [distanceMeters, setDistanceMeters] = useState<number | null>(null)
+    const descriptionText = activity?.primary_item?.description?.rendered
+        ? stripHtml(activity?.primary_item?.description?.rendered)
+        : activity?.primary_item?.description?.raw ?? '';
 
-    const handleOpenDirections = () => {
-        const [rawLat, rawLng] = locationCoords.split(',')
-        const latitude = rawLat?.trim()
-        const longitude = rawLng?.trim()
+    const startAtRaw = activity?.primary_item?.start_at ?? '';
+    const endAtRaw = activity?.primary_item?.end_at ?? '';
+    const startAt = startAtRaw ? new Date(startAtRaw) : null;
+    const endAt = endAtRaw ? new Date(endAtRaw) : null;
+
+    const dateRangeText = startAt && endAt && isValid(startAt) && isValid(endAt)
+        ? isSameDay(startAt, endAt)
+            ? `${format(startAt, 'MMM dd, yyyy')} • ${format(startAt, 'hh:mm a')} - ${format(endAt, 'hh:mm a')}`
+            : `${format(startAt, 'MMM dd, yyyy')} • ${format(startAt, 'hh:mm a')} - ${format(endAt, 'MMM dd, yyyy')} • ${format(endAt, 'hh:mm a')}`
+        : 'Anytime';
+
+    const [joinMeetup, { isLoading: isJoining }] = useJoinMeetupMutation();
+    const [leaveMeetup, { isLoading: isLeaving }] = useLeaveMeetupMutation();
+
+    useEffect(() => {
+        const latRaw = activity?.primary_item?.latitude
+        const lngRaw = activity?.primary_item?.longitude
+        const latitude = latRaw !== undefined ? Number(latRaw) : NaN
+        const longitude = lngRaw !== undefined ? Number(lngRaw) : NaN
+
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            setDistanceMeters(null)
+            return
+        }
+
+        let isActive = true
+
+        const calculateDistance = async () => {
+            const location = await getCurrentLocation()
+            if (!location.ok || !isActive) {
+                return
+            }
+
+            const { latitude: userLat, longitude: userLng } = location.data.coords
+            const meters = haversineDistanceMeters(userLat, userLng, latitude, longitude)
+            if (isActive) {
+                setDistanceMeters(meters)
+            }
+        }
+
+        calculateDistance()
+
+        return () => {
+            isActive = false
+        }
+    }, [activity?.primary_item?.latitude, activity?.primary_item?.longitude])
+
+    const handleOpenDirections = (item: BPActivityResponse | null) => {
+        const latitude = item?.primary_item?.latitude?.trim()
+        const longitude = item?.primary_item?.longitude?.trim()
 
         if (!latitude || !longitude) return
 
         const query = encodeURIComponent(`${latitude},${longitude}`)
-        const label = encodeURIComponent(locationName)
+        const label = encodeURIComponent(item?.primary_item?.address)
         const url = Platform.OS === 'ios'
             ? `http://maps.apple.com/?ll=${query}&q=${label}`
             : `https://www.google.com/maps/search/?api=1&query=${query}`
@@ -53,98 +85,151 @@ const Meetup = ({
         Linking.openURL(url)
     }
 
+    /**
+     * Join meetup
+     */
+    const handleJoinMeetup = async (meetup: any) => {
+        const auth = await getAuth();
+        
+        // check is member or not
+        if (meetup?.member_detail?.is_member) {
+            const leavePayload: LeavePayload = {
+                group_id: meetup.id,
+                user_id: parseInt(auth?.user?.id as string),
+                context: 'edit',
+            }
+
+            const result = await leaveMeetup(leavePayload);
+            if (result && result.data) {
+                Toast.show({
+                    type: 'success',
+                    text1: 'You’ve left the group',
+                    text2: 'You can rejoin anytime if you change your mind.',
+                });
+            }
+            return;
+        }
+
+        // Join or request membership (for private meetup)
+        let result = null;
+        
+        if (meetup.status === 'public') {
+            const payload: JoinPayload = {
+                group_id: meetup.id,
+                context: 'edit',
+            }
+            result = await joinMeetup(payload);
+        } else if (meetup.status === 'private') {
+
+        }
+
+        if (result && result.data) {
+            Toast.show({
+                type: 'success',
+                text1: 'You’ve joined the group!',
+                text2: 'Start connecting and explore activities with members.',
+            });
+        }
+    }
+
     return (
-        <>
-            <Card style={styles.card}>
-                <YStack gap="$3">
-                    <YStack gap="$2">
-                        <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Text fontSize={16} fontWeight="700">{name}</Text>
-                            <Button size="$2">
-                                <XStack gap="$2">
-                                    <MaterialCommunityIcons name="account-plus" size={14} />
-                                    <Text fontSize={12} fontWeight="600">{joinButtonLabel}</Text>
-                                </XStack>
-                            </Button>
-                        </XStack>
-                        <XStack gap="$2" marginTop="$2">
-                            <MaterialCommunityIcons name="calendar-range" size={16} color="#ff817b" />
-                            <Text fontSize={12} opacity={0.8}>{dateRange}</Text>
-                        </XStack>
-                        <XStack gap="$2" style={{ marginTop: -2 }}>
-                            <MaterialCommunityIcons name="map-marker" size={16} color="#ff817b" />
-                            <Text fontSize={12} opacity={0.8}>
-                                {locationName}
-                            </Text>
-                        </XStack>
-                        <XStack gap="$2" style={{ marginTop: -2 }}>
-                            <MaterialCommunityIcons name="account-multiple-outline" size={16} color="#ff817b" />
-                            <Text fontSize={12} opacity={0.8}>{spotLeft}</Text>
-                        </XStack>
-                        <Text fontSize={14} opacity={0.75}>
-                            {description}
-                        </Text>
-                    </YStack>
-
-                    <XStack style={{ justifyContent: 'space-between' }}>
-                        <XStack gap="$2" style={{ alignItems: 'center' }}>
+        <Card style={styles.card}>
+            <YStack gap="$3">
+                <YStack gap="$2">
+                    <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text fontSize={16} fontWeight="700">{activity?.primary_item?.name}</Text>
+                        <Button size="$2" onPress={async () => await handleJoinMeetup(activity?.primary_item)}>
                             <XStack gap="$2">
-                                {joiners.map((src, index) => (
-                                    <Avatar key={src} circular size="$2" style={{ marginLeft: index === 0 ? 0 : -6 }}>
-                                        <Avatar.Image src={src} accessibilityLabel="Joiner avatar" />
-                                        <Avatar.Fallback />
-                                    </Avatar>
-                                ))}
+                                <MaterialCommunityIcons 
+                                    name={activity?.primary_item?.member_detail?.is_member ? 'account-minus' : 'account-plus'} 
+                                    size={14} 
+                                />
+                                <Text fontSize={12} fontWeight="600">
+                                    {activity?.primary_item?.member_detail?.is_member ? 'Leave' : 'Join'}
+                                </Text>
                             </XStack>
-                            <Text fontSize={12} opacity={0.7}>{extraJoinLabel}</Text>
-                        </XStack>
-
-                        <XStack gap="$2">
-                            <Button size="$2" backgroundColor="transparent" onPress={handleOpenDirections}>
-                                <XStack gap="$2" style={{ alignItems: 'center' }}>
-                                    <MaterialCommunityIcons name="directions" size={24} color={directionsColor} />
-                                    <YStack>
-                                        <Text fontSize={12} fontWeight="600" color={directionsColor}>
-                                            Directions
-                                        </Text>
-                                        
-                                        <Text fontSize={10} fontWeight={700} opacity={0.8} color={'#333'}>
-                                            {distance / 1000} km
-                                        </Text>
-                                    </YStack>
-                                </XStack>
-                            </Button>
-                        </XStack>
+                        </Button>
                     </XStack>
+                    <XStack gap="$2" marginBlockStart="$2">
+                        <MaterialCommunityIcons name="calendar-range" size={16} color="#ff817b" />
+                        <Text fontSize={12} opacity={0.8}>{dateRangeText}</Text>
+                    </XStack>
+                    <XStack gap="$2" style={{ marginTop: -2 }}>
+                        <MaterialCommunityIcons name="map-marker" size={16} color="#ff817b" />
+                        <Text fontSize={12} opacity={0.8} marginEnd={22}>
+                            {activity?.primary_item?.address ? activity?.primary_item?.address : '-'}
+                        </Text>
+                    </XStack>
+                    <XStack gap="$2" style={{ marginTop: -2 }}>
+                        <MaterialCommunityIcons name="account-multiple-outline" size={16} color="#ff817b" />
+                        <Text fontSize={12} opacity={0.8}>
+                            {activity?.primary_item?.capacity ? activity?.primary_item?.capacity + ' spots left' : 'Unlimited'}
+                        </Text>
+                    </XStack>
+                    <Paragraph fontSize={14} opacity={0.8} lineHeight={'$3'}>{descriptionText}</Paragraph>
                 </YStack>
 
-                <Separator my={10} />
-
-                <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$3" style={styles.avatar}>
-                        <Avatar.Image
-                            src="https://i.pravatar.cc/100?img=8"
-                            accessibilityLabel="Contributor avatar"
-                        />
-                        <Avatar.Fallback />
-                    </Avatar>
-
-                    <YStack style={styles.contributorInfo}>
-                        <Text style={styles.contributorName}>Angelina Ho</Text>
-                        <Text style={styles.contributorMeta}>10 contribs.</Text>
-                    </YStack>
-
-                    <Text style={styles.onWayText}>72 meets</Text>
-                    
-                    <Button size="$2" style={styles.viewLocationButton}>
-                        <XStack style={{ alignItems: 'center', gap: 3 }}>
-                            <MaterialCommunityIcons name="database-search-outline" size={16} />
-                            <Text style={styles.thanksText}>View</Text>
+                <XStack style={{ justifyContent: 'space-between' }}>
+                    <XStack gap="$2" style={{ alignItems: 'center' }}>
+                        <XStack gap="$2">
+                            {activity?.primary_item?.member_detail?.users?.map((user: any, index: number) => (
+                                <Avatar key={user.id} circular size="$2" style={{ marginLeft: index === 0 ? 0 : -4 }}>
+                                    <Avatar.Image src={'https:' + user.user_avatar.thumb} accessibilityLabel={user.name} />
+                                    <Avatar.Fallback />
+                                </Avatar>
+                            ))}
                         </XStack>
-                    </Button>
+                        <Text fontSize={12} opacity={0.7}>{'+' + activity?.primary_item?.member_detail?.count}</Text>
+                    </XStack>
+
+                    <XStack gap="$2">
+                        <Button size="$2" onPress={() => handleOpenDirections(activity)}>
+                            <XStack gap="$2" style={{ alignItems: 'center' }}>
+                                <MaterialCommunityIcons name="directions" size={24} color={directionsColor} />
+                                <YStack>
+                                    <Text fontSize={12} fontWeight="600" color={directionsColor}>
+                                        Directions
+                                    </Text>
+                                    
+                                    {distanceMeters ?
+                                        <Text fontSize={10} fontWeight={700} opacity={0.8} color={'#333'}>
+                                            {((distanceMeters / 1000)).toFixed(2)} km
+                                        </Text>
+                                        : null
+                                    }
+                                </YStack>
+                            </XStack>
+                        </Button>
+                    </XStack>
                 </XStack>
-            </Card>
-        </>
+            </YStack>
+
+            <Separator my={10} />
+
+            <XStack style={styles.contributorRow}>
+                <Avatar circular size="$3" style={styles.avatar}>
+                    <Avatar.Image
+                        src={'https:' + activity?.user_avatar?.thumb}
+                        accessibilityLabel="Contributor avatar"
+                    />
+                    <Avatar.Fallback />
+                </Avatar>
+
+                <YStack style={styles.contributorInfo}>
+                    <Text style={styles.contributorName}>{activity?.user_profile?.name}</Text>
+                    <Text style={styles.contributorMeta}>10 contribs.</Text>
+                </YStack>
+
+                <Text style={styles.onWayText}>72 meets</Text>
+                
+                <Button size="$2" style={styles.viewLocationButton}>
+                    <XStack style={{ alignItems: 'center', gap: 3 }}>
+                        <MaterialCommunityIcons name="database-search-outline" size={16} />
+                        <Text style={styles.thanksText}>View</Text>
+                    </XStack>
+                </Button>
+            </XStack>
+        </Card>
     )
 }
 
@@ -154,7 +239,6 @@ const styles = StyleSheet.create({
     card: {
         padding: 12,
         borderRadius: 12,
-        marginBottom: 16,
         backgroundColor: '#fff',
     },
     row: {
@@ -195,3 +279,18 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
 })
+
+const stripHtml = (value: string) => value.replace(/<[^>]*>/g, '').trim();
+
+const haversineDistanceMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const toRadians = (value: number) => (value * Math.PI) / 180
+    const earthRadiusMeters = 6371000
+    const deltaLat = toRadians(lat2 - lat1)
+    const deltaLon = toRadians(lon2 - lon1)
+    const a = Math.sin(deltaLat / 2) ** 2
+        + Math.cos(toRadians(lat1))
+        * Math.cos(toRadians(lat2))
+        * Math.sin(deltaLon / 2) ** 2
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return earthRadiusMeters * c
+}

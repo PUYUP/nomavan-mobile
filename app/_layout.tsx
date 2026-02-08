@@ -50,7 +50,8 @@ export default function RootLayout() {
                 <Stack.Screen name="index" options={{ headerShown: false }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+                <Stack.Screen name="modals/map" options={{ presentation: 'modal', title: 'Map', headerShown: true }} />
+                <Stack.Screen name="modals/datetime" options={{ presentation: 'modal', title: 'Datetime', headerShown: true }} />
               </Stack>
               <StatusBar style="auto" />
             </PortalProvider>
