@@ -66,7 +66,7 @@ const Login = () => {
                 Toast.show({
                     type: 'success',
                     position: 'top',
-                    visibilityTime: 2000,
+                    visibilityTime: 500,
                     text1: 'Log in successful',
                     text2: 'Welcome back and continue your journey!',
                 });

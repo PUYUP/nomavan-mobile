@@ -1,13 +1,67 @@
+import JoinedGroup from '@/components/activity/joined-group';
 import Meetup from '@/components/activity/meetup';
 import PostUpdate from '@/components/activity/post-update';
-import { useGetActivitiesQuery } from '@/services/activity';
-import React from 'react';
+import { activityApi, BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
+import { useJoinMeetupMutation, useLeaveMeetupMutation } from '@/services/meetup';
+import { useAppDispatch } from '@/utils/hooks';
+import React, { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Text, YStack } from 'tamagui';
 
 export default function FeedScreen() {
-  const { data, isLoading, error, refetch } = useGetActivitiesQuery({ per_page: 20 });
+  const dispatch = useAppDispatch();
+  const activitiesQueryArgs: BPActivityFilterArgs = { 
+    page: 1,
+    per_page: 50 
+  };
+  const { data, isLoading, error, refetch } = useGetActivitiesQuery(activitiesQueryArgs);
+  const [, joinMeetupResult] = useJoinMeetupMutation({ fixedCacheKey: 'join-meetup-process' });
+  const [, leaveMeetupResult] = useLeaveMeetupMutation({ fixedCacheKey: 'leave-meetup-process' });
+  const [, createMeetupResult] = useLeaveMeetupMutation({ fixedCacheKey: 'create-meetup-process' });
+
+  const updateActivityMembership = (primaryItemId: number, isMember: boolean) => {
+    dispatch(
+        activityApi.util.updateQueryData('getActivities', activitiesQueryArgs, (draftPosts) => {
+            const index = draftPosts.findIndex((item) => item.primary_item_id === primaryItemId)
+            if (index === -1) {
+              return
+            }
+
+            const target = draftPosts[index] as any
+            if (!target.primary_item) {
+              return
+            }
+
+            if (!target.primary_item.member_detail) {
+              target.primary_item.member_detail = { is_member: isMember, count: 0, users: [] }
+            }
+
+            const memberDetail = target.primary_item.member_detail
+            memberDetail.is_member = isMember
+
+            const currentCount = Number(memberDetail.count ?? 0)
+            if (Number.isFinite(currentCount)) {
+              memberDetail.count = Math.max(0, currentCount + (isMember ? 1 : -1))
+            }
+        }),
+    )
+  }
+
+  useEffect(() => {
+    if (
+      joinMeetupResult.isSuccess 
+      || leaveMeetupResult.isSuccess 
+      || createMeetupResult.isSuccess
+    ) {
+      refetch();
+    }
+  }, [
+    joinMeetupResult.isSuccess,
+    leaveMeetupResult.isSuccess,
+    createMeetupResult.isSuccess,
+  ]);
+
 
   return (
     <Animated.ScrollView contentContainerStyle={styles.container}>
@@ -34,6 +88,11 @@ export default function FeedScreen() {
 
               {activity.type === 'created_group'
                 ? <Meetup activity={activity} />
+                : null
+              }
+
+              {activity.type === 'joined_group'
+                ? <JoinedGroup activity={activity} />
                 : null
               }
             </React.Fragment>

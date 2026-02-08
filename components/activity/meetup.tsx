@@ -1,7 +1,7 @@
 import { BPActivityResponse } from '@/services/activity'
 import { getAuth } from '@/services/auth-storage'
 import { getCurrentLocation } from '@/services/location'
-import { JoinPayload, LeavePayload, useJoinMeetupMutation, useLeaveMeetupMutation } from '@/services/meetup'
+import { JoinPayload, LeavePayload, MembershipPayload, useJoinMeetupMutation, useLeaveMeetupMutation, useRequestMembershipMutation } from '@/services/meetup'
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { Card } from '@tamagui/card'
 import { format, isSameDay, isValid } from 'date-fns'
@@ -34,8 +34,9 @@ const Meetup = ({
             : `${format(startAt, 'MMM dd, yyyy')} • ${format(startAt, 'hh:mm a')} - ${format(endAt, 'MMM dd, yyyy')} • ${format(endAt, 'hh:mm a')}`
         : 'Anytime';
 
-    const [joinMeetup, { isLoading: isJoining }] = useJoinMeetupMutation();
-    const [leaveMeetup, { isLoading: isLeaving }] = useLeaveMeetupMutation();
+    const [joinMeetup, { isLoading: isJoining }] = useJoinMeetupMutation({ fixedCacheKey: 'join-meetup-process' });
+    const [leaveMeetup, { isLoading: isLeaving }] = useLeaveMeetupMutation({ fixedCacheKey: 'leave-meetup-process' });
+    const [requestMembership, { isLoading: isRequesting }] = useRequestMembershipMutation();
 
     useEffect(() => {
         const latRaw = activity?.primary_item?.latitude
@@ -102,9 +103,10 @@ const Meetup = ({
             const result = await leaveMeetup(leavePayload);
             if (result && result.data) {
                 Toast.show({
-                    type: 'success',
+                    type: 'info',
                     text1: 'You’ve left the group',
                     text2: 'You can rejoin anytime if you change your mind.',
+                    visibilityTime: 1500,
                 });
             }
             return;
@@ -119,8 +121,14 @@ const Meetup = ({
                 context: 'edit',
             }
             result = await joinMeetup(payload);
+            
         } else if (meetup.status === 'private') {
+            const payload: MembershipPayload = {
+                group_id: meetup.id,
+                message: '',
+            }
 
+            result = await requestMembership(payload);
         }
 
         if (result && result.data) {
@@ -128,6 +136,7 @@ const Meetup = ({
                 type: 'success',
                 text1: 'You’ve joined the group!',
                 text2: 'Start connecting and explore activities with members.',
+                visibilityTime: 1500,
             });
         }
     }
@@ -138,17 +147,28 @@ const Meetup = ({
                 <YStack gap="$2">
                     <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
                         <Text fontSize={16} fontWeight="700">{activity?.primary_item?.name}</Text>
-                        <Button size="$2" onPress={async () => await handleJoinMeetup(activity?.primary_item)}>
-                            <XStack gap="$2">
-                                <MaterialCommunityIcons 
-                                    name={activity?.primary_item?.member_detail?.is_member ? 'account-minus' : 'account-plus'} 
-                                    size={14} 
-                                />
-                                <Text fontSize={12} fontWeight="600">
-                                    {activity?.primary_item?.member_detail?.is_member ? 'Leave' : 'Join'}
-                                </Text>
-                            </XStack>
-                        </Button>
+                        {activity?.primary_item?.member_detail?.is_creator 
+                            ?   <Button size="$2" onPress={async () => {}}>
+                                    <XStack gap="$2">
+                                        <MaterialCommunityIcons 
+                                            name="file-document-edit-outline" 
+                                            size={14} 
+                                        />
+                                        <Text fontSize={12} fontWeight="600">Edit</Text>
+                                    </XStack>
+                                </Button>
+                            :   <Button size="$2" onPress={async () => await handleJoinMeetup(activity?.primary_item)}>
+                                    <XStack gap="$2">
+                                        <MaterialCommunityIcons 
+                                            name={activity?.primary_item?.member_detail?.is_member ? 'account-minus' : 'account-plus'} 
+                                            size={14} 
+                                        />
+                                        <Text fontSize={12} fontWeight="600">
+                                            {activity?.primary_item?.member_detail?.is_member ? 'Leave' : 'Join'}
+                                        </Text>
+                                    </XStack>
+                                </Button>
+                        }
                     </XStack>
                     <XStack gap="$2" marginBlockStart="$2">
                         <MaterialCommunityIcons name="calendar-range" size={16} color="#ff817b" />

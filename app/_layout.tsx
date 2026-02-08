@@ -8,7 +8,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { PortalProvider } from '@tamagui/portal';
 import { TamaguiProvider } from 'tamagui';
 
-import { store } from '@/utils/store';
+import { AppStore } from '@/utils/store';
 import { Inter_400Regular, Inter_900Black, useFonts } from '@expo-google-fonts/inter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
@@ -41,7 +41,7 @@ export default function RootLayout() {
   }
 
   return (
-    <Provider store={store}>
+    <Provider store={AppStore}>
       <TamaguiProvider config={tamaguiConfig} defaultTheme="blue">
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <QueryClientProvider client={queryClient}>

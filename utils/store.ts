@@ -5,7 +5,7 @@ import { signinApi } from '@/services/signin';
 import { signupApi } from '@/services/signup';
 import { configureStore } from '@reduxjs/toolkit';
 
-export const store = configureStore({
+export const AppStore = configureStore({
     reducer: {
         [receiptApi.reducerPath]: receiptApi.reducer,
         [signinApi.reducerPath]: signinApi.reducer,
@@ -24,7 +24,7 @@ export const store = configureStore({
 })
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
-export type RootState = ReturnType<typeof store.getState>
+export type RootState = ReturnType<typeof AppStore.getState>
 
 // Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
-export type AppDispatch = typeof store.dispatch
+export type AppDispatch = typeof AppStore.dispatch

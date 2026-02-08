@@ -36,7 +36,7 @@ const CreateMeetupSubmission = () => {
     const [location, setLocation] = useState<LocationSelection | undefined>();
     const [startAt, setStartAt] = useState<string>('');
     const [endAt, setEndAt] = useState<string>('');
-    const [createMeetup, { isLoading }] = useCreateMeetupMutation();
+    const [createMeetup, { isLoading }] = useCreateMeetupMutation({ fixedCacheKey: 'create-meetup-process' });
     const onSubmit: SubmitHandler<Meetup> = async (data) => {
         const payload: MeetupPayload = {
             name: data.name,

@@ -22,6 +22,7 @@ export type MeetupPayload = {
 };
 
 export interface MeetupResponse extends BPGroup {
+  [x: string]: any;
 	latitude: string;
     longitude: string;
     address: string;
@@ -40,6 +41,11 @@ export interface LeavePayload {
     context: 'edit';
     group_id: number;
     user_id: number;
+}
+
+export interface MembershipPayload {
+    group_id: number;
+    message?: string;
 }
 
 const rawBaseUrl = process.env.EXPO_PUBLIC_BP_API_BASE ?? '';
@@ -78,6 +84,16 @@ export const meetupApi = createApi({
                 }
 			}),
 		}),
+        // private meetup
+        requestMembership: builder.mutation<MeetupResponse, MembershipPayload>({
+			query: (body) => ({
+				url: '/buddypress/v1/groups/membership-requests',
+				method: 'POST',
+				body: {
+                    ...body,
+                }
+			}),
+		}),
         leaveMeetup: builder.mutation<MeetupResponse, LeavePayload>({
 			query: (body) => {
                 return {
@@ -92,4 +108,9 @@ export const meetupApi = createApi({
 	}),
 });
 
-export const { useCreateMeetupMutation, useJoinMeetupMutation, useLeaveMeetupMutation } = meetupApi;
+export const { 
+    useCreateMeetupMutation, 
+    useJoinMeetupMutation, 
+    useLeaveMeetupMutation,
+    useRequestMembershipMutation
+} = meetupApi;
