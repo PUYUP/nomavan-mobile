@@ -142,6 +142,7 @@ const CreateMeetupSubmission = () => {
                                         autoCapitalize="none"
                                         autoComplete="off"
                                         spellCheck={false}
+                                        autoCorrect={'off'}
                                     />
                                 )}
                             />
@@ -240,6 +241,7 @@ const CreateMeetupSubmission = () => {
                                             autoCapitalize="none"
                                             autoComplete="off"
                                             spellCheck={false}
+                                            autoCorrect={'off'}
                                         />
                                     )}
                                 />
@@ -267,6 +269,7 @@ const CreateMeetupSubmission = () => {
                                             autoCapitalize="none"
                                             autoComplete="off"
                                             spellCheck={false}
+                                            autoCorrect={'off'}
                                         />
                                     )}
                                 />

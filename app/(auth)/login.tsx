@@ -137,7 +137,9 @@ const Login = () => {
                                     value={value} 
                                     paddingStart="$8"
                                     autoCapitalize="none"
-                                    autoComplete="none"
+                                    autoComplete="off"
+                                    spellCheck={false}
+                                    autoCorrect={'off'}
                                 />
                             </XStack>
                         )}
@@ -160,7 +162,10 @@ const Login = () => {
                                     value={value} 
                                     paddingStart="$8"
                                     paddingEnd="$8"
-                                    autoComplete="none"
+                                    autoCapitalize="none"
+                                    autoComplete="off"
+                                    spellCheck={false}
+                                    autoCorrect={'off'}
                                 />
                                 <Button
                                     size="$2"

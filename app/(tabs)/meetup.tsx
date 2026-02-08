@@ -1,81 +1,67 @@
 import Meetup from '@/components/activity/meetup';
+import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
+import { useCreateMeetupMutation, useJoinMeetupMutation, useLeaveMeetupMutation } from '@/services/meetup';
+import React, { useEffect } from 'react';
+import { ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { Text, YStack } from 'tamagui';
 
 export default function MeetupScreen() {
-  const items = [
-    {
-      name: 'Desert Nomad Breakfast',
-      dateRange: 'Feb 12, 2026 • 07:30 AM - 10:00 AM',
-      locationName: 'Oak Creek Canyon',
-      locationCoords: '34.9121, -111.7114',
-      distance: 1400,
-      description: 'Sunrise coffee, canyon views, and casual campfire stories.',
-      joiners: [
-        'https://i.pravatar.cc/100?img=31',
-        'https://i.pravatar.cc/100?img=32',
-        'https://i.pravatar.cc/100?img=33',
-        'https://i.pravatar.cc/100?img=34',
-        'https://i.pravatar.cc/100?img=35',
-      ],
-      extraJoinLabel: '+6',
-      joinButtonLabel: 'Join',
-      spotLeft: '2 spots left',
-    },
-    {
-      name: 'Red Rocks Night Camp',
-      dateRange: 'Feb 14, 2026 • 06:00 PM - 11:00 PM',
-      locationName: 'Cathedral Rock',
-      locationCoords: '34.8226, -111.7880',
-      distance: 2400,
-      description: 'Stargazing, lantern-lit hangs, and a shared potluck dinner.',
-      joiners: [
-        'https://i.pravatar.cc/100?img=41',
-        'https://i.pravatar.cc/100?img=42',
-        'https://i.pravatar.cc/100?img=43',
-        'https://i.pravatar.cc/100?img=44',
-        'https://i.pravatar.cc/100?img=45',
-      ],
-      extraJoinLabel: '+18',
-      joinButtonLabel: 'Join',
-      spotLeft: '43 spots left',
-    },
-    {
-      name: 'Vanlife Gear Swap',
-      dateRange: 'Feb 16, 2026 • 01:00 PM - 04:30 PM',
-      locationName: 'Tlaquepaque Plaza',
-      locationCoords: '34.8653, -111.7635',
-      distance: 7631,
-      description: 'Trade gear, share tips, and find your next road companion.',
-      joiners: [
-        'https://i.pravatar.cc/100?img=51',
-        'https://i.pravatar.cc/100?img=52',
-        'https://i.pravatar.cc/100?img=53',
-        'https://i.pravatar.cc/100?img=54',
-        'https://i.pravatar.cc/100?img=55',
-      ],
-      extraJoinLabel: '+9',
-      joinButtonLabel: 'Join',
-      spotLeft: '1 spots left',
-    },
-  ]
+  const activitiesQueryArgs: BPActivityFilterArgs = { 
+    page: 1,
+    per_page: 50,
+    component: 'groups',
+    type: ['created_group'],
+  };
+  const { data, isLoading, error, refetch } = useGetActivitiesQuery(activitiesQueryArgs);
+  const [, joinMeetupResult] = useJoinMeetupMutation({ fixedCacheKey: 'join-meetup-process' });
+  const [, leaveMeetupResult] = useLeaveMeetupMutation({ fixedCacheKey: 'leave-meetup-process' });
+  const [, createMeetupResult] = useCreateMeetupMutation({ fixedCacheKey: 'create-meetup-process' });
+
+  useEffect(() => {
+    if (
+      joinMeetupResult.isSuccess 
+      || leaveMeetupResult.isSuccess 
+      || createMeetupResult.isSuccess
+    ) {
+      refetch();
+    }
+  }, [
+    joinMeetupResult.isSuccess,
+    leaveMeetupResult.isSuccess,
+    createMeetupResult.isSuccess,
+  ]);
 
   return (
     <Animated.ScrollView style={{ padding: 16 }}>
-      {items.map((event) => (
-        <Meetup
-          key={event.name}
-          name={event.name}
-          dateRange={event.dateRange}
-          locationName={event.locationName}
-          locationCoords={event.locationCoords}
-          distance={event.distance}
-          description={event.description}
-          joiners={event.joiners}
-          extraJoinLabel={event.extraJoinLabel}
-          joinButtonLabel={event.joinButtonLabel}
-          spotLeft={event.spotLeft}
-        />
-      ))}
+      {isLoading ? (
+        <YStack style={{ alignItems: 'center' }} paddingBlockStart="$4" gap="$2">
+          <ActivityIndicator />
+          <Text opacity={0.7}>Loading meetups...</Text>
+        </YStack>
+      ) : error ? (
+        <YStack style={{ alignItems: 'center' }} paddingBlockStart="$4" gap="$2">
+          <Text color="$red10">Failed to load meetups.</Text>
+          <Text opacity={0.7} onPress={() => refetch()}>
+            Tap to retry
+          </Text>
+        </YStack>
+      ) : data && data.length > 0 ? (
+        <YStack gap="$3" paddingBlockEnd="$4">
+          {data.map((activity) => (
+            <React.Fragment key={activity.id}>
+              {activity.type === 'created_group'
+                ? <Meetup activity={activity} />
+                : null
+              }
+            </React.Fragment>
+          ))}
+        </YStack>
+      ) : (
+        <YStack style={{ alignItems: 'center' }} paddingBlockStart="$4">
+          <Text opacity={0.7}>No meetups yet.</Text>
+        </YStack>
+      )}
     </Animated.ScrollView>
   );
 }

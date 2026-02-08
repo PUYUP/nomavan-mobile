@@ -105,6 +105,10 @@ const Register = () => {
                                     borderWidth={1} 
                                     value={value} 
                                     paddingStart="$8"
+                                    autoCapitalize="none"
+                                    autoComplete="off"
+                                    spellCheck={false}
+                                    autoCorrect={'off'}
                                 />
                             </XStack>
                         )}
@@ -133,7 +137,9 @@ const Register = () => {
                                     value={value} 
                                     paddingStart="$8"
                                     autoCapitalize="none"
-                                    autoComplete="none"
+                                    autoComplete="off"
+                                    spellCheck={false}
+                                    autoCorrect={'off'}
                                 />
                             </XStack>
                         )}
@@ -156,7 +162,10 @@ const Register = () => {
                                     value={value} 
                                     paddingStart="$8"
                                     paddingEnd="$8"
-                                    autoComplete="none"
+                                    autoCapitalize="none"
+                                    autoComplete="off"
+                                    spellCheck={false}
+                                    autoCorrect={'off'}
                                 />
                                 <Button
                                     size="$2"
@@ -192,7 +201,10 @@ const Register = () => {
                                     value={value} 
                                     paddingStart="$8"
                                     paddingEnd="$8"
-                                    autoComplete="none"
+                                    autoCapitalize="none"
+                                    autoComplete="off"
+                                    spellCheck={false}
+                                    autoCorrect={'off'}
                                 />
                                 <Button
                                     size="$2"

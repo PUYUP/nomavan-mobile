@@ -180,6 +180,10 @@ const SignalingSubmission = () => {
 												flex={1}
 												size="$3"
 												placeholder={'Carrier'}
+												autoCapitalize="none"
+												autoComplete="off"
+												spellCheck={false}
+												autoCorrect={'off'}
 											/>
 										}
 									</XStack>

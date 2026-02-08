@@ -366,6 +366,10 @@ const ExpenseSubmission = () => {
                                                 onChange={onChange}
                                                 value={value}
                                                 placeholder="Price"
+                                                autoCapitalize="none"
+                                                autoComplete="off"
+                                                spellCheck={false}
+                                                autoCorrect={'off'}
                                             />
                                         )}
                                     />
@@ -382,6 +386,10 @@ const ExpenseSubmission = () => {
                                                 value={value} 
                                                 textAlign="center" 
                                                 placeholder="Qty" 
+                                                autoCapitalize="none"
+                                                autoComplete="off"
+                                                spellCheck={false}
+                                                autoCorrect={'off'}
                                             />
                                         )}
                                     />

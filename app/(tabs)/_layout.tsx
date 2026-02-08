@@ -5,7 +5,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
 import { BackHandler, Pressable, StyleSheet } from 'react-native';
-import { Avatar, Sheet, Text, View, XStack, YStack } from 'tamagui';
+import { Avatar, Button, Sheet, Text, View, XStack, YStack } from 'tamagui';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -84,6 +84,7 @@ export default function TabLayout() {
           headerTransparent: false,
           headerStyle: {
             backgroundColor: '#fff',
+            height: 110
           },
           headerTitleStyle: {
             fontSize: 22,
@@ -100,27 +101,43 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <MaterialCommunityIcons size={28} name="timeline-text" color={color} />,
             headerRight: () => {
               return (
-                <Pressable onPress={() => {}}>
-                  <View
-                    style={{
-                      height: 36,
-                      width: 36,
-                      borderRadius: 18,
-                      backgroundColor: 'transparent',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: 10,
-                    }}
-                  >
-                    <MaterialCommunityIcons name="filter-variant" size={24} />
-                  </View>
-                </Pressable>
+                <XStack gap="$2" marginInlineEnd={16} style={{ alignItems: 'center' }}>
+                  <Pressable onPress={() => {}}>
+                    <Button
+                      circular
+                      size="$3"
+                      style={{
+                        
+                        borderRadius: 18,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <MaterialCommunityIcons name="bell-badge-outline" size={22} />
+                    </Button>
+                  </Pressable>
+
+                  <Pressable onPress={() => {}}>
+                    <Button
+                      circular
+                      size="$3"
+                      style={{
+                        
+                        borderRadius: 18,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <MaterialCommunityIcons name="filter-cog-outline" size={22} />
+                    </Button>
+                  </Pressable>
+                </XStack>
               )
             },
             headerLeft: () => {
               return (
                 <Pressable onPress={() => router.push('/')}>
-                  <Avatar circular size="$2" style={{ marginHorizontal: 16 }}>
+                  <Avatar circular size="$2.5" style={{ marginHorizontal: 16 }}>
                     <Avatar.Image
                       src="https://i.pravatar.cc/100?img=17"
                       accessibilityLabel="Contributor avatar"
@@ -233,22 +250,22 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <MaterialCommunityIcons size={28} name="account-group" color={color} />,
             headerLeft: () => {
               return (
-                <Pressable onPress={() => {}}>
-                  <View
-                    style={{
-                      height: 36,
-                      width: 36,
-                      borderRadius: 18,
-                      backgroundColor: 'transparent',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginLeft: 10,
-                      marginRight: 16,
-                    }}
-                  >
-                    <MaterialCommunityIcons name="filter-variant" size={24} />
-                  </View>
-                </Pressable>
+                <XStack marginInlineStart={16}>
+                  <Pressable onPress={() => {}}>
+                    <Button
+                      circular
+                      size="$3"
+                      style={{
+                        
+                        borderRadius: 18,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <MaterialCommunityIcons name="filter-cog-outline" size={22} />
+                    </Button>
+                  </Pressable>
+                </XStack>
               )
             },
             headerRight: () => (
@@ -261,7 +278,7 @@ export default function TabLayout() {
                     backgroundColor: '#eef2ff',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    marginRight: 10,
+                    marginRight: 16,
                   }}
                 >
                   <XStack style={{ alignItems: 'center', gap: 2 }}>
