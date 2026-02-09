@@ -5,6 +5,7 @@ import { meetupApi } from '@/services/meetup';
 import { receiptApi } from '@/services/receipt-extractor';
 import { signinApi } from '@/services/signin';
 import { signupApi } from '@/services/signup';
+import { spothuntApi } from '@/services/spothunt';
 import { storyApi } from '@/services/story';
 import { configureStore } from '@reduxjs/toolkit';
 
@@ -18,6 +19,7 @@ export const AppStore = configureStore({
         [expenseApi.reducerPath]: expenseApi.reducer,
         [connectivityApi.reducerPath]: connectivityApi.reducer,
         [storyApi.reducerPath]: storyApi.reducer,
+        [spothuntApi.reducerPath]: spothuntApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(
@@ -29,6 +31,7 @@ export const AppStore = configureStore({
             expenseApi.middleware,
             connectivityApi.middleware,
             storyApi.middleware,
+            spothuntApi.middleware,
         ),
 })
 

@@ -28,7 +28,7 @@ export default function TabLayout() {
 
   const quickActions = [
     { label: 'New Meetup', key: 'meetup', icon: 'account-group' as const },
-    { label: 'Add PIN', key: 'add-pin', icon: 'map-marker-plus' as const },
+    { label: 'Add Pin', key: 'add-pin', icon: 'map-marker-plus' as const },
     { label: 'Locate', key: 'locate', icon: 'map-marker-path' as const },
     { label: 'Expense', key: 'expense', icon: 'basket-plus-outline' as const },
     { label: 'Connectivity', key: 'connectivity', icon: 'access-point-network' as const },
@@ -149,9 +149,9 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="geo-guessr"
+          name="spothunt"
           options={{
-            title: 'Geo Guessr',
+            title: 'Spot Hunt',
             tabBarIcon: ({ color }) => <MaterialCommunityIcons size={28} name="map-search" color={color} />,
             headerTitleAlign: 'left',
             headerRight: () => (
@@ -167,7 +167,7 @@ export default function TabLayout() {
                   }}
                 >
                   <XStack style={{ alignItems: 'center', gap: 6 }}>
-                    <Text fontSize={14}>Add PIN</Text>
+                    <Text fontSize={14}>Add Pin</Text>
                     <MaterialCommunityIcons name="map-marker-plus" size={22} />
                   </XStack>
                 </View>

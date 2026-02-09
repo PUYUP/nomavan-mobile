@@ -1,23 +1,26 @@
 import { getCurrentLocation, reverseGeocodeLocation } from '@/services/location';
+import { SpothuntPayload, useCreateSpothuntMutation } from '@/services/spothunt';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from 'react';
-import { SubmitHandler, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { ActivityIndicator, Animated, Platform, Pressable, StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import MapView, { Region } from 'react-native-maps';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Text, View, XStack, YStack } from "tamagui";
+import { Button, Input, Text, TextArea, View, XStack, YStack } from "tamagui";
 
-export interface PIN {
-    note: string;
+export interface Marker {
+    title: string;
+    content: string;
     lat: number;
 	lng: number;
 }
 
 const AddPinSubmission = () => {
-    const initialDelta = 0.0025;
-    const { handleSubmit, setValue } = useForm<PIN>();
+    const router = useRouter();
+    const initialDelta = 0.0015;
+    const { handleSubmit, control, setValue, reset } = useForm<Marker>();
     const [region, setRegion] = useState<Region | null>(null);
     const [centerCoords, setCenterCoords] = useState<{ latitude: number; longitude: number } | null>(null);
     const [locationName, setLocationName] = useState<string>('');
@@ -29,9 +32,24 @@ const AddPinSubmission = () => {
     const isRevertingRef = useRef(false);
     const isDraggingRef = useRef(false);
     const hasInitialized = useRef(false);
-    const onSubmit: SubmitHandler<PIN> = (data) => {
-        console.log('Submit!');
-        console.log(data);
+    const [submitSpothunt, { isLoading: submitSpothuntLoading }] = useCreateSpothuntMutation({ fixedCacheKey: 'submit-spothunt-process' });
+
+    const onSubmit: SubmitHandler<Marker> = async (data) => {
+        const payload: SpothuntPayload = {
+            content: data.content,
+            title: data.title,
+            status: 'publish',
+            meta: {
+                latitude: centerCoords?.latitude,
+                longitude: centerCoords?.longitude,
+                address: locationName,
+            }
+        }
+
+        const result = await submitSpothunt(payload);
+        if (result && result.data) {
+            router.back();
+        }
     };
 
     useEffect(() => {
@@ -105,7 +123,7 @@ const AddPinSubmission = () => {
         if (originalCoordsRef.current) {
             const distance = distanceInMeters(originalCoordsRef.current, nextRegion);
             if (distance > 100) {
-                alert('PIN must be within 100 meters of your current location.');
+                alert('Pin must be within 100 meters of your current location.');
                 const snapRegion: Region = {
                     latitude: originalCoordsRef.current.latitude,
                     longitude: originalCoordsRef.current.longitude,
@@ -156,7 +174,7 @@ const AddPinSubmission = () => {
             <SafeAreaView style={styles.safeArea} edges={['bottom']}>
                 <Stack.Screen 
                     options={{ 
-                        title: 'Geo Guessr PIN', 
+                        title: 'Spot Hunt Pin', 
                         headerTitleStyle: {
                             fontSize: 22,
                             fontFamily: 'Inter-Black',
@@ -237,22 +255,55 @@ const AddPinSubmission = () => {
                             </XStack>
                         </YStack>
                     
-                        <View style={styles.povGrid}>
-                            {Array.from({ length: 6 }).map((_, index) => (
+                        <XStack style={styles.povGrid}>
+                            {Array.from({ length: 3 }).map((_, index) => (
                                 <Pressable key={`pov-${index}`} style={styles.povTile}>
                                     <View style={styles.povContent}>
                                         <MaterialCommunityIcons name="image-outline" size={22} color="#6b7280" />
-                                        <Text fontSize={12} opacity={0.7}>Take view</Text>
+                                        <Text fontSize={12} opacity={0.7}>Upload</Text>
                                     </View>
                                 </Pressable>
                             ))}
-                        </View>
+                        </XStack>
+
+                        <YStack gap="$3">
+                            <Controller
+                                control={control}
+                                name={'title'}
+                                rules={{ required: false }}
+                                render={({ field: { onChange, value } }) => (
+                                    <XStack style={styles.inputStack}>
+                                        <Input
+                                            onChangeText={onChange}
+                                            value={value}
+                                            flex={1}
+                                            size="$3"
+                                            placeholder={'Spot name'}
+                                            autoCapitalize="none"
+                                            autoComplete="off"
+                                            spellCheck={false}
+                                            autoCorrect={false}
+                                        />
+                                    </XStack>
+                                )}
+                            />
+
+                            <Controller
+                                control={control}
+                                name={'content'}
+                                rules={{ required: false }}
+                                render={({ field: { onChange, value } }) => (
+                                    <TextArea onChange={onChange} size="$3" placeholder="Description…" rows={4} value={value} />
+                                )}
+                            />
+                        </YStack>
                     </YStack>
                 </KeyboardAwareScrollView>
 
-                <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
-                    <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton}>
-                        <Text color={'white'} fontSize={20}>Set PIN</Text>
+                <View style={{ marginTop: 'auto', paddingHorizontal: 16, paddingBlockEnd: 6 }}>
+                    <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton} disabled={submitSpothuntLoading ? true : false}>
+                        {submitSpothuntLoading ? <ActivityIndicator color={'#fff'} /> : null}
+                        <Text color={'white'} fontSize={20}>Set Pin</Text>
                     </Button>
                 </View>
             </SafeAreaView>
@@ -336,14 +387,14 @@ const styles = StyleSheet.create({
         marginTop: 4,
 	},
     povGrid: {
-        marginTop: 12,
-        paddingLeft: 4,
+        marginTop: 6,
+        marginBottom: 6,
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 12,
+        justifyContent: 'space-between',
     },
     povTile: {
-        width: '31%',
+        width: '32%',
         aspectRatio: 16 / 10,
         borderRadius: 8,
         borderWidth: 1,
@@ -357,4 +408,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         gap: 4,
     },
+    inputStack: {
+		alignItems: 'center',
+	},
 })

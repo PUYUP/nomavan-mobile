@@ -91,7 +91,7 @@ const Index = () => {
                                 ]}
                             >
                                 <MaterialCommunityIcons name="map-marker-radius" size={20} color="#0f5132" />
-                                <Text fontSize={13} opacity={0.8}>Mini Guessr Game</Text>
+                                <Text fontSize={13} opacity={0.8}>Spot hunts game</Text>
                             </Animated.View>
 
                             <Animated.View

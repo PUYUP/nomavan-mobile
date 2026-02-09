@@ -2,12 +2,14 @@ import ConnectivityUpdate from '@/components/activity/connectivity-update';
 import ExpenseUpdate from '@/components/activity/expense-update';
 import JoinedGroup from '@/components/activity/joined-group';
 import Meetup from '@/components/activity/meetup';
+import SpotHuntPin from '@/components/activity/spothunt-pin';
 import StoryUpdate from '@/components/activity/story-update';
 import { activityApi, BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
 import { useCreateConnectivityMutation } from '@/services/connectivity';
 import { useCreateExpenseMutation } from '@/services/expense';
 import { getCurrentLocation } from '@/services/location';
 import { useCreateMeetupMutation, useJoinMeetupMutation, useLeaveMeetupMutation } from '@/services/meetup';
+import { useCreateSpothuntMutation } from '@/services/spothunt';
 import { useCreateStoryMutation } from '@/services/story';
 import { useAppDispatch } from '@/utils/hooks';
 import React, { useEffect, useState } from 'react';
@@ -29,6 +31,7 @@ export default function FeedScreen() {
   const [, submitExpenseResult] = useCreateExpenseMutation({ fixedCacheKey: 'submit-expense-process' });
   const [, submitConnectivityResult] = useCreateConnectivityMutation({ fixedCacheKey: 'submit-connectivity-process' });
   const [, shareStoryResult] = useCreateStoryMutation({ fixedCacheKey: 'share-story-process' });
+  const [, submitSpothuntResult] = useCreateSpothuntMutation({ fixedCacheKey: 'submit-spothunt-process' });
 
   const updateActivityMembership = (primaryItemId: number, isMember: boolean) => {
     dispatch(
@@ -66,6 +69,7 @@ export default function FeedScreen() {
       || submitExpenseResult.isSuccess
       || submitConnectivityResult.isSuccess
       || shareStoryResult.isSuccess
+      || submitSpothuntResult.isSuccess
     ) {
       refetch();
     }
@@ -76,6 +80,7 @@ export default function FeedScreen() {
     submitExpenseResult.isSuccess,
     submitConnectivityResult.isSuccess,
     shareStoryResult.isSuccess,
+    submitSpothuntResult.isSuccess,
   ]);
 
   useEffect(() => {
@@ -137,6 +142,11 @@ export default function FeedScreen() {
 
               {activity.type === 'new_connectivity' && activity.component === 'activity'
                 ? <ConnectivityUpdate activity={activity} />
+                : null
+              }
+
+              {activity.type === 'new_spothunt' && activity.component === 'activity'
+                ? <SpotHuntPin activity={activity} />
                 : null
               }
             </React.Fragment>

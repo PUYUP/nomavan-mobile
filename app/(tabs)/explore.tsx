@@ -14,7 +14,7 @@ import { Button, Text, XStack, YStack } from 'tamagui';
 export default function TabTwoScreen() {
   const quickActions = [
     { label: 'Add Event', icon: 'calendar-plus' as const },
-    { label: 'New PIN', icon: 'map-marker-plus' as const },
+    { label: 'New Pin', icon: 'map-marker-plus' as const },
     { label: 'Find Camps', icon: 'tent' as const },
     { label: 'Fuel Stop', icon: 'gas-station' as const },
     { label: 'Route Plan', icon: 'map-marker-path' as const },

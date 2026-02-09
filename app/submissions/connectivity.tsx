@@ -49,9 +49,6 @@ const ConnectivitySubmission = () => {
 
 	const { control, handleSubmit, setValue, reset } = useForm<SignalInfo>();
 	const onSubmit: SubmitHandler<SignalInfo> = async (data) => {
-		console.log('Submit!');
-		console.log(data);
-
 		const payload: ConnectivityPayload = {
 			content: '',
 			status: 'publish',
