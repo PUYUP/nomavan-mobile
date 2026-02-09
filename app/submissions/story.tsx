@@ -1,21 +1,71 @@
+import { StoryPayload, useCreateStoryMutation } from "@/services/story";
+import { LocationSelection, subscribeLocationSelected } from "@/utils/location-selector";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import { Platform, StyleSheet } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, ListItem, Text, TextArea, View, YGroup, YStack } from "tamagui";
+import { Button, ListItem, Text, TextArea, View, XStack, YGroup, YStack } from "tamagui";
 
 export interface Story {
     content: string;
+    address: string;
+    latitude: number;
+    longitude: number;
 }
 
 const StorySubmission = () => {
-    const { control, handleSubmit, setValue } = useForm<Story>();
-    const onSubmit: SubmitHandler<Story> = (data) => {
-        console.log('Submit!');
-        console.log(data);
+    const router = useRouter();
+    const [shareStory, { isLoading }] = useCreateStoryMutation({ fixedCacheKey: 'share-story-process' });
+    const { control, handleSubmit, setValue, reset } = useForm<Story>();
+    const [address, setAddress] = useState<string | undefined>('');
+    const [location, setLocation] = useState<LocationSelection | null>();
+    
+    const onSubmit: SubmitHandler<Story> = async (data) => {
+        const trimmedContent = data.content.trim();
+        const titleMax = 60;
+        const rawTitle = trimmedContent.slice(0, titleMax);
+        const title = trimmedContent.length > titleMax
+            ? `${rawTitle.slice(0, Math.max(0, titleMax - 1))}…`
+            : rawTitle;
+        const payload: StoryPayload = {
+            title,
+            content: data.content,
+            status: 'publish',
+            meta: {
+                address: address,
+                latitude: location?.latitude,
+                longitude: location?.longitude,
+            }
+        }
+
+        const result = await shareStory(payload);
+        if (result && result.data) {
+            router.back();
+            reset();
+            setAddress('');
+            setLocation(null);
+        }
     };
+
+    useEffect(() => {
+        const unsubscribeLocation = subscribeLocationSelected((selection) => {
+            if (selection && selection.purpose === 'story') {
+                setLocation(selection);
+                setAddress(selection.address);
+
+                setValue('address', selection?.address ? location?.address as string : '');
+                setValue('latitude', location?.latitude ? location.latitude : 0);
+                setValue('longitude', location?.longitude ? location.longitude : 0);
+            }
+        }, { emitLast: false });
+
+        return () => {
+            unsubscribeLocation();
+        };
+    }, []);
 
     return (
         <>
@@ -64,8 +114,31 @@ const StorySubmission = () => {
                     </YStack>
                 </KeyboardAwareScrollView>
 
-                <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
-                    <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton}>
+                <View style={{ marginTop: 'auto', paddingHorizontal: 16, paddingBlockEnd: 6 }}>
+                    <XStack marginBlockEnd="$5" gap="$4" style={{ justifyContent: 'space-between' }}>
+                        <XStack maxW={'60%'} gap="$3">
+                            <MaterialCommunityIcons name="map-marker-radius-outline" size={24} />
+
+                            <Text fontSize={address ? '$2' : '$3'} opacity={0.75}>
+                                {address ? address : 'Not set yet'}
+                            </Text>
+                        </XStack>
+
+                        <Button size={'$2'} width={74} onPress={() => router.push({
+                            pathname: '/modals/map',
+                            params: {
+                                purpose: 'story',
+                                address: location?.address,
+                                initialLat: location?.latitude,
+                                initialLng: location?.longitude,
+                            }
+                        })}>
+                            <Text>{address ? 'Change' : 'Locate'}</Text>
+                        </Button>
+                    </XStack>
+
+                    <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton} disabled={isLoading ? true : false }>
+                        {isLoading ? <ActivityIndicator color={'#fff'} /> : null}
                         <Text color={'white'} fontSize={20}>Post</Text>
                     </Button>
                 </View>

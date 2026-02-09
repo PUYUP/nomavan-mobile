@@ -32,7 +32,7 @@ export default function MapScreen() {
     ? 'Origin'
     : purpose === 'destination'
       ? 'Destination'
-      : purpose === 'meetup' || purpose === 'expense' || purpose === 'connectivity'
+      : purpose === 'meetup' || purpose === 'expense' || purpose === 'connectivity' || purpose === 'story'
         ? 'Location'
         : purpose
           ? `${purpose.charAt(0).toUpperCase()}${purpose.slice(1)}`

@@ -5,6 +5,7 @@ import { meetupApi } from '@/services/meetup';
 import { receiptApi } from '@/services/receipt-extractor';
 import { signinApi } from '@/services/signin';
 import { signupApi } from '@/services/signup';
+import { storyApi } from '@/services/story';
 import { configureStore } from '@reduxjs/toolkit';
 
 export const AppStore = configureStore({
@@ -16,6 +17,7 @@ export const AppStore = configureStore({
         [activityApi.reducerPath]: activityApi.reducer,
         [expenseApi.reducerPath]: expenseApi.reducer,
         [connectivityApi.reducerPath]: connectivityApi.reducer,
+        [storyApi.reducerPath]: storyApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(
@@ -26,6 +28,7 @@ export const AppStore = configureStore({
             activityApi.middleware,
             expenseApi.middleware,
             connectivityApi.middleware,
+            storyApi.middleware,
         ),
 })
 

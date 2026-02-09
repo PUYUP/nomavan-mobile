@@ -8,6 +8,7 @@ import { useCreateConnectivityMutation } from '@/services/connectivity';
 import { useCreateExpenseMutation } from '@/services/expense';
 import { getCurrentLocation } from '@/services/location';
 import { useCreateMeetupMutation, useJoinMeetupMutation, useLeaveMeetupMutation } from '@/services/meetup';
+import { useCreateStoryMutation } from '@/services/story';
 import { useAppDispatch } from '@/utils/hooks';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, InteractionManager, StyleSheet } from 'react-native';
@@ -27,6 +28,7 @@ export default function FeedScreen() {
   const [, createMeetupResult] = useCreateMeetupMutation({ fixedCacheKey: 'create-meetup-process' });
   const [, submitExpenseResult] = useCreateExpenseMutation({ fixedCacheKey: 'submit-expense-process' });
   const [, submitConnectivityResult] = useCreateConnectivityMutation({ fixedCacheKey: 'submit-connectivity-process' });
+  const [, shareStoryResult] = useCreateStoryMutation({ fixedCacheKey: 'share-story-process' });
 
   const updateActivityMembership = (primaryItemId: number, isMember: boolean) => {
     dispatch(
@@ -63,6 +65,7 @@ export default function FeedScreen() {
       || createMeetupResult.isSuccess
       || submitExpenseResult.isSuccess
       || submitConnectivityResult.isSuccess
+      || shareStoryResult.isSuccess
     ) {
       refetch();
     }
@@ -72,6 +75,7 @@ export default function FeedScreen() {
     createMeetupResult.isSuccess,
     submitExpenseResult.isSuccess,
     submitConnectivityResult.isSuccess,
+    shareStoryResult.isSuccess,
   ]);
 
   useEffect(() => {
@@ -111,7 +115,7 @@ export default function FeedScreen() {
         <YStack gap="$3" paddingBlockEnd="$4">
           {data.map((activity) => (
             <React.Fragment key={activity.id}>
-              {activity.type === 'activity_update'
+              {activity.type === 'activity_update' || activity.type === 'new_story'
                 ? <StoryUpdate activity={activity} />
                 : null
               }

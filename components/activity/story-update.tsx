@@ -11,11 +11,15 @@ type StoryUpdateProps = {
 const stripHtml = (value: string) => value.replace(/<[^>]*>/g, '').trim();
 
 const StoryUpdate = ({ activity }: StoryUpdateProps) => {
-    const contentText = activity.content?.rendered
-        ? stripHtml(activity.content.rendered)
-        : activity.content?.raw ?? '';
+    if (!activity) {
+        return;
+    }
+
+    const contentText = activity.secondary_item.content.rendered
+        ? stripHtml(activity.secondary_item.content.rendered)
+        : stripHtml(activity.content.rendered) ?? '';
     const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
-    const componentLabel = activity.component || 'Activity';
+    const componentLabel = activity.secondary_item.meta.address || null;
     return (
         <>
             <Card style={styles.card}>
@@ -39,14 +43,14 @@ const StoryUpdate = ({ activity }: StoryUpdateProps) => {
                         <Text style={styles.contributorMeta}>10 contribs.</Text>
                     </YStack>
 
-                    <YStack style={styles.locationColumn}>
-                        <XStack style={styles.locationRow}>
-                            <MaterialCommunityIcons
-                                name="map-marker"
-                                size={16}
-                            />
-                            <Text style={styles.locationText}>{componentLabel}</Text>
-                        </XStack>
+                    <YStack maxW={120} style={styles.locationColumn}>
+                        {componentLabel ?
+                            <XStack style={styles.locationRow}>
+                                <MaterialCommunityIcons name="map-marker-radius" size={16} />
+                                <Text style={styles.locationText} numberOfLines={1}>{componentLabel}</Text>
+                            </XStack>
+                            : null
+                        }
                         <Text style={styles.postedTime}>{postedTime}</Text>
                     </YStack>
                 </XStack>

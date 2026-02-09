@@ -207,21 +207,25 @@ const ExpenseSubmission = () => {
                 <Stack.Screen 
                     options={{ 
                         headerShown: true,
-                        title: 'Expense', 
-                        headerTitleStyle: {
-                            fontSize: 22,
-                            fontFamily: 'Inter-Black',
-                            color: '#1F3D2B',
+                        title: '', 
+                        headerLeft: () => {
+                            return (
+                                <XStack items={'center'} gap="$3">
+                                    <Button size="$3" onPress={() => router.back()} circular>
+                                        <MaterialCommunityIcons name="chevron-left" size={30} />
+                                    </Button>
+                                    <Text fontFamily={'Inter-Black'} fontSize={22} color={'#1F3D2B'}>Expense</Text>
+                                </XStack>
+                            )
                         },
-                        headerBackButtonDisplayMode: 'minimal',
                         headerRight: () => {
                             return (
-                                <XStack width={200} gap="$2" items="center">
+                                <XStack width={160} gap="$2" items="center">
                                     <Button
                                         size="$2"
                                         flex={1}
                                         onPress={() => addItem()}
-                                        icon={<MaterialCommunityIcons name="basket-plus-outline" size={24} />}
+                                        icon={<MaterialCommunityIcons name="basket-plus-outline" size={20} />}
                                     >
                                         Entry
                                     </Button>
@@ -229,7 +233,7 @@ const ExpenseSubmission = () => {
                                         size="$2"
                                         flex={1}
                                         onPress={() => router.push('/submissions/expenses/scan-receipt')}
-                                        icon={<MaterialCommunityIcons name="receipt-text-plus-outline" size={24} />}
+                                        icon={<MaterialCommunityIcons name="receipt-text-plus-outline" size={20} />}
                                     >
                                         Scan
                                     </Button>
