@@ -26,6 +26,7 @@ export interface ExpenseResponse {
         latitude?: string
         longitude?: string
         address?: string
+        store: string
         expense_items_inline?: ExpenseItem[]
     }
     date?: string

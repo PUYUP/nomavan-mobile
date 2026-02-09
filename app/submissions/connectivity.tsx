@@ -1,7 +1,8 @@
-import { getCurrentLocation, reverseGeocodeLocation } from '@/services/location';
+import { ConnectivityPayload, useCreateConnectivityMutation } from '@/services/connectivity';
+import { subscribeLocationSelected } from '@/utils/location-selector';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import NetInfo from '@react-native-community/netinfo';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { ActivityIndicator, Platform, StyleSheet, Switch } from 'react-native';
@@ -14,7 +15,7 @@ interface SignalInfo {
 	carrier: string;
 	cellularGeneration: string;
 	internetAvailable: boolean;
-	strength: string | undefined;
+	strength: string;
 	lat: number;
 	lng: number;
 }
@@ -41,50 +42,57 @@ const RadioGroupItemWithLabel2 = (props: {
 }
 
 const ConnectivitySubmission = () => {
+	const router = useRouter();
 	const [signalInfo, setSignalInfo] = useState<SignalInfo>();
-	const [locationError, setLocationError] = useState<string | null>(null);
-	const [isLoading, setIsLoading] = useState(false);
     const [locationName, setLocationName] = useState('');
+	const [submitConnectivity, { isLoading }] = useCreateConnectivityMutation({ fixedCacheKey: 'submit-connectivity-process' });
 
-	const { control, handleSubmit, setValue } = useForm<SignalInfo>();
-	const onSubmit: SubmitHandler<SignalInfo> = (data) => {
+	const { control, handleSubmit, setValue, reset } = useForm<SignalInfo>();
+	const onSubmit: SubmitHandler<SignalInfo> = async (data) => {
 		console.log('Submit!');
 		console.log(data);
+
+		const payload: ConnectivityPayload = {
+			content: '',
+			status: 'publish',
+			meta: {
+				latitude: data.lat,
+				longitude: data.lng,
+				address: locationName,
+				carrier: data.carrier,
+				generation: data.cellularGeneration,
+				type: data.type,
+				strength: data.strength ? parseFloat(data.strength) : 0,
+				internet_available: data.internetAvailable,
+			}
+		}
+
+		const result = await submitConnectivity(payload);
+		if (result && result.data) {
+			router.back();
+			reset();
+		}
 	};
 
 	useEffect(() => {
 		const onMount = async () => {
-			setIsLoading(true);
 			const info = await NetInfo.refresh();
 			const carrier = info.details && 'carrier' in info.details ? info.details.carrier as string : null;
 			const cellularGeneration = info.details && 'cellularGeneration' in info.details ? info.details.cellularGeneration as string : null;
 			const isConnectionExpensive = info.details && 'isConnectionExpensive' in info.details ? info.details.isConnectionExpensive as boolean : false;
 			const isInternetReachable = info.isInternetReachable ? info.isInternetReachable : false;
 
-			const location = await getCurrentLocation();
-			if (location.ok) {
-                const coords = location.data.coords;
-                const nextSignalInfo: SignalInfo = {
-                    type: info.type,
-                    carrier: carrier ? carrier : '',
-                    cellularGeneration: cellularGeneration ? cellularGeneration: '',
-                    internetAvailable: isConnectionExpensive || isInternetReachable,
-                    strength: '',
-                    lat: location.ok ? coords.latitude : 0,
-                    lng: location.ok ? coords.longitude : 0
-                };
+			const nextSignalInfo: SignalInfo = {
+				type: info.type,
+				carrier: carrier ? carrier : '',
+				cellularGeneration: cellularGeneration ? cellularGeneration: '',
+				internetAvailable: isConnectionExpensive || isInternetReachable,
+				strength: '',
+				lat: 0,
+				lng: 0
+			};
 
-                const address = await reverseGeocodeLocation(coords.latitude, coords.longitude);
-                if (address.ok) {
-                    console.log(address.data.name);
-                    setLocationName(address.data.name);
-                }
-                setSignalInfo(nextSignalInfo);
-            } else {
-                setLocationError(location.error.message);
-            }
-
-			setIsLoading(false);
+			setSignalInfo(nextSignalInfo);
 		};
 		onMount();
 	}, []);
@@ -97,6 +105,25 @@ const ConnectivitySubmission = () => {
 				});
 		}
 	}, [signalInfo, setValue]);
+
+	useEffect(() => {
+		const unsubscribeLocation = subscribeLocationSelected((selection) => {
+			if (selection && selection.purpose === 'connectivity') {
+				setLocationName(selection.address as string);
+				setSignalInfo((prev: SignalInfo | undefined) => {
+					return prev ? {
+						...prev,
+						lat: selection.latitude || prev.lat,
+						lng: selection.longitude || prev.lng,
+					} : prev;
+				});
+			}
+		}, { emitLast: false });
+
+		return () => {
+			unsubscribeLocation();
+		};
+	}, []);
 
 	return (
 		<SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -121,129 +148,132 @@ const ConnectivitySubmission = () => {
 				showsVerticalScrollIndicator={false}
 				contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'never' : 'automatic'}
 			>
-				{isLoading ? (
-					<XStack style={styles.loadingRow}>
-						<ActivityIndicator size="small" />
-						<Text opacity={0.7} fontSize={12}>Fetching location...</Text>
+				<YStack marginStart="$2" paddingEnd="$2">
+					{signalInfo?.lat && signalInfo?.lng ?
+						<XStack style={styles.inputStack}>
+							<XStack flex={1} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+								<XStack style={{ alignItems: 'center' }}>
+									<MaterialCommunityIcons name='crosshairs-gps' size={26} style={styles.inputIcon} />
+									
+									<Text style={styles.inputText}>{signalInfo?.lat}</Text>
+									<Text marginStart={1} marginEnd={3}>,</Text>
+									<Text style={styles.inputText}>{signalInfo?.lng}</Text>
+								</XStack>
+							</XStack>
+						</XStack>
+						: null
+					}
+
+					<XStack style={[styles.inputStack, { alignItems: locationName ? 'start' : 'center' }]}>
+						<MaterialCommunityIcons name='map-marker-radius-outline' size={26} style={styles.inputIcon} />
+						<Text style={[styles.inputText, { fontSize: 14, flex: 1, paddingRight: 8 }]}>{locationName != '' ? locationName : 'Not set yet'}</Text>
+						<Button size={'$2'} width={80} onPress={() => router.push({
+							pathname: '/modals/map',
+							params: {
+								purpose: 'connectivity',
+								address: locationName,
+								initialLat: signalInfo?.lat,
+								initialLng: signalInfo?.lng,
+							}
+						})}>
+							<Text>{locationName ? 'Change' : 'Locate'}</Text>
+						</Button>
 					</XStack>
-				) : (
-					<>
-						{locationError ? (
-							<Text color="red" fontSize={12}>{locationError}</Text>
-						) : null}
-                        
-						<YStack marginStart="$4" paddingEnd="$4">
-							<XStack style={styles.inputStack}>
-								<XStack flex={1} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-									<XStack style={{ alignItems: 'center' }}>
-										<MaterialCommunityIcons name='crosshairs-gps' size={26} style={styles.inputIcon} />
-										
-										<Text style={styles.inputText}>{signalInfo?.lat}</Text>
-										<Text marginStart={1} marginEnd={3}>,</Text>
-										<Text style={styles.inputText}>{signalInfo?.lng}</Text>
-									</XStack>
-								</XStack>
+
+					<XStack style={styles.inputStack}>
+						<XStack flex={1} style={{justifyContent: 'space-between', alignItems: 'center' }}>
+							<XStack style={{ alignItems: 'center' }}>
+								<MaterialCommunityIcons name='router-network-wireless' size={26} style={styles.inputIcon} />
+								<Text style={styles.inputText}>{signalInfo?.type}</Text>
 							</XStack>
 
-                            <XStack style={styles.inputStack}>
-                                <MaterialCommunityIcons name='map-marker-radius-outline' size={26} style={styles.inputIcon} />
-                                <Text style={[styles.inputText, { fontSize: 14, flex: 1 }]}>{locationName != '' ? locationName : '-'}</Text>
-                            </XStack>
+							{signalInfo?.cellularGeneration 
+								? <Text textTransform={'uppercase'} fontWeight={800}>{signalInfo?.cellularGeneration}</Text>
+								: null
+							}
+						</XStack>
+					</XStack>
 
+					<Controller
+						control={control}
+						name={'carrier'}
+						rules={{ required: true }}
+						render={({ field: { onChange, value } }) => (
 							<XStack style={styles.inputStack}>
-								<XStack flex={1} style={{justifyContent: 'space-between', alignItems: 'center' }}>
-									<XStack style={{ alignItems: 'center' }}>
-										<MaterialCommunityIcons name='router-network-wireless' size={26} style={styles.inputIcon} />
-										<Text style={styles.inputText}>{signalInfo?.type}</Text>
-									</XStack>
+								<MaterialCommunityIcons name='flag-outline' size={26} style={styles.inputIcon} />
+								{signalInfo?.carrier
+									? <View width={200}><Text fontSize={14} numberOfLines={1} ellipsizeMode='tail' overflow='hidden'>{value}</Text></View>
+									: <Input
+										style={styles.input}
+										onChangeText={onChange}
+										value={value}
+										flex={1}
+										size="$3"
+										placeholder={'Carrier'}
+										autoCapitalize="none"
+										autoComplete="off"
+										spellCheck={false}
+										autoCorrect={false}
+									/>
+								}
+							</XStack>
+						)}
+					/>
 
-									{signalInfo?.cellularGeneration 
-										? <Text textTransform={'uppercase'} fontWeight={800}>{signalInfo?.cellularGeneration}</Text>
-										: null
-									}
+					<Controller
+						control={control}
+						name={'internetAvailable'}
+						rules={{ required: true }}
+						render={({ field: { onChange, value } }) => (
+							<XStack style={styles.inputStack}>
+								<MaterialCommunityIcons name='microsoft-internet-explorer' size={26} style={styles.inputIcon} />
+								<XStack gap="$3" flex={1} style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+									<Text>Connected</Text>
+									<Switch
+										id="internetAvailable"
+										trackColor={{false: '#767577', true: '#dcdbdc'}}
+										thumbColor={value ? '#00bcd4' : '#f4f3f4'}
+										ios_backgroundColor="#fff"
+										onValueChange={onChange}
+										value={!!value}
+									/>
 								</XStack>
 							</XStack>
+						)}
+					/>
 
-							<Controller
-								control={control}
-								name={'carrier'}
-								rules={{ required: true }}
-								render={({ field: { onChange, value } }) => (
-									<XStack style={styles.inputStack}>
-										<MaterialCommunityIcons name='flag-outline' size={26} style={styles.inputIcon} />
-										{signalInfo?.carrier
-											? <View width={200}><Text fontSize={14} numberOfLines={1} ellipsizeMode='tail' overflow='hidden'>{value}</Text></View>
-											: <Input
-												style={styles.input}
-												onChangeText={onChange}
-												value={value}
-												flex={1}
-												size="$3"
-												placeholder={'Carrier'}
-												autoCapitalize="none"
-												autoComplete="off"
-												spellCheck={false}
-												autoCorrect={false}
-											/>
-										}
+					<Controller
+						control={control}
+						name={'strength'}
+						rules={{ required: true }}
+						render={({ field: { onChange, value } }) => (
+							<YStack style={{ marginTop: 10 }}>
+								<XStack style={{justifyContent: 'space-between', alignItems: 'center' }}>
+									<XStack style={{ alignItems: 'center' }}>
+										<MaterialCommunityIcons name='network-strength-4-cog' size={26} style={styles.inputIcon} />
+										<Text style={[styles.inputText, { fontSize: 15 }]}>Signal strength </Text>
 									</XStack>
-								)}
-							/>
-
-							<Controller
-								control={control}
-								name={'internetAvailable'}
-								rules={{ required: true }}
-								render={({ field: { onChange, value } }) => (
-									<XStack style={styles.inputStack}>
-										<MaterialCommunityIcons name='microsoft-internet-explorer' size={26} style={styles.inputIcon} />
-										<XStack gap="$3" flex={1} style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-											<Text>Connected</Text>
-											<Switch
-												id="internetAvailable"
-												trackColor={{false: '#767577', true: '#dcdbdc'}}
-												thumbColor={value ? '#00bcd4' : '#f4f3f4'}
-												ios_backgroundColor="#fff"
-												onValueChange={onChange}
-												value={!!value}
-											/>
-										</XStack>
+								</XStack>
+								
+								<RadioGroup onValueChange={onChange} value={value} name="strength" style={{ marginTop: 16 }}>
+									<XStack items="center" gap="$2" style={{ justifyContent: 'space-between' }}>
+										<RadioGroupItemWithLabel2 value="0" icon="signal-off" selected={value === '0'} />
+										<RadioGroupItemWithLabel2 value="1" icon="signal-cellular-outline" selected={value === '1'} />
+										<RadioGroupItemWithLabel2 value="2" icon="signal-cellular-1" selected={value === '2'} />
+										<RadioGroupItemWithLabel2 value="3" icon="signal-cellular-2" selected={value === '3'} />
+										<RadioGroupItemWithLabel2 value="4" icon="signal-cellular-3" selected={value === '4'} />
 									</XStack>
-								)}
-							/>
-
-							<Controller
-								control={control}
-								name={'strength'}
-								rules={{ required: true }}
-								render={({ field: { onChange, value } }) => (
-									<YStack style={{ marginTop: 10 }}>
-										<XStack style={{justifyContent: 'space-between', alignItems: 'center' }}>
-											<XStack style={{ alignItems: 'center' }}>
-												<MaterialCommunityIcons name='network-strength-4-cog' size={26} style={styles.inputIcon} />
-												<Text style={[styles.inputText, { fontSize: 15 }]}>Signal strength </Text>
-											</XStack>
-										</XStack>
-                                        
-										<RadioGroup onValueChange={onChange} value={value} name="strength" style={{ marginTop: 16 }}>
-											<XStack items="center" gap="$2" style={{ justifyContent: 'space-between' }}>
-												<RadioGroupItemWithLabel2 value="0" icon="signal-off" selected={value === '0'} />
-												<RadioGroupItemWithLabel2 value="1" icon="signal-cellular-outline" selected={value === '1'} />
-												<RadioGroupItemWithLabel2 value="2" icon="signal-cellular-1" selected={value === '2'} />
-												<RadioGroupItemWithLabel2 value="3" icon="signal-cellular-2" selected={value === '3'} />
-												<RadioGroupItemWithLabel2 value="4" icon="signal-cellular-3" selected={value === '4'} />
-											</XStack>
-										</RadioGroup>
-									</YStack>
-								)}
-							/>
-						</YStack>
-					</>
-				)}
+								</RadioGroup>
+							</YStack>
+						)}
+					/>
+				</YStack>
 			</KeyboardAwareScrollView>
 
             <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
-                <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton}>
+                <Text opacity={0.8}>All values (location, carrier, signal strength) are required to ensure data accuracy.</Text>
+				<Button onPress={handleSubmit(onSubmit)} style={styles.submitButton} disabled={isLoading ? true : false}>
+					{isLoading ? <ActivityIndicator color={'#fff'} /> : null}
                     <Text color={'white'} fontSize={20}>Share</Text>
                 </Button>
             </View>
@@ -261,7 +291,7 @@ const styles = StyleSheet.create({
 	scrollContent: {
 		padding: 12,
 		paddingBottom: 16,
-        paddingTop: 32,
+        paddingTop: 16,
         height: '100%'
 	},
 	loadingRow: {
@@ -304,6 +334,6 @@ const styles = StyleSheet.create({
 	submitButton: {
 		backgroundColor: '#00bcd4',
 		color: '#fff',
-		marginTop: 'auto',
+		marginTop: 10,
 	},
 });

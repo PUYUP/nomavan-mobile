@@ -1,4 +1,5 @@
 import { activityApi } from '@/services/activity';
+import { connectivityApi } from '@/services/connectivity';
 import { expenseApi } from '@/services/expense';
 import { meetupApi } from '@/services/meetup';
 import { receiptApi } from '@/services/receipt-extractor';
@@ -14,6 +15,7 @@ export const AppStore = configureStore({
         [meetupApi.reducerPath]: meetupApi.reducer,
         [activityApi.reducerPath]: activityApi.reducer,
         [expenseApi.reducerPath]: expenseApi.reducer,
+        [connectivityApi.reducerPath]: connectivityApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(
@@ -23,6 +25,7 @@ export const AppStore = configureStore({
             meetupApi.middleware,
             activityApi.middleware,
             expenseApi.middleware,
+            connectivityApi.middleware,
         ),
 })
 

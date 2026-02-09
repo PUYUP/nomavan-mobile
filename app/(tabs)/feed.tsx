@@ -1,8 +1,10 @@
+import ConnectivityUpdate from '@/components/activity/connectivity-update';
 import ExpenseUpdate from '@/components/activity/expense-update';
 import JoinedGroup from '@/components/activity/joined-group';
 import Meetup from '@/components/activity/meetup';
 import StoryUpdate from '@/components/activity/story-update';
 import { activityApi, BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
+import { useCreateConnectivityMutation } from '@/services/connectivity';
 import { useCreateExpenseMutation } from '@/services/expense';
 import { getCurrentLocation } from '@/services/location';
 import { useCreateMeetupMutation, useJoinMeetupMutation, useLeaveMeetupMutation } from '@/services/meetup';
@@ -24,6 +26,7 @@ export default function FeedScreen() {
   const [, leaveMeetupResult] = useLeaveMeetupMutation({ fixedCacheKey: 'leave-meetup-process' });
   const [, createMeetupResult] = useCreateMeetupMutation({ fixedCacheKey: 'create-meetup-process' });
   const [, submitExpenseResult] = useCreateExpenseMutation({ fixedCacheKey: 'submit-expense-process' });
+  const [, submitConnectivityResult] = useCreateConnectivityMutation({ fixedCacheKey: 'submit-connectivity-process' });
 
   const updateActivityMembership = (primaryItemId: number, isMember: boolean) => {
     dispatch(
@@ -59,6 +62,7 @@ export default function FeedScreen() {
       || leaveMeetupResult.isSuccess 
       || createMeetupResult.isSuccess
       || submitExpenseResult.isSuccess
+      || submitConnectivityResult.isSuccess
     ) {
       refetch();
     }
@@ -67,6 +71,7 @@ export default function FeedScreen() {
     leaveMeetupResult.isSuccess,
     createMeetupResult.isSuccess,
     submitExpenseResult.isSuccess,
+    submitConnectivityResult.isSuccess,
   ]);
 
   useEffect(() => {
@@ -123,6 +128,11 @@ export default function FeedScreen() {
 
               {activity.type === 'new_expense' && activity.component === 'activity'
                 ? <ExpenseUpdate activity={activity} />
+                : null
+              }
+
+              {activity.type === 'new_connectivity' && activity.component === 'activity'
+                ? <ConnectivityUpdate activity={activity} />
                 : null
               }
             </React.Fragment>
