@@ -1,12 +1,14 @@
+import ExpenseUpdate from '@/components/activity/expense-update';
 import JoinedGroup from '@/components/activity/joined-group';
 import Meetup from '@/components/activity/meetup';
-import PostUpdate from '@/components/activity/post-update';
+import StoryUpdate from '@/components/activity/story-update';
 import { activityApi, BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
+import { useCreateExpenseMutation } from '@/services/expense';
 import { getCurrentLocation } from '@/services/location';
 import { useCreateMeetupMutation, useJoinMeetupMutation, useLeaveMeetupMutation } from '@/services/meetup';
 import { useAppDispatch } from '@/utils/hooks';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator, InteractionManager, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Text, YStack } from 'tamagui';
 
@@ -21,6 +23,7 @@ export default function FeedScreen() {
   const [, joinMeetupResult] = useJoinMeetupMutation({ fixedCacheKey: 'join-meetup-process' });
   const [, leaveMeetupResult] = useLeaveMeetupMutation({ fixedCacheKey: 'leave-meetup-process' });
   const [, createMeetupResult] = useCreateMeetupMutation({ fixedCacheKey: 'create-meetup-process' });
+  const [, submitExpenseResult] = useCreateExpenseMutation({ fixedCacheKey: 'submit-expense-process' });
 
   const updateActivityMembership = (primaryItemId: number, isMember: boolean) => {
     dispatch(
@@ -55,6 +58,7 @@ export default function FeedScreen() {
       joinMeetupResult.isSuccess 
       || leaveMeetupResult.isSuccess 
       || createMeetupResult.isSuccess
+      || submitExpenseResult.isSuccess
     ) {
       refetch();
     }
@@ -62,18 +66,26 @@ export default function FeedScreen() {
     joinMeetupResult.isSuccess,
     leaveMeetupResult.isSuccess,
     createMeetupResult.isSuccess,
+    submitExpenseResult.isSuccess,
   ]);
 
   useEffect(() => {
-    const mounted = async () => {
+    let isActive = true;
+    const task = InteractionManager.runAfterInteractions(async () => {
       const location = await getCurrentLocation();
+      if (!isActive) {
+        return;
+      }
       if (location.ok) {
         const coords = location.data.coords;
         setLocation({ lat: coords.latitude, lng: coords.longitude });
       }
-    }
+    });
 
-    mounted();
+    return () => {
+      isActive = false;
+      task.cancel();
+    };
   }, []);
 
   return (
@@ -95,7 +107,7 @@ export default function FeedScreen() {
           {data.map((activity) => (
             <React.Fragment key={activity.id}>
               {activity.type === 'activity_update'
-                ? <PostUpdate activity={activity} />
+                ? <StoryUpdate activity={activity} />
                 : null
               }
 
@@ -106,6 +118,11 @@ export default function FeedScreen() {
 
               {activity.type === 'joined_group'
                 ? <JoinedGroup activity={activity} />
+                : null
+              }
+
+              {activity.type === 'new_expense' && activity.component === 'activity'
+                ? <ExpenseUpdate activity={activity} />
                 : null
               }
             </React.Fragment>

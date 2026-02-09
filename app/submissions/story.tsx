@@ -6,13 +6,13 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, ListItem, Text, TextArea, View, YGroup, YStack } from "tamagui";
 
-export interface Post {
+export interface Story {
     content: string;
 }
 
-const PostSubmission = () => {
-    const { control, handleSubmit, setValue } = useForm<Post>();
-    const onSubmit: SubmitHandler<Post> = (data) => {
+const StorySubmission = () => {
+    const { control, handleSubmit, setValue } = useForm<Story>();
+    const onSubmit: SubmitHandler<Story> = (data) => {
         console.log('Submit!');
         console.log(data);
     };
@@ -22,7 +22,7 @@ const PostSubmission = () => {
             <SafeAreaView style={styles.safeArea} edges={['bottom']}>
                 <Stack.Screen 
                     options={{ 
-                        title: 'Post Update', 
+                        title: 'Share Story', 
                         headerTitleStyle: {
                             fontSize: 22,
                             fontFamily: 'Inter-Black',
@@ -66,7 +66,7 @@ const PostSubmission = () => {
 
                 <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
                     <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton}>
-                        <Text color={'white'} fontSize={20}>Posting</Text>
+                        <Text color={'white'} fontSize={20}>Post</Text>
                     </Button>
                 </View>
             </SafeAreaView>
@@ -74,7 +74,7 @@ const PostSubmission = () => {
     )
 }
 
-export default PostSubmission;
+export default StorySubmission;
 
 const styles = StyleSheet.create({
     safeArea: {

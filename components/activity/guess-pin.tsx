@@ -91,7 +91,7 @@ const GuessPIN = ({
                 <Separator my={10} />
 
                 <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$3" style={styles.avatar}>
+                    <Avatar circular size="$4" style={styles.avatar}>
                         <Avatar.Image
                             src="https://i.pravatar.cc/100?img=12"
                             accessibilityLabel="Contributor avatar"

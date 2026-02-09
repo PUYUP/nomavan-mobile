@@ -5,7 +5,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Text, XStack, YStack } from 'tamagui';
+import { Button, Text, View, XStack, YStack } from 'tamagui';
 
 const toSelection = (date: Date, purpose?: string) => ({
 	date,
@@ -18,6 +18,8 @@ export default function DateTimeModal() {
 	const router = useRouter();
 	const { returnTo, initialISO, purpose } = useLocalSearchParams<{ returnTo?: string; initialISO?: string; purpose?: string }>();
 	const [value, setValue] = useState<Date>(new Date());
+	const [hasPickedDate, setHasPickedDate] = useState(false);
+	const [hasPickedTime, setHasPickedTime] = useState(false);
 
 	useEffect(() => {
 		const parsed = initialISO ? new Date(initialISO) : null;
@@ -27,6 +29,9 @@ export default function DateTimeModal() {
 			: fallback ?? new Date();
 		setValue(next);
 		emitDateTimeSelection(toSelection(next, purpose));
+		const hasInitial = Boolean(parsed && !Number.isNaN(parsed.getTime())) || Boolean(fallback);
+		setHasPickedDate(hasInitial);
+		setHasPickedTime(hasInitial);
 	}, [initialISO]);
 
 	const handleChange = (next: Date) => {
@@ -42,6 +47,11 @@ export default function DateTimeModal() {
 			onChange: (_, selectedDate) => {
 				if (selectedDate) {
 					handleChange(selectedDate);
+					if (mode === 'date') {
+						setHasPickedDate(true);
+					} else {
+						setHasPickedTime(true);
+					}
 				}
 			},
 		});
@@ -73,6 +83,18 @@ export default function DateTimeModal() {
 		: purpose === 'start'
 			? 'Start time'
 			: 'Date & time';
+
+	const androidDateText = hasPickedDate
+		? value.toLocaleDateString(undefined, {
+			weekday: 'short',
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+		})
+		: 'Date not set';
+	const androidTimeText = hasPickedTime
+		? value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+		: 'Time not set';
 
 	return (
 		<SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -116,16 +138,30 @@ export default function DateTimeModal() {
 						/>
 					</YStack>
 				) : (
-					<XStack gap="$2">
-						<Button flex={1} onPress={() => openAndroidPicker('date')}>
-							<MaterialCommunityIcons name="calendar-month" size={18} />
-							<Text>Select date</Text>
-						</Button>
-						<Button flex={1} onPress={() => openAndroidPicker('time')}>
-							<MaterialCommunityIcons name="clock-outline" size={18} />
-							<Text>Select time</Text>
-						</Button>
-					</XStack>
+					<YStack gap="$3">
+						{(!hasPickedDate || !hasPickedTime) ? (
+							<Text opacity={0.7} fontSize={13}>
+								Tap “Select date” and “Select time” to set a schedule.
+							</Text>
+						) : null}
+						<View style={styles.selectionWrapper}>
+							<XStack gap="$2" style={styles.selectionRow}>
+								<Text fontSize={18} fontWeight="700">{androidDateText}</Text>
+								<Text fontSize={18} fontWeight="700" opacity={0.7}>•</Text>
+								<Text fontSize={18} fontWeight="700">{androidTimeText}</Text>
+							</XStack>
+						</View>
+						<XStack gap="$2">
+							<Button flex={1} onPress={() => openAndroidPicker('date')}>
+								<MaterialCommunityIcons name="calendar-month" size={18} />
+								<Text>Select date</Text>
+							</Button>
+							<Button flex={1} onPress={() => openAndroidPicker('time')}>
+								<MaterialCommunityIcons name="clock-outline" size={18} />
+								<Text>Select time</Text>
+							</Button>
+						</XStack>
+					</YStack>
 				)}
 
 				<XStack marginBlockStart="auto" gap="$2">
@@ -164,6 +200,19 @@ const styles = StyleSheet.create({
 		backgroundColor: '#f8fafc',
 		padding: 12,
 		gap: 6,
+	},
+	selectionWrapper: {
+		borderRadius: 12,
+		borderWidth: 1,
+		borderColor: '#e5e7eb',
+		backgroundColor: '#f8fafc',
+		paddingVertical: 10,
+		paddingHorizontal: 12,
+	},
+	selectionRow: {
+		alignItems: 'center',
+		justifyContent: 'center',
+		flexWrap: 'wrap',
 	},
 	submitButton: {
 		backgroundColor: '#00bcd4',

@@ -1,45 +1,60 @@
+import { BPActivityResponse } from '@/services/activity';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { StyleSheet } from 'react-native';
+import { formatDistanceToNow } from 'date-fns';
+import { Linking, Platform, StyleSheet } from 'react-native';
 import { Avatar, Button, Card, Separator, Text, View, XStack, YStack } from 'tamagui';
 
-const ExpenseUpdate = () => {
-    const items = [
-        { name: 'Premium Fuel', price: 22.5, quantity: 3 },
-        { name: 'Toll Fee', price: 15.0, quantity: 2 },
-        // { name: 'Parking', price: 6.0, quantity: 1 },
-        // { name: 'Snacks', price: 4.75, quantity: 4 },
-        { name: 'Water Bottles', price: 2.5, quantity: 6 },
-    ]
+type ExpenseUpdateProps = {
+    activity?: BPActivityResponse | null;
+};
 
-    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
+    if (!activity) {
+        return null;
+    }
+
+    const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
+    const total = activity.secondary_item.meta.expense_items_inline.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
+
+    const handleOpenDirections = (item: BPActivityResponse | null) => {
+        const latitude = item?.secondary_item?.meta?.latitude;
+        const longitude = item?.secondary_item?.meta?.longitude;
+
+        if (!latitude || !longitude) return
+
+        const query = encodeURIComponent(`${latitude},${longitude}`)
+        const label = encodeURIComponent(item?.secondary_item?.meta?.address)
+        const url = Platform.OS === 'ios'
+            ? `http://maps.apple.com/?ll=${query}&q=${label}`
+            : `https://www.google.com/maps/search/?api=1&query=${query}`
+
+        Linking.openURL(url)
+    }
 
     return (
         <>
             <Card style={styles.card}>
                 <XStack gap="$3" style={styles.row}>
                     <YStack style={styles.itemsList}>
-                        <XStack style={styles.itemsHeader}>
-                            <Text style={[styles.itemHeaderText, { textAlign: 'left' }]}>Items</Text>
-                            <Text style={[styles.itemHeaderText, { textAlign: 'right' }]}>Price ($) x Qty</Text>
-                            <Text style={styles.itemHeaderText}>Sub-total ($)</Text>
-                        </XStack>
-
-                        {items.map((item) => {
+                        {activity.secondary_item.meta.expense_items_inline.map((item: any) => {
                             const subtotal = item.price * item.quantity
 
                             return (
                                 <XStack key={item.name} style={styles.itemRow}>
-                                    <Text style={styles.itemName}>{item.name}</Text>
-                                    <Text style={styles.itemValue}>
-                                        {item.price.toFixed(2)} x {item.quantity}
-                                    </Text>
-                                    <Text style={styles.itemValue}>{subtotal.toFixed(2)}</Text>
+                                    <YStack width={'70%'}>
+                                        <Text style={styles.itemName}>{item.name}</Text>
+                                        <Text style={styles.itemValue}>
+                                            {item.price.toFixed(2)} x {item.quantity}
+                                        </Text>
+                                    </YStack>
+
+                                    <Text fontSize={14}>{subtotal.toFixed(2)}</Text>
                                 </XStack>
                             )
                         })}
 
                         <XStack style={styles.totalRow}>
-                            <Text style={styles.totalLabel}>Total ($)</Text>
+                            <Text style={styles.totalLabel}>Total</Text>
                             <Text style={styles.totalValue}>{total.toFixed(2)}</Text>
                         </XStack>
                     </YStack>
@@ -48,28 +63,40 @@ const ExpenseUpdate = () => {
                 <Separator my={10} />
 
                 <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$3" style={styles.avatar}>
+                    <Avatar circular size="$4" style={styles.avatar}>
                         <Avatar.Image
-                            src="https://i.pravatar.cc/100?img=11"
+                            src={'https:' + activity.user_avatar.thumb}
                             accessibilityLabel="Contributor avatar"
                         />
                         <Avatar.Fallback />
                     </Avatar>
 
                     <YStack style={styles.contributorInfo}>
-                        <Text style={styles.contributorName}>Adam Zaidan</Text>
+                        <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
                         <Text style={styles.contributorMeta}>1.276 contribs.</Text>
                     </YStack>
 
                     <YStack style={styles.locationColumn}>
-                        <XStack style={styles.locationRow}>
-                            <MaterialCommunityIcons
-                                name="storefront-outline"
-                                size={16}
-                            />
-                            <Text style={styles.locationText}>Wawa & Sheetz</Text>
-                        </XStack>
-                        <Text style={styles.postedTime}>1 day ago - sedona az</Text>
+                        {activity.secondary_item.meta.store ? 
+                            <XStack maxW={140}  style={styles.locationRow}>
+                                <MaterialCommunityIcons
+                                    name="storefront-outline"
+                                    size={16}
+                                />
+                                <Text style={styles.locationText} numberOfLines={1}>
+                                    {activity.secondary_item.meta.store}
+                                </Text>
+                            </XStack>
+                            : null
+                        }
+
+                        <Text 
+                            style={styles.postedTime} 
+                            maxW={140} 
+                            numberOfLines={activity.secondary_item.meta.store ? 1 : 2}
+                        >
+                            {postedTime} {activity.secondary_item.meta.address ? ' - ' + activity.secondary_item.meta.address : null}
+                        </Text>
                     </YStack>
                 </XStack>
 
@@ -89,7 +116,7 @@ const ExpenseUpdate = () => {
                         </View>
                     </XStack>
 
-                    <Button size="$2" style={styles.viewLocationButton}>
+                    <Button size="$2" style={styles.viewLocationButton} onPress={() => handleOpenDirections(activity)}>
                         <XStack style={styles.thanksContent}>
                             <MaterialCommunityIcons name="map" size={14} />
                             <Text style={styles.thanksText}>See Location</Text>
@@ -107,7 +134,6 @@ const styles = StyleSheet.create({
     card: {
         padding: 12,
         borderRadius: 12,
-        marginBottom: 16,
         backgroundColor: '#fff',
     },
     row: {
@@ -126,22 +152,22 @@ const styles = StyleSheet.create({
     itemHeaderText: {
         fontSize: 11,
         opacity: 0.7,
-        width: '33%',
+        width: '36%',
         textAlign: 'right',
     },
     itemRow: {
         justifyContent: 'space-between',
     },
     itemName: {
-        width: '33%',
-        fontSize: 12,
+        width: '100%',
+        fontSize: 14,
         fontWeight: '600',
         textAlign: 'left',
     },
     itemValue: {
-        width: '33%',
+        width: '100%',
         fontSize: 12,
-        textAlign: 'right',
+        fontWeight: 700,
         opacity: 0.9,
     },
     totalRow: {
@@ -211,6 +237,7 @@ const styles = StyleSheet.create({
     locationText: {
         fontSize: 12,
         opacity: 0.9,
+        paddingRight: 10,
     },
     postedTime: {
         fontSize: 11,

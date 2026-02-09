@@ -68,9 +68,9 @@ const Index = () => {
             >
                 <YStack paddingStart="$0" paddingEnd="$0" flex={1} gap="$2">
                     <View style={styles.heroWrap}>
-                        <YStack style={{ justifyContent: 'center', alignItems: 'center' }}>
-                            <Text style={{ fontFamily: 'Inter-Black', fontSize: 54, marginBottom: 2 }}>Nomavan</Text>
-                            <Text fontSize="$3">Where Vanlifers Help Vanlifers</Text>
+                        <YStack style={{ justifyContent: 'stretch', alignContent: 'center', alignItems: 'center' }}>
+                            <Text style={{ fontFamily: 'Inter-Black', fontSize: 48, marginBottom: 2, textAlign: 'center' }}>Nomavan</Text>
+                            <Text fontSize="$2" style={{ textAlign: 'center' }}>Where Vanlifers Help Vanlifers</Text>
                         </YStack>
 
                         <YStack marginBlockStart={'40%'} marginStart={'6%'} marginEnd={'6%'}>
@@ -184,12 +184,13 @@ const Index = () => {
                         pressStyle={{ bg: "$orange10"}} 
                         hoverStyle={{ bg: "$orange10" }}
                         marginBlockStart="$3"
+                        size={'$5'}
                     >
                         <MaterialCommunityIcons name="account-plus-outline" size={22} color={'white'} />
                         <Text color={'white'} fontSize={17}>Register</Text>
                     </Button>
 
-                    <Button onPress={() => router.push('/(auth)/login')}>
+                    <Button onPress={() => router.push('/(auth)/login')} size={'$5'}>
                         <MaterialCommunityIcons name="login" size={22} />
                         <Text fontSize={17}>Log in</Text>
                     </Button>

@@ -108,7 +108,7 @@ const Register = () => {
                                     autoCapitalize="none"
                                     autoComplete="off"
                                     spellCheck={false}
-                                    autoCorrect={'off'}
+                                    autoCorrect={false}
                                 />
                             </XStack>
                         )}
@@ -139,7 +139,7 @@ const Register = () => {
                                     autoCapitalize="none"
                                     autoComplete="off"
                                     spellCheck={false}
-                                    autoCorrect={'off'}
+                                    autoCorrect={false}
                                 />
                             </XStack>
                         )}
@@ -165,7 +165,7 @@ const Register = () => {
                                     autoCapitalize="none"
                                     autoComplete="off"
                                     spellCheck={false}
-                                    autoCorrect={'off'}
+                                    autoCorrect={false}
                                 />
                                 <Button
                                     size="$2"
@@ -204,7 +204,7 @@ const Register = () => {
                                     autoCapitalize="none"
                                     autoComplete="off"
                                     spellCheck={false}
-                                    autoCorrect={'off'}
+                                    autoCorrect={false}
                                 />
                                 <Button
                                     size="$2"

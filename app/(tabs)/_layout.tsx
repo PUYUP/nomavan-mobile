@@ -4,7 +4,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
-import { BackHandler, Pressable, StyleSheet } from 'react-native';
+import { BackHandler, Platform, Pressable, StyleSheet } from 'react-native';
 import { Avatar, Button, Sheet, Text, View, XStack, YStack } from 'tamagui';
 
 export default function TabLayout() {
@@ -31,8 +31,8 @@ export default function TabLayout() {
     { label: 'Add PIN', key: 'add-pin', icon: 'map-marker-plus' as const },
     { label: 'Locate', key: 'locate', icon: 'map-marker-path' as const },
     { label: 'Expense', key: 'expense', icon: 'basket-plus-outline' as const },
-    { label: 'Signaling', key: 'signaling', icon: 'access-point-network' as const },
-    { label: 'Post', key: 'post', icon: 'post' as const },
+    { label: 'Connectivity', key: 'connectivity', icon: 'access-point-network' as const },
+    { label: 'Story', key: 'story', icon: 'post' as const },
   ];
 
   type QuickAction = (typeof quickActions)[number];
@@ -45,16 +45,16 @@ export default function TabLayout() {
     setOpen(false);
 
     switch (action.key) {
-      case 'signaling':
-        router.push('/submissions/signaling');
+      case 'connectivity':
+        router.push('/submissions/connectivity');
         break;
 
       case 'locate':
         router.push('/submissions/locate');
         break;
       
-      case 'post':
-        router.push('/submissions/post');
+      case 'story':
+        router.push('/submissions/story');
         break;
       
       case 'add-pin':
@@ -84,13 +84,12 @@ export default function TabLayout() {
           headerTransparent: false,
           headerStyle: {
             backgroundColor: '#fff',
-            height: 110
+            height: Platform.OS == 'ios' ? 110 : 80,
           },
           headerTitleStyle: {
             fontSize: 22,
             fontFamily: 'Inter-Black',
             color: '#1F3D2B',
-            maxWidth: 280,
           },
         }}>
         <Tabs.Screen
@@ -250,7 +249,7 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <MaterialCommunityIcons size={28} name="account-group" color={color} />,
             headerLeft: () => {
               return (
-                <XStack marginInlineStart={16}>
+                <XStack marginInlineStart={16} marginInlineEnd={Platform.OS == 'android' ? 10 : 0}>
                   <Pressable onPress={() => {}}>
                     <Button
                       circular
@@ -322,7 +321,7 @@ export default function TabLayout() {
               <Pressable key={action.label} style={styles.gridButton} onPress={() => quickActionHandler(action)}>
                 <YStack style={styles.gridButtonContent}>
                   <MaterialCommunityIcons name={action.icon} size={28} color="#1F3D2B" />
-                  <Text style={styles.gridButtonText}>{action.label}</Text>
+                  <Text style={styles.gridButtonText} width={'100%'}>{action.label}</Text>
                 </YStack>
               </Pressable>
             ))}

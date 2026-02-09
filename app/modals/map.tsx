@@ -32,9 +32,11 @@ export default function MapScreen() {
     ? 'Origin'
     : purpose === 'destination'
       ? 'Destination'
-      : purpose
-        ? `${purpose.charAt(0).toUpperCase()}${purpose.slice(1)}`
-        : 'Location';
+      : purpose === 'meetup' || purpose === 'expense'
+        ? 'Location'
+        : purpose
+          ? `${purpose.charAt(0).toUpperCase()}${purpose.slice(1)}`
+          : 'Location';
 
   useEffect(() => {
     const init = async () => {
@@ -215,7 +217,6 @@ export default function MapScreen() {
       }} />
       
       <YStack paddingStart="$0" paddingEnd="$0" flex={1} gap="$2">
-        <Text fontSize={14} opacity={0.7}>{`Editing: ${purposeLabel}`}</Text>
         <View style={styles.mapCard}>
           {isLoading || !region ? (
             <View style={styles.mapLoading}>

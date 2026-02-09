@@ -75,7 +75,7 @@ const CreateMeetupSubmission = () => {
 
     useEffect(() => {
         const unsubscribeLocation = subscribeLocationSelected((selection) => {
-            if (selection) {
+            if (selection && selection.purpose === 'meetup') {
                 setLocation(selection);
                 setAddress(selection.address);
 
@@ -134,7 +134,6 @@ const CreateMeetupSubmission = () => {
                                 render={({ field: { onChange, value } }) => (
                                     <Input 
                                         onChange={onChange} 
-                                        size="$3" 
                                         placeholder="Meetup name…" 
                                         borderWidth={1} 
                                         value={value} 
@@ -142,7 +141,7 @@ const CreateMeetupSubmission = () => {
                                         autoCapitalize="none"
                                         autoComplete="off"
                                         spellCheck={false}
-                                        autoCorrect={'off'}
+                                        autoCorrect={false}
                                     />
                                 )}
                             />
@@ -156,7 +155,6 @@ const CreateMeetupSubmission = () => {
                                 render={({ field: { onChange, value } }) => (
                                     <TextArea 
                                         onChange={onChange} 
-                                        size="$3" 
                                         rows={4} 
                                         placeholder="Description" 
                                         borderWidth={1} 
@@ -210,6 +208,7 @@ const CreateMeetupSubmission = () => {
                                 <Button width={64} size="$2" onPress={() => router.push({
                                     pathname: '/modals/map',
                                     params: {
+                                        purpose: 'meetup',
                                         address: location?.address,
                                         initialLat: location?.latitude,
                                         initialLng: location?.longitude,
@@ -234,14 +233,16 @@ const CreateMeetupSubmission = () => {
                                     render={({ field: { onChange, value } }) => (
                                         <Input 
                                             onChange={onChange} 
-                                            size="$2" 
+                                            fontSize={12}
                                             value={String(value)} 
+                                            padding={0}
+                                            height={30}
                                             width={64} 
                                             textAlign="center" 
                                             autoCapitalize="none"
                                             autoComplete="off"
                                             spellCheck={false}
-                                            autoCorrect={'off'}
+                                            autoCorrect={false}
                                         />
                                     )}
                                 />
@@ -262,14 +263,16 @@ const CreateMeetupSubmission = () => {
                                     render={({ field: { onChange, value } }) => (
                                         <Input 
                                             onChange={onChange} 
-                                            size="$2" 
-                                            value={String(value)} 
+                                            fontSize={12}
+                                            value={String(value)}
+                                            padding={0}
+                                            height={30} 
                                             width={64} 
                                             textAlign="center" 
                                             autoCapitalize="none"
                                             autoComplete="off"
                                             spellCheck={false}
-                                            autoCorrect={'off'}
+                                            autoCorrect={false}
                                         />
                                     )}
                                 />

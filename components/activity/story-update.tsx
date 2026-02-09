@@ -1,59 +1,42 @@
+import { BPActivityResponse } from '@/services/activity';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { formatDistanceToNow } from 'date-fns';
 import { StyleSheet } from 'react-native';
-import { Avatar, Button, Card, Separator, Text, View, XStack, YStack } from 'tamagui';
+import { Avatar, Button, Card, Paragraph, Separator, Text, View, XStack, YStack } from 'tamagui';
 
-const SIGNAL_COLORS = {
-    bad: '#ff817b',
-    medium: '#efbb11',
-    good: '#00bcd4',
-    inactive: '#d1d5db',
-} as const
+type StoryUpdateProps = {
+    activity: BPActivityResponse;
+};
 
-const NetworkUpdate = () => {
+const stripHtml = (value: string) => value.replace(/<[^>]*>/g, '').trim();
+
+const StoryUpdate = ({ activity }: StoryUpdateProps) => {
+    const contentText = activity.content?.rendered
+        ? stripHtml(activity.content.rendered)
+        : activity.content?.raw ?? '';
+    const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
+    const componentLabel = activity.component || 'Activity';
     return (
         <>
             <Card style={styles.card}>
-                <XStack gap="$3" style={styles.row}>
-                    <MaterialCommunityIcons style={styles.mainIcon} color={styles.mediumSignalColor.color} name='access-point-network' />
-                    <YStack style={styles.strengthCol}>
-                        <Text style={[styles.title, styles.mediumSignalColor]}>-110</Text>
-                        <Text style={styles.subtitle}>dBm</Text>
-                    </YStack>
-
-                    <YStack>
-                        <Text style={styles.title}>T-Mobile</Text>
-                        <Text style={[styles.subtitle, { textAlign: 'left'}]}>Operator</Text>
-                    </YStack>
-
-                    <View style={styles.signalGraph}>
-                        {[28, 28, 28, 28, 28, 28].map((height, index) => {
-                            const barStyle = index < 2 ? styles.signalBarBad : styles.signalBarInactive
-
-                            return (
-                                <View
-                                    key={`bar-${index}`}
-                                    height={height}
-                                    style={[styles.signalBar, barStyle]}
-                                />
-                            )
-                        })}
-                    </View>
-                </XStack>
+                <View>
+                    <Paragraph>{contentText || activity.title || '-'}</Paragraph>
+                </View>
 
                 <Separator my={10} />
 
                 <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$3" style={styles.avatar}>
+                    <Avatar circular size="$4" style={styles.avatar}>
                         <Avatar.Image
-                            src="https://i.pravatar.cc/100?img=12"
+                            src={'https:' + activity.user_avatar?.thumb}
                             accessibilityLabel="Contributor avatar"
                         />
                         <Avatar.Fallback />
                     </Avatar>
 
                     <YStack style={styles.contributorInfo}>
-                        <Text style={styles.contributorName}>Samuel Rizal</Text>
-                        <Text style={styles.contributorMeta}>1.276 contribs.</Text>
+                        <Text style={styles.contributorName}>{activity.user_profile?.name}</Text>
+                        <Text style={styles.contributorMeta}>10 contribs.</Text>
                     </YStack>
 
                     <YStack style={styles.locationColumn}>
@@ -62,9 +45,9 @@ const NetworkUpdate = () => {
                                 name="map-marker"
                                 size={16}
                             />
-                            <Text style={styles.locationText}>Sedona, AZ</Text>
+                            <Text style={styles.locationText}>{componentLabel}</Text>
                         </XStack>
-                        <Text style={styles.postedTime}>2 minutes ago</Text>
+                        <Text style={styles.postedTime}>{postedTime}</Text>
                     </YStack>
                 </XStack>
 
@@ -80,29 +63,21 @@ const NetworkUpdate = () => {
                         </Button>
 
                         <View style={styles.thanksCount}>
-                            <Text style={styles.thanksCountText}>130 thanks</Text>
+                            <Text style={styles.thanksCountText}>97 thanks</Text>
                         </View>
                     </XStack>
-
-                    <Button size="$2" style={styles.viewLocationButton}>
-                        <XStack style={styles.thanksContent}>
-                            <MaterialCommunityIcons name="map" size={14} />
-                            <Text style={styles.thanksText}>See Location</Text>
-                        </XStack>
-                    </Button>
                 </XStack>
             </Card>
         </>
     )
 }
 
-export default NetworkUpdate
+export default StoryUpdate
 
 const styles = StyleSheet.create({
     card: {
         padding: 12,
         borderRadius: 12,
-        marginBottom: 16,
         backgroundColor: '#fff',
     },
     row: {
@@ -125,37 +100,6 @@ const styles = StyleSheet.create({
         fontSize: 10,
         opacity: 0.8,
         textAlign: 'center',
-    },
-    badSignalColor: {
-        color: SIGNAL_COLORS.bad,
-    },
-    mediumSignalColor: {
-        color: SIGNAL_COLORS.medium,
-    },
-    goodSignalColor: {
-        color: SIGNAL_COLORS.good,
-    },
-    signalGraph: {
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        gap: 6,
-        marginLeft: 'auto',
-    },
-    signalBar: {
-        width: 7,
-        borderRadius: 4,
-    },
-    signalBarBad: {
-        backgroundColor: SIGNAL_COLORS.bad,
-    },
-    signalBarMedium: {
-        backgroundColor: SIGNAL_COLORS.medium,
-    },
-    signalBarGood: {
-        backgroundColor: SIGNAL_COLORS.good,
-    },
-    signalBarInactive: {
-        backgroundColor: SIGNAL_COLORS.inactive,
     },
     contributorRow: {
         alignItems: 'center',
@@ -222,11 +166,5 @@ const styles = StyleSheet.create({
     thanksCountText: {
         fontSize: 12,
         opacity: 0.7,
-    },
-    viewLocationButton: {
-        height: 30,
-        paddingHorizontal: 10,
-        borderRadius: 16,
-        backgroundColor: '#eef2ff',
     },
 })

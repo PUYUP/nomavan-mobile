@@ -51,6 +51,7 @@ export interface BPActivityResponse {
     // custom fields
     user_profile: BPUserProfile;
     primary_item: any;
+    secondary_item: any;
 }
 
 export interface BPActivityContent {

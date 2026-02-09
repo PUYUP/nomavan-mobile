@@ -40,7 +40,7 @@ const RadioGroupItemWithLabel2 = (props: {
 	)
 }
 
-const SignalingSubmission = () => {
+const ConnectivitySubmission = () => {
 	const [signalInfo, setSignalInfo] = useState<SignalInfo>();
 	const [locationError, setLocationError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -102,7 +102,7 @@ const SignalingSubmission = () => {
 		<SafeAreaView style={styles.safeArea} edges={['bottom']}>
 			<Stack.Screen 
                 options={{ 
-                    title: 'Signaling', 
+                    title: 'Connectivity', 
                     headerTitleStyle: {
                         fontSize: 22,
                         fontFamily: 'Inter-Black',
@@ -183,7 +183,7 @@ const SignalingSubmission = () => {
 												autoCapitalize="none"
 												autoComplete="off"
 												spellCheck={false}
-												autoCorrect={'off'}
+												autoCorrect={false}
 											/>
 										}
 									</XStack>
@@ -251,7 +251,7 @@ const SignalingSubmission = () => {
 	);
 }
 
-export default SignalingSubmission;
+export default ConnectivitySubmission;
 
 const styles = StyleSheet.create({
 	safeArea: {

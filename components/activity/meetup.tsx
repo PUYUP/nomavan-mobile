@@ -217,7 +217,7 @@ const Meetup = ({
             <Separator my={10} />
 
             <XStack style={styles.contributorRow}>
-                <Avatar circular size="$3" style={styles.avatar}>
+                <Avatar circular size="$4" style={styles.avatar}>
                     <Avatar.Image
                         src={'https:' + activity?.user_avatar?.thumb}
                         accessibilityLabel="Contributor avatar"

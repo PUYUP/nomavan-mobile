@@ -14,7 +14,7 @@ const JoinedGroup = ({
         activity ? 
             <Card style={styles.card}>
                 <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$3" style={styles.avatar}>
+                    <Avatar circular size="$4" style={styles.avatar}>
                         <Avatar.Image
                             src={'https:' + activity?.user_avatar?.thumb}
                             accessibilityLabel={activity.user_profile.name}

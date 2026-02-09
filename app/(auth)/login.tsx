@@ -1,7 +1,7 @@
 import { saveAuth } from "@/services/auth-storage"
 import { SigninPayload, useCreateSigninMutation } from "@/services/signin"
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
-import { useLocalSearchParams, useRouter } from "expo-router"
+import { useLocalSearchParams, usePathname, useRouter } from "expo-router"
 import { useEffect, useState } from "react"
 import { Controller, SubmitHandler, useForm } from "react-hook-form"
 import { ActivityIndicator, Platform, StyleSheet } from "react-native"
@@ -17,9 +17,11 @@ interface Account {
 
 const Login = () => {
     const router = useRouter();
+    const pathname = usePathname();
     const [showPassword, setShowPassword] = useState(false);
     const { email } = useLocalSearchParams<{ email?: string }>();
-    const [signIn, { isLoading, isSuccess }] = useCreateSigninMutation();
+    const [signIn, { isLoading }] = useCreateSigninMutation();
+    const [isSavingAuth, setIsSavingAuth] = useState(false);
 
     const {
         control,
@@ -52,6 +54,7 @@ const Login = () => {
             const { data, error } = result;
 
             if (data) {
+                setIsSavingAuth(true);
                 await saveAuth({
                     token: data.token,
                     user: {
@@ -61,6 +64,7 @@ const Login = () => {
                         displayName: data.user_display_name,
                     },
                 });
+                
                 router.push('/(tabs)/feed');
 
                 Toast.show({
@@ -96,6 +100,14 @@ const Login = () => {
             setValue('email', email);
         }
     }, [email, setValue]);
+
+    useEffect(() => {
+        if (pathname !== '/login') {
+            setIsSavingAuth(false);
+        }
+    }, [pathname]);
+
+    const isSubmitting = isLoading || isSavingAuth;
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -139,7 +151,7 @@ const Login = () => {
                                     autoCapitalize="none"
                                     autoComplete="off"
                                     spellCheck={false}
-                                    autoCorrect={'off'}
+                                    autoCorrect={false}
                                 />
                             </XStack>
                         )}
@@ -165,7 +177,7 @@ const Login = () => {
                                     autoCapitalize="none"
                                     autoComplete="off"
                                     spellCheck={false}
-                                    autoCorrect={'off'}
+                                    autoCorrect={false}
                                 />
                                 <Button
                                     size="$2"
@@ -187,9 +199,9 @@ const Login = () => {
                         pressStyle={{ bg: "$orange10"}} 
                         hoverStyle={{ bg: "$orange10" }}
                         marginBlockStart="$3"
-                        disabled={isLoading ? true : false}
+                        disabled={isSubmitting}
                     >
-                        {isLoading ? <ActivityIndicator color={'white'} /> : null}
+                        {isSubmitting ? <ActivityIndicator color={'white'} /> : null}
                         <Text color={'white'} fontSize={16}>Log in</Text>
                     </Button>
 
