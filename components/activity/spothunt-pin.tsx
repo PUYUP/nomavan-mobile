@@ -4,11 +4,15 @@ import { Card } from "@tamagui/card";
 import { Separator } from "@tamagui/separator";
 import { XStack, YStack } from "@tamagui/stacks";
 import { formatDistanceToNow } from 'date-fns';
+import { useEffect, useState } from 'react';
 import { Linking, Platform, StyleSheet } from "react-native";
 import { Avatar, Button, Paragraph, Text } from "tamagui";
 
 type SpotHuntPinProps = {
     activity?: BPActivityResponse | null
+    userLat?: number | null
+    userLng?: number | null
+
     title?: string
     photos?: string[]
     morePhotosLabel?: string
@@ -19,9 +23,23 @@ type SpotHuntPinProps = {
 }
 
 const stripHtml = (value: string) => value.replace(/<[^>]*>/g, '').trim();
+const haversineDistanceMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const toRadians = (value: number) => (value * Math.PI) / 180
+    const earthRadiusMeters = 6371000
+    const deltaLat = toRadians(lat2 - lat1)
+    const deltaLon = toRadians(lon2 - lon1)
+    const a = Math.sin(deltaLat / 2) ** 2
+        + Math.cos(toRadians(lat1))
+        * Math.cos(toRadians(lat2))
+        * Math.sin(deltaLon / 2) ** 2
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return earthRadiusMeters * c
+}
 
 const SpotHuntPin = ({
     activity = null,
+    userLat = null,
+    userLng = null,
     photos = [
         'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300&q=80',
         'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=300&q=80',
@@ -41,6 +59,7 @@ const SpotHuntPin = ({
     const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
     const placeLabel = activity.secondary_item.meta.address ? activity.secondary_item.meta.address : null;
     const title = activity.secondary_item.title.rendered ? stripHtml(activity.secondary_item.title.rendered) : 'New Pin Dropped';
+    const [distanceMeters, setDistanceMeters] = useState<number | null>(null)
     
     const handleOpenDirections = (item: BPActivityResponse | null) => {
         const latitude = item?.secondary_item?.meta?.latitude;
@@ -56,6 +75,26 @@ const SpotHuntPin = ({
 
         Linking.openURL(url)
     }
+
+    useEffect(() => {
+        const latRaw = activity?.secondary_item?.meta?.latitude
+        const lngRaw = activity?.secondary_item?.meta?.longitude
+        const latitude = latRaw !== undefined ? Number(latRaw) : NaN
+        const longitude = lngRaw !== undefined ? Number(lngRaw) : NaN
+
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            setDistanceMeters(null)
+            return
+        }
+
+        if (userLat === null || userLat === undefined || userLng === null || userLng === undefined) {
+            setDistanceMeters(null)
+            return
+        }
+
+        const meters = haversineDistanceMeters(userLat, userLng, latitude, longitude)
+        setDistanceMeters(meters)
+    }, [activity?.secondary_item?.meta?.latitude, activity?.secondary_item?.meta?.longitude, userLat, userLng])
     
     return (
         <Card style={styles.card}>
@@ -68,7 +107,13 @@ const SpotHuntPin = ({
                             <Text style={styles.coordText}>{coordinates}</Text>
                         </XStack>
                     </YStack>
-                    <Text style={styles.timeText}>14.5 km</Text>
+
+                    {distanceMeters ?
+                        <Text style={styles.timeText}>
+                            {((distanceMeters / 1000)).toFixed(2)} km
+                        </Text>
+                        : null
+                    }
                 </XStack>
 
                 {activity.secondary_item.content.rendered ?

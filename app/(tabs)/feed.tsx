@@ -146,7 +146,7 @@ export default function FeedScreen() {
               }
 
               {activity.type === 'new_spothunt' && activity.component === 'activity'
-                ? <SpotHuntPin activity={activity} />
+                ? <SpotHuntPin activity={activity} userLat={location?.lat} userLng={location?.lng} />
                 : null
               }
             </React.Fragment>
