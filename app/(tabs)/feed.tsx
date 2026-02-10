@@ -1,19 +1,22 @@
+import ArrivedOnSite from '@/components/activity/arrived-on-site';
 import ConnectivityUpdate from '@/components/activity/connectivity-update';
 import ExpenseUpdate from '@/components/activity/expense-update';
 import JoinedGroup from '@/components/activity/joined-group';
 import Meetup from '@/components/activity/meetup';
+import OnTheWay from '@/components/activity/on-the-way';
 import SpotHuntPin from '@/components/activity/spothunt-pin';
 import StoryUpdate from '@/components/activity/story-update';
 import { activityApi, BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
 import { useCreateConnectivityMutation } from '@/services/connectivity';
 import { useCreateExpenseMutation } from '@/services/expense';
-import { getCurrentLocation } from '@/services/location';
 import { useCreateMeetupMutation, useJoinMeetupMutation, useLeaveMeetupMutation } from '@/services/meetup';
+import { useCreateRouteContextMutation } from '@/services/route-context';
+import { useCreateRoutePointMutation } from '@/services/route-point';
 import { useCreateSpothuntMutation } from '@/services/spothunt';
 import { useCreateStoryMutation } from '@/services/story';
 import { useAppDispatch } from '@/utils/hooks';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, InteractionManager, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Text, YStack } from 'tamagui';
 
@@ -32,6 +35,8 @@ export default function FeedScreen() {
   const [, submitConnectivityResult] = useCreateConnectivityMutation({ fixedCacheKey: 'submit-connectivity-process' });
   const [, shareStoryResult] = useCreateStoryMutation({ fixedCacheKey: 'share-story-process' });
   const [, submitSpothuntResult] = useCreateSpothuntMutation({ fixedCacheKey: 'submit-spothunt-process' });
+  const [, createRouteContextResult] = useCreateRouteContextMutation({ fixedCacheKey: 'cerate-route-context-process' });
+  const [, createRoutePointResult] = useCreateRoutePointMutation({ fixedCacheKey: 'create-route-point-process' });
 
   const updateActivityMembership = (primaryItemId: number, isMember: boolean) => {
     dispatch(
@@ -70,6 +75,8 @@ export default function FeedScreen() {
       || submitConnectivityResult.isSuccess
       || shareStoryResult.isSuccess
       || submitSpothuntResult.isSuccess
+      || createRouteContextResult.isSuccess
+      || createRoutePointResult.isSuccess
     ) {
       refetch();
     }
@@ -81,26 +88,9 @@ export default function FeedScreen() {
     submitConnectivityResult.isSuccess,
     shareStoryResult.isSuccess,
     submitSpothuntResult.isSuccess,
+    createRouteContextResult.isSuccess,
+    createRoutePointResult.isSuccess
   ]);
-
-  useEffect(() => {
-    let isActive = true;
-    const task = InteractionManager.runAfterInteractions(async () => {
-      const location = await getCurrentLocation();
-      if (!isActive) {
-        return;
-      }
-      if (location.ok) {
-        const coords = location.data.coords;
-        setLocation({ lat: coords.latitude, lng: coords.longitude });
-      }
-    });
-
-    return () => {
-      isActive = false;
-      task.cancel();
-    };
-  }, []);
 
   return (
     <Animated.ScrollView contentContainerStyle={styles.container}>
@@ -147,6 +137,11 @@ export default function FeedScreen() {
 
               {activity.type === 'new_spothunt' && activity.component === 'activity'
                 ? <SpotHuntPin activity={activity} userLat={location?.lat} userLng={location?.lng} />
+                : null
+              }
+
+              {activity.type === 'new_route_point' && activity.component === 'activity'
+                ? activity.secondary_item.meta.arrived_at ? <ArrivedOnSite activity={activity} /> : <OnTheWay activity={activity} />
                 : null
               }
             </React.Fragment>

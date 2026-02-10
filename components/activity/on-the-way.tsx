@@ -1,70 +1,102 @@
+import { BPActivityResponse } from '@/services/activity';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { formatDistanceToNow } from 'date-fns';
 import { StyleSheet } from 'react-native';
 import { Avatar, Button, Card, Separator, Text, View, XStack, YStack } from 'tamagui';
 
-const OnTheWay = () => {
+type ComponentProps = {
+    activity: BPActivityResponse | null
+}
+
+const distanceInMeters = (a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) => {
+    const toRad = (value: number) => (value * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(b.latitude - a.latitude);
+    const dLng = toRad(b.longitude - a.longitude);
+    const lat1 = toRad(a.latitude);
+    const lat2 = toRad(b.latitude);
+    const sinDLat = Math.sin(dLat / 2);
+    const sinDLng = Math.sin(dLng / 2);
+    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+};
+
+const OnTheWay = ({ activity = null }: ComponentProps) => {
+    if (!activity) {
+        return null;
+    }
+
+    const postedTime = (activity.secondary_item.meta?.previous_route_point_id ? formatDistanceToNow(new Date(activity.secondary_item.meta?.previous_route_point_id?.date)) : '-').replace('about', '');
+    const distance = distanceInMeters(
+        { latitude: activity.secondary_item.meta.latitude, longitude: activity.secondary_item.meta.longitude },
+        { latitude: activity.secondary_item.meta?.previous_route_point_id?.latitude, longitude: activity.secondary_item.meta?.previous_route_point_id?.longitude }
+    );
+
     return (
-        <>
-            <Card style={styles.card}>
-                <YStack style={styles.directionBlock}>
-                    <XStack flex={1}>
-                        <MaterialCommunityIcons name="map-marker" size={28} color="#ef4444" />
-                        <YStack flex={1} paddingStart="$2.5">
-                            <XStack style={styles.directionRow}>
-                                <YStack style={styles.directionInfo}>
-                                    <Text style={styles.directionLabel}>From</Text>
-                                    <Text style={styles.directionTitle}>Wawa & Sheetz</Text>
-                                    <Text style={styles.directionMeta}>Sedona, AZ</Text>
-                                </YStack>
-                                <Text style={styles.directionDistance}>1 day ago</Text>
-                            </XStack>
-                        </YStack>
-                    </XStack>
+        <Card style={styles.card}>
+            <YStack style={styles.directionBlock}>
+                <XStack flex={1}>
+                    <MaterialCommunityIcons name="map-marker" size={28} color="#ef4444" />
+                    <YStack flex={1} paddingStart="$2.5">
+                        <XStack style={styles.directionRow}>
+                            <YStack style={styles.directionInfo}>
+                                <Text style={styles.directionLabel}>From</Text>
+                                <Text style={styles.directionTitle}>
+                                    {activity.secondary_item.meta?.previous_route_point_id?.place_name ?
+                                        activity.secondary_item.meta.previous_route_point_id.place_name
+                                        : 'Unknown'
+                                    }
+                                </Text>
+                            </YStack>
+                            <Text style={styles.directionDistance}>{postedTime}</Text>
+                        </XStack>
+                    </YStack>
+                </XStack>
 
-                    <View style={styles.directionDivider} />
+                <View style={styles.directionDivider} />
 
-                    <XStack flex={1}>
-                        <MaterialCommunityIcons name="flag" size={28} color="#22c55e" />
-                        <YStack flex={1} paddingStart="$2.5">
-                            <XStack style={styles.directionRow}>
-                                <YStack style={styles.directionInfo}>
-                                    <Text style={styles.directionLabel}>To</Text>
-                                    <Text style={styles.directionTitle}>Twin Creek Trailhead</Text>
-                                    <Text style={styles.directionMeta}>Coconino NF</Text>
-                                </YStack>
-                                <Text style={styles.directionDistance}>6.4 mi</Text>
-                            </XStack>
-                        </YStack>
-                    </XStack>
+                <XStack flex={1}>
+                    <MaterialCommunityIcons name="flag" size={28} color="#22c55e" />
+                    <YStack flex={1} paddingStart="$2.5">
+                        <XStack style={styles.directionRow}>
+                            <YStack style={styles.directionInfo}>
+                                <Text style={styles.directionLabel}>To</Text>
+                                <Text style={styles.directionTitle}>{activity.secondary_item.title.rendered}</Text>
+                            </YStack>
+                            <Text style={styles.directionDistance}>
+                                {distance || distance == 0 ? Math.round((distance / 1000) * 100) / 100 : '-'} km
+                            </Text>
+                        </XStack>
+                    </YStack>
+                </XStack>
+            </YStack>
+
+            <Separator my={10} />
+
+            <XStack style={styles.contributorRow}>
+                <Avatar circular size="$4" style={styles.avatar}>
+                    <Avatar.Image
+                        src={'https:' + activity.user_avatar.thumb}
+                        accessibilityLabel="Contributor avatar"
+                    />
+                    <Avatar.Fallback />
+                </Avatar>
+
+                <YStack style={styles.contributorInfo}>
+                    <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
+                    <Text style={styles.contributorMeta}>1.276 contribs.</Text>
                 </YStack>
 
-                <Separator my={10} />
-
-                <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$4" style={styles.avatar}>
-                        <Avatar.Image
-                            src="https://i.pravatar.cc/100?img=13"
-                            accessibilityLabel="Contributor avatar"
-                        />
-                        <Avatar.Fallback />
-                    </Avatar>
-
-                    <YStack style={styles.contributorInfo}>
-                        <Text style={styles.contributorName}>John George</Text>
-                        <Text style={styles.contributorMeta}>1.276 contribs.</Text>
-                    </YStack>
-
-                    <Text style={styles.onWayText}>102 en route</Text>
-                    
-                    <Button size="$2" style={styles.viewLocationButton}>
-                        <XStack style={styles.thanksContent}>
-                            <MaterialCommunityIcons name="directions" size={14} />
-                            <Text style={styles.thanksText}>Me Too</Text>
-                        </XStack>
-                    </Button>
-                </XStack>
-            </Card>
-        </>
+                <Text style={styles.onWayText}>102 en route</Text>
+                
+                <Button size="$2" style={styles.viewLocationButton}>
+                    <XStack style={styles.thanksContent}>
+                        <MaterialCommunityIcons name="directions" size={14} />
+                        <Text style={styles.thanksText}>Me Too</Text>
+                    </XStack>
+                </Button>
+            </XStack>
+        </Card>
     )
 }
 
@@ -74,7 +106,6 @@ const styles = StyleSheet.create({
     card: {
         padding: 12,
         borderRadius: 12,
-        marginBottom: 16,
         backgroundColor: '#fff',
     },
     row: {
@@ -194,7 +225,7 @@ const styles = StyleSheet.create({
     },
     directionTitle: {
         fontSize: 14,
-        fontWeight: '700',
+        fontWeight: '600',
     },
     directionMeta: {
         fontSize: 12,

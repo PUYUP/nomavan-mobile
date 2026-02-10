@@ -1,81 +1,114 @@
+import { BPActivityResponse } from '@/services/activity';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { formatDistanceToNow } from 'date-fns';
 import { StyleSheet } from 'react-native';
 import { Avatar, Button, Card, Separator, Text, View, XStack, YStack } from 'tamagui';
 
-const ArrivedOnSite = () => {
+type ComponentProps = {
+    activity: BPActivityResponse | null
+}
+
+const distanceInMeters = (a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) => {
+    const toRad = (value: number) => (value * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(b.latitude - a.latitude);
+    const dLng = toRad(b.longitude - a.longitude);
+    const lat1 = toRad(a.latitude);
+    const lat2 = toRad(b.latitude);
+    const sinDLat = Math.sin(dLat / 2);
+    const sinDLng = Math.sin(dLng / 2);
+    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+};
+
+const ArrivedOnSite = ({ activity = null }: ComponentProps) => {
+    if (!activity) {
+        return null;
+    }
+    
+    const postedTime = (activity.secondary_item.meta?.previous_route_point_id ? formatDistanceToNow(new Date(activity.secondary_item.meta?.previous_route_point_id?.date)) : '-').replace('about', '');
+    const distance = distanceInMeters(
+        { latitude: activity.secondary_item.meta.latitude, longitude: activity.secondary_item.meta.longitude },
+        { latitude: activity.secondary_item.meta?.previous_route_point_id?.latitude, longitude: activity.secondary_item.meta?.previous_route_point_id?.longitude }
+    );
+
     return (
-        <>
-            <Card style={styles.card}>
-                <YStack style={styles.arrivedBlock}>
-                    <XStack flex={1}>
-                        <MaterialCommunityIcons name="map-marker-check" size={28} color="#22c55e" />
-                        <YStack flex={1} paddingStart="$2.5">
-                            <XStack style={styles.arrivedRow}>
-                                <YStack style={styles.arrivedInfo}>
-                                    <Text style={styles.arrivedLabel}>Arrived</Text>
-                                    <Text style={styles.arrivedTitle}>Twin Creek Trailhead</Text>
-                                    <Text style={styles.arrivedMeta}>Coconino NF</Text>
-                                </YStack>
-                                <Text style={styles.arrivedStatText}>32 minutes ago</Text>
-                            </XStack>
+        <Card style={styles.card}>
+            <YStack style={styles.arrivedBlock}>
+                <XStack flex={1}>
+                    <MaterialCommunityIcons name="map-marker-check" size={28} color="#22c55e" />
+                    <YStack flex={1} paddingStart="$2.5">
+                        <XStack style={styles.arrivedRow}>
+                            <YStack style={styles.arrivedInfo}>
+                                <Text style={styles.arrivedLabel}>Arrived</Text>
+                                <Text style={styles.arrivedTitle}>
+                                    {activity.secondary_item.title.rendered}
+                                </Text>
+                            </YStack>
+                        </XStack>
 
-                            <XStack style={styles.arrivedStats} marginBlockStart="$2.5">
-                                <XStack style={styles.arrivedStatItem}>
-                                    <MaterialCommunityIcons name="clock-time-four-outline" size={14} color="#6b7280" />
-                                    <Text style={styles.arrivedStatText}>2.3 hours</Text>
-                                </XStack>
-                                <XStack style={styles.arrivedStatItem}>
-                                    <MaterialCommunityIcons name="road-variant" size={14} color="#6b7280" />
-                                    <Text style={styles.arrivedStatText}>18.6 km</Text>
-                                </XStack>
+                        <XStack style={styles.arrivedStats} marginBlockStart="$2.5">
+                            <XStack style={styles.arrivedStatItem}>
+                                <MaterialCommunityIcons name="clock-time-four-outline" size={14} color="#6b7280" />
+                                <Text style={styles.arrivedStatText}>{activity.secondary_item.meta?.time_from_prev / 60} hours</Text>
                             </XStack>
-                        </YStack>
-                    </XStack>
+                            <XStack style={styles.arrivedStatItem}>
+                                <MaterialCommunityIcons name="road-variant" size={14} color="#6b7280" />
+                                <Text style={styles.arrivedStatText}>
+                                    {distance || distance == 0 ? Math.round((distance / 1000) * 100) / 100 : '-'} km
+                                </Text>
+                            </XStack>
+                        </XStack>
+                    </YStack>
+                </XStack>
 
-                    <View style={styles.arrivedDivider} />
-                    
-                    <XStack flex={1}>
-                        <MaterialCommunityIcons name="map-marker" size={28} color="#ef4444" />
-                        <YStack flex={1} paddingStart="$2.5">
-                            <XStack style={styles.arrivedRow}>
-                                <YStack style={styles.arrivedInfo}>
-                                    <Text style={styles.arrivedLabel}>From</Text>
-                                    <Text style={styles.arrivedTitle}>Wawa & Sheetz</Text>
-                                    <Text style={styles.arrivedMeta}>Sedona, AZ</Text>
-                                </YStack>
-                                <Text style={styles.arrivedStatText}>3 days ago</Text>
-                            </XStack>
-                        </YStack>
-                    </XStack>
+                <View style={styles.arrivedDivider} />
+                
+                <XStack flex={1}>
+                    <MaterialCommunityIcons name="map-marker" size={28} color="#ef4444" />
+                    <YStack flex={1} paddingStart="$2.5">
+                        <XStack style={styles.arrivedRow}>
+                            <YStack style={styles.arrivedInfo}>
+                                <Text style={styles.arrivedLabel}>From</Text>
+                                <Text style={styles.arrivedTitle}>
+                                    {activity.secondary_item.meta?.previous_route_point_id?.place_name ?
+                                        activity.secondary_item.meta.previous_route_point_id.place_name
+                                        : 'Unknown'
+                                    }
+                                </Text>
+                            </YStack>
+                            <Text style={styles.arrivedStatText}>{postedTime}</Text>
+                        </XStack>
+                    </YStack>
+                </XStack>
+            </YStack>
+
+            <Separator my={10} />
+
+            <XStack style={styles.contributorRow}>
+                <Avatar circular size="$4" style={styles.avatar}>
+                    <Avatar.Image
+                        src={'https:' + activity.user_avatar.thumb}
+                        accessibilityLabel="Contributor avatar"
+                    />
+                    <Avatar.Fallback />
+                </Avatar>
+
+                <YStack style={styles.contributorInfo}>
+                    <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
+                    <Text style={styles.contributorMeta}>1.276 contribs.</Text>
                 </YStack>
 
-                <Separator my={10} />
-
-                <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$4" style={styles.avatar}>
-                        <Avatar.Image
-                            src="https://i.pravatar.cc/100?img=8"
-                            accessibilityLabel="Contributor avatar"
-                        />
-                        <Avatar.Fallback />
-                    </Avatar>
-
-                    <YStack style={styles.contributorInfo}>
-                        <Text style={styles.contributorName}>Angelina Ho</Text>
-                        <Text style={styles.contributorMeta}>10 contribs.</Text>
-                    </YStack>
-
-                    <Text style={styles.onWayText}>87 en route</Text>
-                    
-                    <Button size="$2" style={styles.viewLocationButton}>
-                        <XStack style={styles.thanksContent}>
-                            <MaterialCommunityIcons name="history" size={16} />
-                            <Text style={styles.thanksText}>View Log</Text>
-                        </XStack>
-                    </Button>
-                </XStack>
-            </Card>
-        </>
+                <Text style={styles.onWayText}>87 en route</Text>
+                
+                <Button size="$2" style={styles.viewLocationButton}>
+                    <XStack style={styles.thanksContent}>
+                        <MaterialCommunityIcons name="history" size={16} />
+                        <Text style={styles.thanksText}>View Log</Text>
+                    </XStack>
+                </Button>
+            </XStack>
+        </Card>
     )
 }
 
@@ -85,7 +118,6 @@ const styles = StyleSheet.create({
     card: {
         padding: 12,
         borderRadius: 12,
-        marginBottom: 16,
         backgroundColor: '#fff',
     },
     row: {
@@ -205,7 +237,6 @@ const styles = StyleSheet.create({
     },
     arrivedTitle: {
         fontSize: 14,
-        fontWeight: '700',
     },
     arrivedMeta: {
         fontSize: 12,

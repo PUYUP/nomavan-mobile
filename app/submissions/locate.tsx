@@ -1,58 +1,159 @@
 import { getCurrentLocation, reverseGeocodeLocation } from '@/services/location';
+import { RouteContextPayload, useCreateRouteContextMutation } from '@/services/route-context';
+import { RoutePointPayload, useCreateRoutePointMutation } from '@/services/route-point';
+import { LocationSelection, subscribeLocationSelected } from '@/utils/location-selector';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Stack } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { BackHandler, Platform, StyleSheet } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Platform, StyleSheet } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Card, Sheet, Text, View, XStack, YStack } from 'tamagui';
+import Toast from 'react-native-toast-message';
+import { Button, Text, View, XStack, YStack } from 'tamagui';
+
+const distanceInMeters = (a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) => {
+    const toRad = (value: number) => (value * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(b.latitude - a.latitude);
+    const dLng = toRad(b.longitude - a.longitude);
+    const lat1 = toRad(a.latitude);
+    const lat2 = toRad(b.latitude);
+    const sinDLat = Math.sin(dLat / 2);
+    const sinDLng = Math.sin(dLng / 2);
+    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+};
 
 const LocateSubmission = () => {
-    const [editorOpen, setEditorOpen] = useState<boolean>(false);
-    const [position, setPosition] = React.useState(0);
-    const [location, setLocation] = React.useState(null);
-    const [placeName, setPlaceName] = React.useState('');
+    const router = useRouter();
+    const [nextLocation, setNextLocation] = React.useState<LocationSelection>();
+    const [currentLocation, setCurrentLocation] = React.useState<LocationSelection>();
+    const [previousLocation, setPreviousLocation] = React.useState<LocationSelection>();
+    const [currentDistanceFromPrev, setCurrentDistanceFromPrev] = React.useState<number>();
+    const [nextDistanceFromCurrent, setNextDistanceFromCurrent] = React.useState<number>();
+    const [createRouteContext, { isLoading: createContextLoading }] = useCreateRouteContextMutation({ fixedCacheKey: 'create-route-context-process' });
+    const [createRoutePoint, { isLoading: createPointLoading }] = useCreateRoutePointMutation({ fixedCacheKey: 'create-route-point-process' });
 
-    useEffect(() => {
-        const onMount = async () => {
-            if (editorOpen) {
-                const location = await getCurrentLocation();
-                if (location.ok) {
-                    const coords = location.data.coords;
-                    const geocoded = await reverseGeocodeLocation(coords.latitude, coords.longitude);
-                    if (geocoded.ok) {
-                        setPlaceName(geocoded.data.name);
-                    }
-                }
-            }
-        }
-        onMount();
-    }, [editorOpen]);
-
-    useEffect(() => {
-        if (!editorOpen) {
-            return;
-        }
-
-        const onBackPress = () => {
-            setEditorOpen(false);
-            return true;
-        };
-
-        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-        return () => subscription.remove();
-    }, [editorOpen]);
-
-    const refreshLocation = async () => {
+    const refreshLocation = async (isArrived: boolean = false) => {
         const location = await getCurrentLocation();
         if (location.ok) {
             const coords = location.data.coords;
             const geocoded = await reverseGeocodeLocation(coords.latitude, coords.longitude);
             if (geocoded.ok) {
-                setPlaceName(geocoded.data.name);
+                const placeName = geocoded.data.name;
+
+                // move current location to previous
+                if (currentLocation) {
+                    setPreviousLocation(currentLocation);
+
+                    const distance = distanceInMeters(
+                        { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
+                        { latitude: coords.latitude, longitude: coords.longitude }
+                    );
+
+                    setCurrentDistanceFromPrev(distance);
+                }
+                
+                if (isArrived && nextLocation) {
+                    setCurrentLocation({
+                        placeName: nextLocation?.placeName,
+                        latitude: nextLocation?.latitude,
+                        longitude: nextLocation?.longitude,
+                    });
+                } else {
+                    setCurrentLocation({
+                        placeName: placeName,
+                        latitude: coords.latitude,
+                        longitude: coords.longitude,
+                    });
+                }
+
+                // calculate distance
+                if (nextLocation) {
+                    const distance = distanceInMeters(
+                        { latitude: nextLocation.latitude, longitude: nextLocation.longitude },
+                        { latitude: coords.latitude, longitude: coords.longitude }
+                    );
+
+                    setNextDistanceFromCurrent(distance);
+                }
+
+                const payload: RoutePointPayload = {
+                    title: isArrived && nextLocation?.placeName ? nextLocation.placeName : placeName,
+                    content: '',
+                    status: 'publish',
+                    meta: {
+                        latitude: isArrived && nextLocation?.latitude ? nextLocation?.latitude : coords.latitude,
+                        longitude: isArrived && nextLocation?.longitude ? nextLocation?.longitude : coords.longitude,
+                        arrived_at: isArrived ? new Date().toISOString() : '',
+                    }
+                }
+                const result = await createRoutePoint(payload);
+                if (result && result.data) {
+                    // router.back();
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Information',
+                        text2: 'Your location updated successfully',
+                    });
+                }
+
+                if (isArrived) {
+                    setNextLocation(undefined);
+                }
             }
         }
     }
+
+    useEffect(() => {
+        const unsubscribeLocation = subscribeLocationSelected((selection) => {
+            if (selection && selection.purpose === 'next-location') {
+                setNextLocation(selection);
+            }
+        }, { emitLast: false });
+
+        return () => {
+            unsubscribeLocation();
+        };
+    }, []);
+
+    useEffect(() => {
+        const mounted = async () => {
+            if (nextLocation) {
+                // calculate distance
+                if (currentLocation) {
+                    const distance = distanceInMeters(
+                        { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
+                        { latitude: nextLocation?.latitude, longitude: nextLocation?.longitude }
+                    );
+
+                    setNextDistanceFromCurrent(distance);
+                }
+
+                const payload: RouteContextPayload = {
+                    title: '',
+                    content: '',
+                    status: 'publish',
+                    meta: {
+                        next_latitude: nextLocation?.latitude,
+                        next_longitude: nextLocation?.longitude,
+                        next_place_name: nextLocation?.placeName,
+                        started_at: new Date().toISOString(),
+                    }
+                }
+                const result = await createRouteContext(payload);
+                if (result && result.data) {
+                    // router.back();
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Information',
+                        text2: 'Destination saved successfully',
+                    });
+                }
+            }   
+        }
+        mounted();
+    }, [nextLocation]);
 
 	return (
         <>
@@ -90,20 +191,25 @@ const LocateSubmission = () => {
                                 </XStack>
                                 <YStack width={'80%'}>
                                     <Text fontSize={12} opacity={0.7}>Previous</Text>
-                                    <Text fontSize={14} numberOfLines={1} ellipsizeMode='tail'>Beaver Meadow Falls</Text>
+                                    <Text fontSize={14} numberOfLines={1} ellipsizeMode='tail'>
+                                        {previousLocation ? previousLocation.placeName : 'Location history empty'}
+                                    </Text>
                                 </YStack>
                             </XStack>
 
-                            <YStack paddingStart={12}>
-                                <XStack style={styles.metaRow}>
-                                    <MaterialCommunityIcons name="crosshairs-gps" size={16} color="#6b7280" />
-                                    <XStack>
-                                        <Text fontSize={13} opacity={0.7}>-140.303636</Text>
-                                        <Text marginStart={1} marginEnd={3}>,</Text>
-                                        <Text fontSize={13} opacity={0.7}>0.146626</Text>
+                            {previousLocation ? 
+                                <YStack paddingStart={12}>
+                                    <XStack style={styles.metaRow}>
+                                        <MaterialCommunityIcons name="crosshairs-gps" size={16} color="#6b7280" />
+                                        <XStack>
+                                            <Text fontSize={13} opacity={0.7}>{previousLocation.latitude}</Text>
+                                            <Text marginStart={1} marginEnd={3}>,</Text>
+                                            <Text fontSize={13} opacity={0.7}>{previousLocation.longitude}</Text>
+                                        </XStack>
                                     </XStack>
-                                </XStack>
-                            </YStack>
+                                </YStack>
+                                : null
+                            }
                         </YStack>
 
                         <View style={styles.dashedArrowRow}>
@@ -112,7 +218,7 @@ const LocateSubmission = () => {
                                     <MaterialCommunityIcons name="arrow-down" size={22} color="#1F3D2B" />
                                 </View>
 
-                                <Button size="$2" width={120} iconAfter={<MaterialCommunityIcons name="car-traction-control" size={14} />}>View track</Button>
+                                <Button size="$2" width={120} iconAfter={<MaterialCommunityIcons name="car-traction-control" size={14} />}>View route</Button>
                             <View style={styles.dashedLine} />
                         </View>
 
@@ -126,36 +232,45 @@ const LocateSubmission = () => {
                                         <Text fontSize={12} opacity={0.7}>Last update</Text>
                                         <Text fontSize={12} opacity={0.7}>2 hours ago</Text>
                                     </XStack>
-                                    <Text fontSize={14} numberOfLines={1} ellipsizeMode='tail'>Pictured Rocks National Lakeshore</Text>
+                                    <Text fontSize={14} numberOfLines={1} ellipsizeMode='tail'>
+                                        {currentLocation ? currentLocation.placeName : 'Where are you now?'}
+                                    </Text>
                                 </YStack>
                             </XStack>
 
                             <XStack style={{ alignItems: 'flex-end' }}>
-                                <YStack paddingStart={12} flex={1}>
-                                    <XStack style={styles.metaRow}>
-                                        <MaterialCommunityIcons name="crosshairs-gps" size={16} color="#6b7280" />
-                                        <XStack>
-                                            <Text fontSize={13} opacity={0.7}>-140.303636</Text>
-                                            <Text marginStart={1} marginEnd={3}>,</Text>
-                                            <Text fontSize={13} opacity={0.7}>0.146626</Text>
+                                {currentLocation ?
+                                    <YStack paddingStart={12} flex={1}>
+                                        <XStack style={styles.metaRow}>
+                                            <MaterialCommunityIcons name="crosshairs-gps" size={16} color="#6b7280" />
+                                            <XStack>
+                                                <Text fontSize={13} opacity={0.7}>{currentLocation.latitude}</Text>
+                                                <Text marginStart={1} marginEnd={3}>,</Text>
+                                                <Text fontSize={13} opacity={0.7}>{currentLocation.longitude}</Text>
+                                            </XStack>
                                         </XStack>
-                                    </XStack>
 
-                                    <XStack style={styles.metaRow}>
-                                        <MaterialCommunityIcons name="map-marker-distance" size={16} color="#6b7280" />
-                                        <Text fontSize={13} opacity={0.7}>From prev: 10.3 km</Text>
-                                    </XStack>
+                                        <XStack style={styles.metaRow}>
+                                            <MaterialCommunityIcons name="map-marker-distance" size={16} color="#6b7280" />
+                                            <Text fontSize={13} opacity={0.7}>
+                                                From prev: {currentDistanceFromPrev || currentDistanceFromPrev == 0 ? Math.round((currentDistanceFromPrev / 1000) * 100) / 100 : '-'} km
+                                            </Text>
+                                        </XStack>
 
-                                    <XStack style={styles.metaRow}>
-                                        <MaterialCommunityIcons name="timer-outline" size={16} color="#6b7280" />
-                                        <Text fontSize={13} opacity={0.7}>Time spent: 1 day 12 h</Text>
-                                    </XStack>
-                                </YStack>
+                                        <XStack style={styles.metaRow}>
+                                            <MaterialCommunityIcons name="timer-outline" size={16} color="#6b7280" />
+                                            <Text fontSize={13} opacity={0.7}>Time spent: 1 day 12 h</Text>
+                                        </XStack>
+                                    </YStack>
+                                    : null
+                                }
 
                                 <Button 
-                                    size="$2" 
+                                    size={currentLocation ? '$2' : '$4'}
+                                    bg={currentLocation ? '$blue4' : '$blue4'}
                                     icon={<MaterialCommunityIcons name="refresh" size={20} />}
-                                    style={styles.actionButton}
+                                    style={currentLocation ? styles.actionButton : styles.setLocationButton}
+                                    marginBlockStart={currentLocation ? 0 : 8}
                                     onPress={async () => await refreshLocation()}
                                 >
                                     Refresh
@@ -168,7 +283,7 @@ const LocateSubmission = () => {
                             <View style={styles.arrow}>
                                 <MaterialCommunityIcons name="arrow-down" size={22} color="#1F3D2B" />
                             </View>
-                            <Button size="$2" width={120} iconAfter={<MaterialCommunityIcons name="car-traction-control" size={14} />}>View track</Button>
+                            <Button size="$2" width={120} iconAfter={<MaterialCommunityIcons name="car-traction-control" size={14} />}>View route</Button>
                             <View style={styles.dashedLine} />
                         </View>
 
@@ -179,106 +294,75 @@ const LocateSubmission = () => {
                                 </XStack>
                                 <YStack width={'80%'}>
                                     <Text fontSize={12} opacity={0.7}>Next</Text>
-                                    <Text fontSize={14} numberOfLines={1} ellipsizeMode='tail'>Palisade Point</Text>
+                                    <Text fontSize={14} numberOfLines={1} ellipsizeMode='tail'>
+                                        {nextLocation ? nextLocation.placeName : 'Where you want to go?'}
+                                    </Text>
                                 </YStack>
                             </XStack>
 
                             <XStack style={{ alignItems: 'flex-end' }}>
-                                <YStack paddingStart={12} flex={1}>
-                                    <XStack style={styles.metaRow}>
-                                        <MaterialCommunityIcons name="crosshairs-gps" size={16} color="#6b7280" />
-                                        <XStack>
-                                            <Text fontSize={13} opacity={0.7}>-140.303636</Text>
-                                            <Text marginStart={1} marginEnd={3}>,</Text>
-                                            <Text fontSize={13} opacity={0.7}>0.146626</Text>
+                                {nextLocation ?
+                                    <YStack paddingStart={12} flex={1}>
+                                        <XStack style={styles.metaRow}>
+                                            <MaterialCommunityIcons name="crosshairs-gps" size={16} color="#6b7280" />
+                                            <XStack>
+                                                <Text fontSize={13} opacity={0.7}>{nextLocation.latitude}</Text>
+                                                <Text marginStart={1} marginEnd={3}>,</Text>
+                                                <Text fontSize={13} opacity={0.7}>{nextLocation.longitude}</Text>
+                                            </XStack>
                                         </XStack>
-                                    </XStack>
-                                
-                                    <XStack style={styles.metaRow}>
-                                        <MaterialCommunityIcons name="map-marker-distance" size={16} color="#6b7280" />
-                                        <Text fontSize={13} opacity={0.7}>Distance: ±7.8 km</Text>
-                                    </XStack>
+                                    
+                                        <XStack style={styles.metaRow}>
+                                            <MaterialCommunityIcons name="map-marker-distance" size={16} color="#6b7280" />
+                                            <Text fontSize={13} opacity={0.7}>
+                                                Distance: {nextDistanceFromCurrent || nextDistanceFromCurrent == 0 ? Math.round((nextDistanceFromCurrent / 1000) * 100) / 100 : '-'} km
+                                            </Text>
+                                        </XStack>
 
-                                    <XStack style={styles.metaRow}>
-                                        <MaterialCommunityIcons name="timer-outline" size={16} color="#6b7280" />
-                                        <Text fontSize={13} opacity={0.7}>Time: ±10 hours</Text>
-                                    </XStack>
-                                </YStack>
+                                        <XStack style={styles.metaRow}>
+                                            <MaterialCommunityIcons name="timer-outline" size={16} color="#6b7280" />
+                                            <Text fontSize={13} opacity={0.7}>Time: ±10 hours</Text>
+                                        </XStack>
+                                    </YStack>
+                                    : null
+                                }
 
                                 <Button 
-                                    size="$2" 
-                                    icon={<MaterialCommunityIcons 
-                                    name="file-document-edit-outline" size={20} />}
-                                    style={styles.actionButton}
+                                    size={nextLocation ? '$2' : '$4'}
+                                    bg={nextLocation ? '$blue4' : '$blue4'}
+                                    icon={<MaterialCommunityIcons name="map-marker-radius-outline" size={20} />}
+                                    style={nextLocation ? styles.actionButton : styles.setLocationButton}
+                                    marginBlockStart={nextLocation ? 0 : 8}
+                                    onPress={() => router.push({
+                                        pathname: '/modals/map',
+                                        params: {
+                                            purpose: 'next-location',
+                                            place_name: nextLocation?.placeName,
+                                            initialLat: nextLocation?.latitude,
+                                            initialLng: nextLocation?.longitude,
+                                        }
+                                    })}
                                 >
-                                    Change
+                                    {nextLocation ? 'Change' : 'Set Destination'}
                                 </Button>
                             </XStack>
+                            
+                            {nextLocation && currentLocation ?
+                                <Button 
+                                    size={'$4'}
+                                    bg={'$blue4'}
+                                    icon={<MaterialCommunityIcons name="map-marker-radius-outline" size={20} />}
+                                    marginBlockStart={8}
+                                    onPress={() => refreshLocation(true)}
+                                >
+                                    Arrived!
+                                </Button>
+                                : null
+                            }
                         </YStack>
                     </YStack>
                 </KeyboardAwareScrollView>
-
-                {/* <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
-                    <XStack style={{ justifyContent: 'stretch', gap: 16 }}>
-                        <View style={{ flex: 1 }}>
-                            <Button onPress={async () => refreshLocation()}>
-                                <MaterialCommunityIcons name="map-marker-radius-outline" size={20} />
-                                <Text>Refresh</Text>
-                            </Button>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Button onPress={async () => setEditorOpen(true)} style={{ backgroundColor: '#00bcd4', width: '100%' }}>
-                                <MaterialCommunityIcons name="map-marker-path" size={20} color={'#fff'} />
-                                <Text color={'#fff'}>Locate</Text>
-                            </Button>
-                        </View>
-                    </XStack>
-                </View> */}
             </SafeAreaView>
-
-            <Sheet
-                modal={true}
-                open={editorOpen}
-                onOpenChange={setEditorOpen}
-                snapPoints={[85]}
-                snapPointsMode={'percent'}
-                dismissOnSnapToBottom
-                position={position}
-                onPositionChange={setPosition}
-                zIndex={100_000}
-                transition="medium"
-            >
-                <Sheet.Overlay
-                    transition="fast"
-                    bg="$shadow6"
-                    enterStyle={{ opacity: 0 }}
-                    exitStyle={{ opacity: 0 }}
-                />
-
-                <Sheet.Frame p="$4" justify="center" items="center" gap="$5">
-                    <Button
-                        unstyled
-                        style={styles.sheetClose}
-                        pressStyle={{ opacity: 0.7 }}
-                        accessibilityLabel="Close"
-                        onPress={async () => setEditorOpen(false)}
-                    >
-                        <MaterialCommunityIcons name="close" size={22} />
-                    </Button>
-
-                    <Card style={styles.currentLocation}>
-                        <YStack style={{ justifyContent: 'center', alignItems: 'center' }}>
-                            <MaterialCommunityIcons name="map-marker-radius" size={60} color={'#E53935'} />
-                            <Text marginBlockStart="$1" opacity={0.75}>You are here</Text>
-                            <Text marginBlockStart="$3" fontSize="$4" style={{ textAlign: 'center' }}>{placeName}</Text>
-                        </YStack>
-                    </Card>
-
-                    <Card>
-                        {/*'map view here'*/}
-                    </Card>
-                </Sheet.Frame>
-            </Sheet>
         </>
 	);
 }
@@ -362,5 +446,8 @@ const styles = StyleSheet.create({
     },
     actionButton: {
         backgroundColor: '#eef2ff',
+    },
+    setLocationButton: {
+        width: '100%',
     }
 });

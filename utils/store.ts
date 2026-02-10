@@ -4,6 +4,8 @@ import { expenseApi } from '@/services/expense';
 import { mediaApi } from '@/services/media';
 import { meetupApi } from '@/services/meetup';
 import { receiptApi } from '@/services/receipt-extractor';
+import { routeContextApi } from '@/services/route-context';
+import { routePointApi } from '@/services/route-point';
 import { signinApi } from '@/services/signin';
 import { signupApi } from '@/services/signup';
 import { spothuntApi } from '@/services/spothunt';
@@ -22,6 +24,8 @@ export const AppStore = configureStore({
         [connectivityApi.reducerPath]: connectivityApi.reducer,
         [storyApi.reducerPath]: storyApi.reducer,
         [spothuntApi.reducerPath]: spothuntApi.reducer,
+        [routePointApi.reducerPath]: routePointApi.reducer,
+        [routeContextApi.reducerPath]: routeContextApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(
@@ -35,6 +39,8 @@ export const AppStore = configureStore({
             connectivityApi.middleware,
             storyApi.middleware,
             spothuntApi.middleware,
+            routePointApi.middleware,
+            routeContextApi.middleware,
         ),
 })
 

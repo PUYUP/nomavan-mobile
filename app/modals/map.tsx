@@ -32,7 +32,7 @@ export default function MapScreen() {
     ? 'Origin'
     : purpose === 'destination'
       ? 'Destination'
-      : purpose === 'meetup' || purpose === 'expense' || purpose === 'connectivity' || purpose === 'story'
+      : purpose === 'meetup' || purpose === 'expense' || purpose === 'connectivity' || purpose === 'story' || purpose === 'next-location'
         ? 'Location'
         : purpose
           ? `${purpose.charAt(0).toUpperCase()}${purpose.slice(1)}`
@@ -266,7 +266,7 @@ export default function MapScreen() {
           <XStack style={[styles.metaRow, { paddingEnd: 16 }]}
           >
             <MaterialCommunityIcons name="map-marker-radius-outline" size={26} color="#6b7280" />
-            <Text fontSize={13}>{placeName ? placeName : '-'}</Text>
+            <Text fontSize={13} maxW={'90%'}>{placeName ? placeName : '-'}</Text>
           </XStack>
 
           <XStack style={styles.metaRow}>
