@@ -27,9 +27,13 @@ const AddPinSubmission = () => {
     const [centerCoords, setCenterCoords] = useState<{ latitude: number; longitude: number } | null>(null);
     const [locationName, setLocationName] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
-    const [povImages, setPovImages] = useState<string[]>([]);
-    const [galleryIds, setGalleryIds] = useState<number[]>([]);
-    const [uploadingSlots, setUploadingSlots] = useState<boolean[]>([]);
+    type PovImage = {
+        id: number;
+        uri: string;
+        clientId: string;
+        uploading?: boolean;
+    };
+    const [povImages, setPovImages] = useState<PovImage[]>([]);
     const pinScale = useRef(new Animated.Value(1)).current;
     const mapRef = useRef<MapView | null>(null);
     const lastRegionRef = useRef<Region | null>(null);
@@ -49,10 +53,9 @@ const AddPinSubmission = () => {
                 latitude: centerCoords?.latitude,
                 longitude: centerCoords?.longitude,
                 address: locationName,
-                gallery: galleryIds,
+                gallery: povImages.filter((item) => item.id > 0).map((item) => item.id),
             }
-        }
-
+        };
         const result = await submitSpothunt(payload);
         if (result && result.data) {
             router.back();
@@ -176,6 +179,7 @@ const AddPinSubmission = () => {
         }
     };
 
+    const createClientId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const pickImage = async (index: number) => {
         Alert.alert('Add photo', 'Choose a source', [
             {
@@ -192,12 +196,20 @@ const AddPinSubmission = () => {
                     });
                     if (!result.canceled && result.assets?.[0]?.uri) {
                         const uri = result.assets[0].uri;
+                        let clientId: string;
                         setPovImages((prev) => {
                             const next = [...prev];
-                            next[index] = uri;
+                            if (index < next.length) {
+                                clientId = next[index].clientId;
+                                next[index] = { ...next[index], uri, id: 0, uploading: true };
+                            } else {
+                                clientId = createClientId();
+                                next.push({ id: 0, uri, clientId, uploading: true });
+                            }
+                            // Immediately start upload after state update
+                            setTimeout(() => handleUploadImages(uri, clientId), 0);
                             return next;
                         });
-                        handleUploadImages(uri, index);
                     }
                 },
             },
@@ -215,12 +227,19 @@ const AddPinSubmission = () => {
                     });
                     if (!result.canceled && result.assets?.[0]?.uri) {
                         const uri = result.assets[0].uri;
+                        let clientId: string;
                         setPovImages((prev) => {
                             const next = [...prev];
-                            next[index] = uri;
+                            if (index < next.length) {
+                                clientId = next[index].clientId;
+                                next[index] = { ...next[index], uri, id: 0, uploading: true };
+                            } else {
+                                clientId = createClientId();
+                                next.push({ id: 0, uri, clientId, uploading: true });
+                            }
+                            setTimeout(() => handleUploadImages(uri, clientId), 0);
                             return next;
                         });
-                        handleUploadImages(uri, index);
                     }
                 },
             },
@@ -228,52 +247,36 @@ const AddPinSubmission = () => {
         ]);
     };
 
-    const handleUploadImages = async (uri: string, index: number) => {
+    const handleUploadImages = async (uri: string, clientId: string) => {
         try {
-            setUploadingSlots((prev) => {
-                const next = [...prev];
-                next[index] = true;
-                return next;
-            });
             const payload: MediaUploadPayload = {
                 file: uri,
             };
             const result = await uploadMdia(payload);
-            if (result && result.data) {
-                setGalleryIds((prev) => {
-                    const next = [...prev];
-                    next[index] = result.data.id;
-                    return next;
-                });
+            if (result && result.data && typeof result.data.id === 'number' && result.data.id > 0) {
+                setPovImages((prev) =>
+                    prev.map((item) =>
+                        item.clientId === clientId
+                            ? { ...item, id: result.data.id, uploading: false }
+                            : item
+                    )
+                );
+            } else {
+                const errorMessage = (result?.error as any)?.data?.message;
+                if (errorMessage) {
+                    Alert.alert(errorMessage);
+                }
+                setPovImages((prev) => prev.filter((item) => item.clientId !== clientId));
             }
         } catch (error) {
             console.error('Error uploading image:', error);
             Alert.alert('Upload failed', 'Failed to upload the image. Please try again.');
-        } finally {
-            setUploadingSlots((prev) => {
-                const next = [...prev];
-                next[index] = false;
-                return next;
-            });
+            setPovImages((prev) => prev.filter((item) => item.clientId !== clientId));
         }
     };
 
-    const removeImage = (index: number) => {
-        setPovImages((prev) => {
-            const next = [...prev];
-            next.splice(index, 1);
-            return next;
-        });
-        setGalleryIds((prev) => {
-            const next = [...prev];
-            next.splice(index, 1);
-            return next;
-        });
-        setUploadingSlots((prev) => {
-            const next = [...prev];
-            next.splice(index, 1);
-            return next;
-        });
+    const removeImage = (clientId: string) => {
+        setPovImages((prev) => prev.filter((item) => item.clientId !== clientId));
     };
 
     return (
@@ -363,20 +366,20 @@ const AddPinSubmission = () => {
                         </YStack>
                     
                         <XStack style={styles.povGrid}>
-                            {povImages.map((uri, index) => (
-                                <Pressable key={`pov-${index}`} style={styles.povTile} onPress={() => pickImage(index)}>
-                                    <Image source={{ uri }} style={styles.povImage} />
-                                    {uploadingSlots[index] ? (
+                            {povImages.map((item, index) => (
+                                <Pressable key={item.clientId} style={styles.povTile} onPress={() => pickImage(index)}>
+                                    <Image source={{ uri: item.uri }} style={styles.povImage} />
+                                    {item.uploading ? (
                                         <View style={styles.povUploading}>
                                             <ActivityIndicator color="#111827" />
                                         </View>
                                     ) : null}
-                                    <Pressable style={styles.povRemove} onPress={() => removeImage(index)}>
+                                    <Pressable style={styles.povRemove} onPress={() => removeImage(item.clientId)}>
                                         <MaterialCommunityIcons name="close" size={14} color="#111827" />
                                     </Pressable>
-                                    {galleryIds[index] ? (
+                                    {item.id > 0 ? (
                                         <View style={styles.povIdBadge}>
-                                            <Text fontSize={10} color="#111827">#{galleryIds[index]}</Text>
+                                            <Text fontSize={10} color="#111827">#{item.id}</Text>
                                         </View>
                                     ) : null}
                                 </Pressable>
