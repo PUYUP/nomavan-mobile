@@ -14,7 +14,7 @@ export type MeetupPayload = {
     invite_status: InviteStatus;
     latitude: number;
     longitude: number;
-    address: string;
+    place_name: string;
     capacity: number;
     coverage_radius: number;
     start_at: string;
@@ -25,7 +25,7 @@ export interface MeetupResponse extends BPGroup {
   [x: string]: any;
 	latitude: string;
     longitude: string;
-    address: string;
+    place_name: string;
     start_at: string;
     end_at: string;
     capacity: string;

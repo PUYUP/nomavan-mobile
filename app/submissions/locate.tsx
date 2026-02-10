@@ -1,6 +1,5 @@
 import { getCurrentLocation, reverseGeocodeLocation } from '@/services/location';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { LocationGeocodedAddress } from 'expo-location';
 import { Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { BackHandler, Platform, StyleSheet } from 'react-native';
@@ -12,8 +11,7 @@ const LocateSubmission = () => {
     const [editorOpen, setEditorOpen] = useState<boolean>(false);
     const [position, setPosition] = React.useState(0);
     const [location, setLocation] = React.useState(null);
-    const [locationName, setLocationName] = React.useState('');
-    const [address, setAddress] = React.useState<LocationGeocodedAddress>();
+    const [placeName, setPlaceName] = React.useState('');
 
     useEffect(() => {
         const onMount = async () => {
@@ -23,8 +21,7 @@ const LocateSubmission = () => {
                     const coords = location.data.coords;
                     const geocoded = await reverseGeocodeLocation(coords.latitude, coords.longitude);
                     if (geocoded.ok) {
-                        setLocationName(geocoded.data.name);
-                        setAddress(geocoded.data.details);
+                        setPlaceName(geocoded.data.name);
                     }
                 }
             }
@@ -52,8 +49,7 @@ const LocateSubmission = () => {
             const coords = location.data.coords;
             const geocoded = await reverseGeocodeLocation(coords.latitude, coords.longitude);
             if (geocoded.ok) {
-                setLocationName(geocoded.data.name);
-                setAddress(geocoded.data.details);
+                setPlaceName(geocoded.data.name);
             }
         }
     }
@@ -274,7 +270,7 @@ const LocateSubmission = () => {
                         <YStack style={{ justifyContent: 'center', alignItems: 'center' }}>
                             <MaterialCommunityIcons name="map-marker-radius" size={60} color={'#E53935'} />
                             <Text marginBlockStart="$1" opacity={0.75}>You are here</Text>
-                            <Text marginBlockStart="$3" fontSize="$4" style={{ textAlign: 'center' }}>{locationName}</Text>
+                            <Text marginBlockStart="$3" fontSize="$4" style={{ textAlign: 'center' }}>{placeName}</Text>
                         </YStack>
                     </Card>
 

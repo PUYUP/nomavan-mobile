@@ -12,7 +12,7 @@
 export type LocationSelection = {
     latitude: number;
     longitude: number;
-    address?: string;
+    placeName?: string;
     purpose?: string;
 };
 

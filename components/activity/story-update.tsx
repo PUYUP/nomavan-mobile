@@ -19,7 +19,7 @@ const StoryUpdate = ({ activity }: StoryUpdateProps) => {
         ? stripHtml(activity.secondary_item.content.rendered)
         : stripHtml(activity.content.rendered) ?? '';
     const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
-    const componentLabel = activity.secondary_item.meta.address || null;
+    const componentLabel = activity.secondary_item.meta.place_name || null;
     return (
         <>
             <Card style={styles.card}>

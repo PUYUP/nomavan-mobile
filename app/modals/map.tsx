@@ -10,17 +10,17 @@ import { Button, Text, View, XStack, YStack } from 'tamagui';
 
 export default function MapScreen() {
   const router = useRouter();
-  const { returnTo, initialLat, initialLng, initialAddress, purpose } = useLocalSearchParams<{
+  const { returnTo, initialLat, initialLng, initialPlaceName, purpose } = useLocalSearchParams<{
     returnTo?: string;
     initialLat?: string;
     initialLng?: string;
-    initialAddress?: string;
+    initialPlaceName?: string;
     purpose?: string;
   }>();
   const initialDelta = 0.0025;
   const [region, setRegion] = useState<Region | null>(null);
   const [centerCoords, setCenterCoords] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [locationName, setLocationName] = useState<string>('');
+  const [placeName, setPlaceName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const pinScale = useRef(new Animated.Value(1)).current;
   const mapRef = useRef<MapView | null>(null);
@@ -56,12 +56,12 @@ export default function MapScreen() {
         setRegion(nextRegion);
         lastRegionRef.current = nextRegion;
         setCenterCoords({ latitude: parsedLat, longitude: parsedLng });
-        const address = initialAddress ?? '';
-        setLocationName(address);
+        const placeName = initialPlaceName ?? '';
+        setPlaceName(placeName);
         emitLocationSelection({
           latitude: parsedLat,
           longitude: parsedLng,
-          address,
+          placeName: placeName,
           purpose,
         });
         setIsLoading(false);
@@ -79,7 +79,7 @@ export default function MapScreen() {
         setRegion(nextRegion);
         lastRegionRef.current = nextRegion;
         setCenterCoords({ latitude: saved.latitude, longitude: saved.longitude });
-        setLocationName(saved.address ?? '');
+        setPlaceName(saved.placeName ?? '');
         emitLocationSelection({
           ...saved,
           purpose,
@@ -102,12 +102,12 @@ export default function MapScreen() {
         lastRegionRef.current = nextRegion;
         setCenterCoords({ latitude: coords.latitude, longitude: coords.longitude });
         const geocoded = await reverseGeocodeLocation(coords.latitude, coords.longitude);
-        const address = geocoded.ok ? geocoded.data.name : '';
-        setLocationName(address);
+        const placeName = geocoded.ok ? geocoded.data.name : '';
+        setPlaceName(placeName);
         emitLocationSelection({
           latitude: coords.latitude,
           longitude: coords.longitude,
-          address,
+          placeName: placeName,
           purpose,
         });
       }
@@ -115,13 +115,13 @@ export default function MapScreen() {
       hasInitialized.current = true;
     };
     init();
-  }, [initialAddress, initialDelta, initialLat, initialLng]);
+  }, [initialPlaceName, initialDelta, initialLat, initialLng]);
 
   const updateLocationFromCoords = async (latitude: number, longitude: number) => {
     const geocoded = await reverseGeocodeLocation(latitude, longitude);
-    const address = geocoded.ok ? geocoded.data.name : '';
-    setLocationName(address);
-    emitLocationSelection({ latitude, longitude, address, purpose });
+    const placeName = geocoded.ok ? geocoded.data.name : '';
+    setPlaceName(placeName);
+    emitLocationSelection({ latitude, longitude, placeName, purpose });
   };
 
   const handleRegionChangeComplete = async (nextRegion: Region) => {
@@ -176,13 +176,13 @@ export default function MapScreen() {
     const payload = {
       latitude: String(centerCoords.latitude),
       longitude: String(centerCoords.longitude),
-      address: locationName ?? '',
+      place_name: placeName ?? '',
       purpose,
     };
     emitLocationSelected({
       latitude: centerCoords.latitude,
       longitude: centerCoords.longitude,
-      address: locationName ?? '',
+      placeName: placeName ?? '',
       purpose,
     });
     if (returnTo) {
@@ -266,7 +266,7 @@ export default function MapScreen() {
           <XStack style={[styles.metaRow, { paddingEnd: 16 }]}
           >
             <MaterialCommunityIcons name="map-marker-radius-outline" size={26} color="#6b7280" />
-            <Text fontSize={13}>{locationName ? locationName : '-'}</Text>
+            <Text fontSize={13}>{placeName ? placeName : '-'}</Text>
           </XStack>
 
           <XStack style={styles.metaRow}>

@@ -13,10 +13,10 @@ import { Button, Dialog, Input, Text, TextArea, View, XStack, YStack } from "tam
 interface Expense {
     items: Item[]
     content: string
-    store: string
+    storeName: string
     lat: number
     lng: number
-    address: string
+    placeName: string
 }
 
 interface Item {
@@ -36,10 +36,10 @@ const ExpenseSubmission = () => {
     const [summary, setSummary] = useState(null);
     const [editorOpen, setEditorOpen] = useState<boolean>(false);
     const [noteOpen, setNoteOpen] = useState<boolean>(false);
-    const [storeOpen, setStoreOpen] = useState<boolean>(false);
+    const [storeNameOpen, setStoreNameOpen] = useState<boolean>(false);
     const { control: controlItem, handleSubmit: saveItem, reset: resetItem } = useForm<Item>();
     const { control: controlNote, handleSubmit: saveNote, reset: resetNote } = useForm<Expense>();
-    const { control: controlStore, handleSubmit: saveStore, reset: resetStore } = useForm<Expense>();
+    const { control: controlStoreName, handleSubmit: saveStoreName, reset: resetStoreName } = useForm<Expense>();
     const { 
         control: controlExpense,
         handleSubmit: saveExpense,
@@ -47,14 +47,13 @@ const ExpenseSubmission = () => {
         getValues: expenseValues,
         setValue: setExpenseValue
     } = useForm<Expense>();
-    const [address, setAddress] = useState<string | undefined>('');
+    const [placeName, setPlaceName] = useState<string | undefined>('');
     const [location, setLocation] = useState<LocationSelection | undefined>();
-    const [store, setStore] = useState<string | undefined>('');
+    const [storeName, setStoreName] = useState<string | undefined>('');
     const [, result] = useGetItemsMutation({ fixedCacheKey: 'receipt-process' });
     const [submitExpense, { isLoading }] = useCreateExpenseMutation({ fixedCacheKey: 'submit-expense-process' });
 
     const onSubmit: SubmitHandler<Item> = (data) => {
-        console.log('Save item!');
         if (selectedItemIndex != null) {
             updateItem(selectedItemIndex, data);
         } else {
@@ -64,15 +63,13 @@ const ExpenseSubmission = () => {
     };
 
     const onNoteSubmit: SubmitHandler<Expense> = (data) => {
-        console.log('Save note!');
         setContent(data.content);
         setNoteOpen(false);
     };
 
-    const onStoreSubmit: SubmitHandler<Expense> = (data) => {
-        console.log('Save store!');
-        setStore(data.store);
-        setStoreOpen(false);
+    const onStoreNameSubmit: SubmitHandler<Expense> = (data) => {
+        setStoreName(data.storeName);
+        setStoreNameOpen(false);
     };
 
     const updateItem = (index: number, patch: Partial<Item>) => {
@@ -120,10 +117,10 @@ const ExpenseSubmission = () => {
             content: content,
             status: 'publish',
             meta: {
-                latitude: location?.latitude ? location.latitude as unknown as string : '',
-                longitude: location?.longitude ? location.longitude as unknown as string : '',
-                address: location?.address ? location?.address : '',
-                store: store ? store : '',
+                latitude: location?.latitude ? location.latitude : 0,
+                longitude: location?.longitude ? location.longitude : 0,
+                place_name: location?.placeName ? location?.placeName : '',
+                store_name: storeName ? storeName : '',
                 expense_items_inline: items.map(item => {
                     return {
                         name: item.name,
@@ -134,9 +131,11 @@ const ExpenseSubmission = () => {
             }
         }
 
-        const result = await submitExpense(payload);
-        if (result && result.data) {
-            router.back();
+        if (items.length > 0) {
+            const result = await submitExpense(payload);
+            if (result && result.data) {
+                router.back();
+            }
         }
     }
 
@@ -188,9 +187,9 @@ const ExpenseSubmission = () => {
         const unsubscribeLocation = subscribeLocationSelected((selection) => {
             if (selection && selection.purpose === 'expense') {
                 setLocation(selection);
-                setAddress(selection.address);
+                setPlaceName(selection.placeName);
 
-                setExpenseValue('address', selection.address as string);
+                setExpenseValue('placeName', selection.placeName as string);
                 setExpenseValue('lat', selection.latitude);
                 setExpenseValue('lng', selection.longitude);
             }
@@ -316,13 +315,13 @@ const ExpenseSubmission = () => {
                         <XStack maxW={'60%'} gap="$3">
                             <MaterialCommunityIcons name="store-settings-outline" size={24} />
 
-                            <Text fontSize={store ? '$3' : '$3'} opacity={0.75}>
-                                {store ? store: 'Not set yet'}
+                            <Text fontSize={storeName ? '$3' : '$3'} opacity={0.75}>
+                                {storeName ? storeName: 'Not set yet'}
                             </Text>
                         </XStack>
 
-                        <Button size={'$2'} width={98} onPress={() => setStoreOpen(true)}>
-                            <Text>{store ? 'Change' : 'Set store'}</Text>
+                        <Button size={'$2'} width={98} onPress={() => setStoreNameOpen(true)}>
+                            <Text>{storeName ? 'Change' : 'Set store'}</Text>
                         </Button>
                     </XStack>
                     
@@ -344,8 +343,8 @@ const ExpenseSubmission = () => {
                         <XStack maxW={'60%'} gap="$3">
                             <MaterialCommunityIcons name="map-marker-radius-outline" size={24} />
 
-                            <Text fontSize={address ? '$2' : '$3'} opacity={0.75}>
-                                {address ? address : 'Not set yet'}
+                            <Text fontSize={placeName ? '$2' : '$3'} opacity={0.75}>
+                                {placeName ? placeName : 'Not set yet'}
                             </Text>
                         </XStack>
 
@@ -353,12 +352,12 @@ const ExpenseSubmission = () => {
                             pathname: '/modals/map',
                             params: {
                                 purpose: 'expense',
-                                address: location?.address,
+                                placeName: location?.placeName,
                                 initialLat: location?.latitude,
                                 initialLng: location?.longitude,
                             }
                         })}>
-                            <Text>{address ? 'Change' : 'Locate'}</Text>
+                            <Text>{placeName ? 'Change' : 'Locate'}</Text>
                         </Button>
                     </XStack>
                     
@@ -578,12 +577,12 @@ const ExpenseSubmission = () => {
 
             {/* store name dialog */}
             <Dialog
-                open={storeOpen}
+                open={storeNameOpen}
                 disableRemoveScroll={false}
                 onOpenChange={(open) => {
-                    setStoreOpen(open);
+                    setStoreNameOpen(open);
                     if (!open) {
-                        resetStore();
+                        resetStoreName();
                     }
                 }}
                 modal={true}
@@ -621,8 +620,8 @@ const ExpenseSubmission = () => {
                             
                                 <YStack gap="$3">
                                     <Controller
-                                        name="store"
-                                        control={controlStore}
+                                        name="storeName"
+                                        control={controlStoreName}
                                         rules={{ required: true }}
                                         render={({ field: { onChange, value } }) => (
                                             <TextArea 
@@ -636,7 +635,7 @@ const ExpenseSubmission = () => {
                                     <XStack gap="$3" marginBlockStart="$4" style={{ justifyContent: 'space-between' }}>
                                         <View flex={1}>
                                             <Button 
-                                                onPress={saveStore(onStoreSubmit)} 
+                                                onPress={saveStoreName(onStoreNameSubmit)} 
                                                 bg="$orange9" 
                                                 pressStyle={{ bg: "$orange10"}} 
                                                 hoverStyle={{ bg: "$orange10" }}

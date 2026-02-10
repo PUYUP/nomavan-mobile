@@ -68,7 +68,7 @@ const Meetup = ({
         if (!latitude || !longitude) return
 
         const query = encodeURIComponent(`${latitude},${longitude}`)
-        const label = encodeURIComponent(item?.primary_item?.address)
+        const label = encodeURIComponent(item?.primary_item?.place_name)
         const url = Platform.OS === 'ios'
             ? `http://maps.apple.com/?ll=${query}&q=${label}`
             : `https://www.google.com/maps/search/?api=1&query=${query}`
@@ -167,7 +167,7 @@ const Meetup = ({
                     <XStack gap="$2" style={{ marginTop: -2 }}>
                         <MaterialCommunityIcons name="map-marker" size={16} color="#ff817b" />
                         <Text fontSize={12} opacity={0.8} marginEnd={22}>
-                            {activity?.primary_item?.address ? activity?.primary_item?.address : '-'}
+                            {activity?.primary_item?.place_name ? activity?.primary_item?.place_name : '-'}
                         </Text>
                     </XStack>
                     <XStack gap="$2" style={{ marginTop: -2 }}>

@@ -44,7 +44,7 @@ const RadioGroupItemWithLabel2 = (props: {
 const ConnectivitySubmission = () => {
 	const router = useRouter();
 	const [signalInfo, setSignalInfo] = useState<SignalInfo>();
-    const [locationName, setLocationName] = useState('');
+    const [placeName, setPlaceName] = useState('');
 	const [submitConnectivity, { isLoading }] = useCreateConnectivityMutation({ fixedCacheKey: 'submit-connectivity-process' });
 
 	const { control, handleSubmit, setValue, reset } = useForm<SignalInfo>();
@@ -55,7 +55,7 @@ const ConnectivitySubmission = () => {
 			meta: {
 				latitude: data.lat,
 				longitude: data.lng,
-				address: locationName,
+				place_name: placeName,
 				carrier: data.carrier,
 				generation: data.cellularGeneration,
 				type: data.type,
@@ -106,7 +106,7 @@ const ConnectivitySubmission = () => {
 	useEffect(() => {
 		const unsubscribeLocation = subscribeLocationSelected((selection) => {
 			if (selection && selection.purpose === 'connectivity') {
-				setLocationName(selection.address as string);
+				setPlaceName(selection.placeName as string);
 				setSignalInfo((prev: SignalInfo | undefined) => {
 					return prev ? {
 						...prev,
@@ -161,19 +161,19 @@ const ConnectivitySubmission = () => {
 						: null
 					}
 
-					<XStack style={[styles.inputStack, { alignItems: locationName ? 'start' : 'center' }]}>
+					<XStack style={[styles.inputStack, { alignItems: placeName ? 'start' : 'center' }]}>
 						<MaterialCommunityIcons name='map-marker-radius-outline' size={26} style={styles.inputIcon} />
-						<Text style={[styles.inputText, { fontSize: 14, flex: 1, paddingRight: 8 }]}>{locationName != '' ? locationName : 'Not set yet'}</Text>
+						<Text style={[styles.inputText, { fontSize: 14, flex: 1, paddingRight: 8 }]}>{placeName != '' ? placeName : 'Not set yet'}</Text>
 						<Button size={'$2'} width={80} onPress={() => router.push({
 							pathname: '/modals/map',
 							params: {
 								purpose: 'connectivity',
-								address: locationName,
+								place_name: placeName,
 								initialLat: signalInfo?.lat,
 								initialLng: signalInfo?.lng,
 							}
 						})}>
-							<Text>{locationName ? 'Change' : 'Locate'}</Text>
+							<Text>{placeName ? 'Change' : 'Locate'}</Text>
 						</Button>
 					</XStack>
 

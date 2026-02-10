@@ -7,7 +7,7 @@ export interface ConnectivityPayload {
 	meta: {
 		latitude: number;
 		longitude: number;
-		address: string;
+		place_name: string;
 		carrier: string;
 		generation: string;
 		type: string;
@@ -50,7 +50,7 @@ export interface ConnectivityResponse {
 		footnotes: string;
 		latitude: number;
 		longitude: number;
-		address: string;
+		place_name: string;
 		carrier: string;
 		generation: string;
 		type: string;

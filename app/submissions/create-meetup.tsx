@@ -19,7 +19,7 @@ export interface Meetup {
     endAt: string
     lat: number
     lng: number
-    address: string
+    placeName: string
     capacity: number
     coverageRadius: number
 }
@@ -32,7 +32,7 @@ const CreateMeetupSubmission = () => {
             coverageRadius: 1000,
         }
     });
-    const [address, setAddress] = useState<string | undefined>('');
+    const [placeName, setPlaceName] = useState<string | undefined>('');
     const [location, setLocation] = useState<LocationSelection | undefined>();
     const [startAt, setStartAt] = useState<string>('');
     const [endAt, setEndAt] = useState<string>('');
@@ -45,7 +45,7 @@ const CreateMeetupSubmission = () => {
             end_at: endAt,
             latitude: data.lat,
             longitude: data.lng,
-            address: data.address,
+            place_name: data.placeName,
             capacity: data.capacity,
             coverage_radius: data.coverageRadius,
             types: 'meetup',
@@ -63,7 +63,7 @@ const CreateMeetupSubmission = () => {
 
             // reset form
             reset();
-            setAddress('');
+            setPlaceName('');
             setLocation(undefined);
             setStartAt('');
             setEndAt('');
@@ -77,9 +77,9 @@ const CreateMeetupSubmission = () => {
         const unsubscribeLocation = subscribeLocationSelected((selection) => {
             if (selection && selection.purpose === 'meetup') {
                 setLocation(selection);
-                setAddress(selection.address);
+                setPlaceName(selection.placeName);
 
-                setValue('address', selection.address as string);
+                setValue('placeName', selection.placeName as string);
                 setValue('lat', selection.latitude);
                 setValue('lng', selection.longitude);
             }
@@ -201,7 +201,7 @@ const CreateMeetupSubmission = () => {
                         <XStack gap="$4" style={{ justifyContent: 'space-between' }}>
                             <XStack gap="$3" style={{ alignItems: 'center' }} maxW={'70%'}>
                                 <MaterialCommunityIcons name="map-marker-radius-outline" size={28} />
-                                <Text>{address ? address : 'Not selected yet'}</Text>
+                                <Text>{placeName ? placeName : 'Not selected yet'}</Text>
                             </XStack>
 
                             <XStack style={{ alignItems: 'center'}} gap="$3">
@@ -209,12 +209,12 @@ const CreateMeetupSubmission = () => {
                                     pathname: '/modals/map',
                                     params: {
                                         purpose: 'meetup',
-                                        address: location?.address,
+                                        placeName: location?.placeName,
                                         initialLat: location?.latitude,
                                         initialLng: location?.longitude,
                                     }
                                 })}>
-                                    {address ? 'Change' : 'Select'}
+                                    {placeName ? 'Change' : 'Select'}
                                 </Button>
                             </XStack>
                         </XStack>

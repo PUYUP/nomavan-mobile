@@ -5,10 +5,10 @@ export interface ExpensePayload {
     content: string
     status: 'publish'
     meta: {
-        latitude: string
-        longitude: string
-        address: string
-        store: string
+        latitude: number
+        longitude: number
+        place_name: string
+        store_name: string
         expense_items_inline: ExpenseItem[]
     }
 }
@@ -25,8 +25,8 @@ export interface ExpenseResponse {
     meta: {
         latitude?: string
         longitude?: string
-        address?: string
-        store: string
+        place_name?: string
+        store_name: string
         expense_items_inline?: ExpenseItem[]
     }
     date?: string

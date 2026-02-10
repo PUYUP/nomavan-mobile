@@ -23,7 +23,7 @@ const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
         if (!latitude || !longitude) return
 
         const query = encodeURIComponent(`${latitude},${longitude}`)
-        const label = encodeURIComponent(item?.secondary_item?.meta?.address)
+        const label = encodeURIComponent(item?.secondary_item?.meta?.place_name)
         const url = Platform.OS === 'ios'
             ? `http://maps.apple.com/?ll=${query}&q=${label}`
             : `https://www.google.com/maps/search/?api=1&query=${query}`
@@ -77,14 +77,14 @@ const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
                     </YStack>
 
                     <YStack style={styles.locationColumn}>
-                        {activity.secondary_item.meta.store ? 
+                        {activity.secondary_item.meta.store_name ? 
                             <XStack maxW={140}  style={styles.locationRow}>
                                 <MaterialCommunityIcons
                                     name="storefront-outline"
                                     size={16}
                                 />
                                 <Text style={styles.locationText} numberOfLines={1}>
-                                    {activity.secondary_item.meta.store}
+                                    {activity.secondary_item.meta.store_name}
                                 </Text>
                             </XStack>
                             : null
@@ -93,9 +93,9 @@ const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
                         <Text 
                             style={styles.postedTime} 
                             maxW={140} 
-                            numberOfLines={activity.secondary_item.meta.store ? 1 : 2}
+                            numberOfLines={activity.secondary_item.meta.store_name ? 1 : 2}
                         >
-                            {postedTime} {activity.secondary_item.meta.address ? ' - ' + activity.secondary_item.meta.address : null}
+                            {postedTime} {activity.secondary_item.meta.place_name ? ' - ' + activity.secondary_item.meta.place_name : null}
                         </Text>
                     </YStack>
                 </XStack>

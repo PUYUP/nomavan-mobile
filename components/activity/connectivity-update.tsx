@@ -62,7 +62,7 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
         if (!latitude || !longitude) return
 
         const query = encodeURIComponent(`${latitude},${longitude}`)
-        const label = encodeURIComponent(item?.secondary_item?.meta?.address)
+        const label = encodeURIComponent(item?.secondary_item?.meta?.place_name)
         const url = Platform.OS === 'ios'
             ? `http://maps.apple.com/?ll=${query}&q=${label}`
             : `https://www.google.com/maps/search/?api=1&query=${query}`
@@ -129,7 +129,7 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
                         <XStack style={styles.locationRow}>
                             <MaterialCommunityIcons name="map-marker-radius" size={16} />
                             <Text style={styles.locationText} numberOfLines={1}>
-                                {activity.secondary_item.meta.address}
+                                {activity.secondary_item.meta.place_name}
                             </Text>
                         </XStack>
                         <Text style={styles.postedTime}>{postedTime}</Text>

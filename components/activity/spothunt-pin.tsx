@@ -49,7 +49,7 @@ const SpotHuntPin = ({
 
     const coordinates = activity.secondary_item.meta.latitude + ', ' + activity.secondary_item.meta.longitude;
     const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
-    const placeLabel = activity.secondary_item.meta.address ? activity.secondary_item.meta.address : null;
+    const placeLabel = activity.secondary_item.meta.place_name ? activity.secondary_item.meta.place_name : null;
     const gallery = activity.secondary_item?.meta?.gallery ?? [];
     const extraPhotos = Math.max(0, gallery.length - 3);
     const morePhotosLabel = extraPhotos > 0 ? `+${extraPhotos}` : '';
@@ -64,7 +64,7 @@ const SpotHuntPin = ({
         if (!latitude || !longitude) return
 
         const query = encodeURIComponent(`${latitude},${longitude}`)
-        const label = encodeURIComponent(item?.secondary_item?.meta?.address)
+        const label = encodeURIComponent(item?.secondary_item?.meta?.place_name)
         const url = Platform.OS === 'ios'
             ? `http://maps.apple.com/?ll=${query}&q=${label}`
             : `https://www.google.com/maps/search/?api=1&query=${query}`

@@ -11,7 +11,7 @@ import { Button, ListItem, Text, TextArea, View, XStack, YGroup, YStack } from "
 
 export interface Story {
     content: string;
-    address: string;
+    placeName: string;
     latitude: number;
     longitude: number;
 }
@@ -20,7 +20,7 @@ const StorySubmission = () => {
     const router = useRouter();
     const [shareStory, { isLoading }] = useCreateStoryMutation({ fixedCacheKey: 'share-story-process' });
     const { control, handleSubmit, setValue, reset } = useForm<Story>();
-    const [address, setAddress] = useState<string | undefined>('');
+    const [placeName, setPlaceName] = useState<string | undefined>('');
     const [location, setLocation] = useState<LocationSelection | null>();
     
     const onSubmit: SubmitHandler<Story> = async (data) => {
@@ -35,7 +35,7 @@ const StorySubmission = () => {
             content: data.content,
             status: 'publish',
             meta: {
-                address: address,
+                place_name: placeName,
                 latitude: location?.latitude,
                 longitude: location?.longitude,
             }
@@ -45,7 +45,7 @@ const StorySubmission = () => {
         if (result && result.data) {
             router.back();
             reset();
-            setAddress('');
+            setPlaceName('');
             setLocation(null);
         }
     };
@@ -54,9 +54,9 @@ const StorySubmission = () => {
         const unsubscribeLocation = subscribeLocationSelected((selection) => {
             if (selection && selection.purpose === 'story') {
                 setLocation(selection);
-                setAddress(selection.address);
+                setPlaceName(selection.placeName);
 
-                setValue('address', selection?.address ? location?.address as string : '');
+                setValue('placeName', selection?.placeName ? location?.placeName as string : '');
                 setValue('latitude', location?.latitude ? location.latitude : 0);
                 setValue('longitude', location?.longitude ? location.longitude : 0);
             }
@@ -119,8 +119,8 @@ const StorySubmission = () => {
                         <XStack maxW={'60%'} gap="$3">
                             <MaterialCommunityIcons name="map-marker-radius-outline" size={24} />
 
-                            <Text fontSize={address ? '$2' : '$3'} opacity={0.75}>
-                                {address ? address : 'Not set yet'}
+                            <Text fontSize={placeName ? '$2' : '$3'} opacity={0.75}>
+                                {placeName ? placeName : 'Not set yet'}
                             </Text>
                         </XStack>
 
@@ -128,12 +128,12 @@ const StorySubmission = () => {
                             pathname: '/modals/map',
                             params: {
                                 purpose: 'story',
-                                address: location?.address,
+                                placeName: location?.placeName,
                                 initialLat: location?.latitude,
                                 initialLng: location?.longitude,
                             }
                         })}>
-                            <Text>{address ? 'Change' : 'Locate'}</Text>
+                            <Text>{placeName ? 'Change' : 'Locate'}</Text>
                         </Button>
                     </XStack>
 

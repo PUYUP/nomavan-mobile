@@ -25,7 +25,7 @@ const AddPinSubmission = () => {
     const { handleSubmit, control, setValue, reset } = useForm<Marker>();
     const [region, setRegion] = useState<Region | null>(null);
     const [centerCoords, setCenterCoords] = useState<{ latitude: number; longitude: number } | null>(null);
-    const [locationName, setLocationName] = useState<string>('');
+    const [placeName, setPlaceName] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
     type PovImage = {
         id: number;
@@ -52,7 +52,7 @@ const AddPinSubmission = () => {
             meta: {
                 latitude: centerCoords?.latitude,
                 longitude: centerCoords?.longitude,
-                address: locationName,
+                place_name: placeName,
                 gallery: povImages.filter((item) => item.id > 0).map((item) => item.id),
             }
         };
@@ -82,7 +82,7 @@ const AddPinSubmission = () => {
                 setValue('lng', coords.longitude);
                 const geocoded = await reverseGeocodeLocation(coords.latitude, coords.longitude);
                 if (geocoded.ok) {
-                    setLocationName(geocoded.data.name);
+                    setPlaceName(geocoded.data.name);
                 }
             }
             setIsLoading(false);
@@ -96,7 +96,7 @@ const AddPinSubmission = () => {
         setValue('lng', longitude);
         const geocoded = await reverseGeocodeLocation(latitude, longitude);
         if (geocoded.ok) {
-            setLocationName(geocoded.data.name);
+            setPlaceName(geocoded.data.name);
         }
     };
 
@@ -352,7 +352,7 @@ const AddPinSubmission = () => {
                         <YStack gap="$0" marginBlockStart="$2">
                             <XStack style={[styles.metaRow, { flex: 1, paddingEnd: 16 }]}>
                                 <MaterialCommunityIcons name="map-marker-radius-outline" size={26} color="#6b7280" />
-                                <Text fontSize={13}>{locationName ? locationName : '-'}</Text>
+                                <Text fontSize={13}>{placeName ? placeName : '-'}</Text>
                             </XStack>
 
                             <XStack style={styles.metaRow}>
