@@ -1,10 +1,12 @@
 import { getCurrentLocation, reverseGeocodeLocation } from '@/services/location';
+import { MediaUploadPayload, useUploadMediaMutation } from '@/services/media';
 import { SpothuntPayload, useCreateSpothuntMutation } from '@/services/spothunt';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import * as ImagePicker from 'expo-image-picker';
 import { Stack, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import { ActivityIndicator, Animated, Platform, Pressable, StyleSheet } from "react-native";
+import { ActivityIndicator, Alert, Animated, Image, Platform, Pressable, StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import MapView, { Region } from 'react-native-maps';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,6 +27,9 @@ const AddPinSubmission = () => {
     const [centerCoords, setCenterCoords] = useState<{ latitude: number; longitude: number } | null>(null);
     const [locationName, setLocationName] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
+    const [povImages, setPovImages] = useState<string[]>([]);
+    const [galleryIds, setGalleryIds] = useState<number[]>([]);
+    const [uploadingSlots, setUploadingSlots] = useState<boolean[]>([]);
     const pinScale = useRef(new Animated.Value(1)).current;
     const mapRef = useRef<MapView | null>(null);
     const lastRegionRef = useRef<Region | null>(null);
@@ -33,7 +38,8 @@ const AddPinSubmission = () => {
     const isDraggingRef = useRef(false);
     const hasInitialized = useRef(false);
     const [submitSpothunt, { isLoading: submitSpothuntLoading }] = useCreateSpothuntMutation({ fixedCacheKey: 'submit-spothunt-process' });
-
+    const [uploadMdia, { isLoading: uploadMediaLoading }] = useUploadMediaMutation();
+    
     const onSubmit: SubmitHandler<Marker> = async (data) => {
         const payload: SpothuntPayload = {
             content: data.content,
@@ -43,6 +49,7 @@ const AddPinSubmission = () => {
                 latitude: centerCoords?.latitude,
                 longitude: centerCoords?.longitude,
                 address: locationName,
+                gallery: galleryIds,
             }
         }
 
@@ -169,6 +176,106 @@ const AddPinSubmission = () => {
         }
     };
 
+    const pickImage = async (index: number) => {
+        Alert.alert('Add photo', 'Choose a source', [
+            {
+                text: 'Take photo',
+                onPress: async () => {
+                    const permission = await ImagePicker.requestCameraPermissionsAsync();
+                    if (!permission.granted) {
+                        Alert.alert('Permission required', 'Camera permission is needed to take a photo.');
+                        return;
+                    }
+                    const result = await ImagePicker.launchCameraAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        quality: 0.8,
+                    });
+                    if (!result.canceled && result.assets?.[0]?.uri) {
+                        const uri = result.assets[0].uri;
+                        setPovImages((prev) => {
+                            const next = [...prev];
+                            next[index] = uri;
+                            return next;
+                        });
+                        handleUploadImages(uri, index);
+                    }
+                },
+            },
+            {
+                text: 'Choose from library',
+                onPress: async () => {
+                    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                    if (!permission.granted) {
+                        Alert.alert('Permission required', 'Media library permission is needed to select a photo.');
+                        return;
+                    }
+                    const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        quality: 0.8,
+                    });
+                    if (!result.canceled && result.assets?.[0]?.uri) {
+                        const uri = result.assets[0].uri;
+                        setPovImages((prev) => {
+                            const next = [...prev];
+                            next[index] = uri;
+                            return next;
+                        });
+                        handleUploadImages(uri, index);
+                    }
+                },
+            },
+            { text: 'Cancel', style: 'cancel' },
+        ]);
+    };
+
+    const handleUploadImages = async (uri: string, index: number) => {
+        try {
+            setUploadingSlots((prev) => {
+                const next = [...prev];
+                next[index] = true;
+                return next;
+            });
+            const payload: MediaUploadPayload = {
+                file: uri,
+            };
+            const result = await uploadMdia(payload);
+            if (result && result.data) {
+                setGalleryIds((prev) => {
+                    const next = [...prev];
+                    next[index] = result.data.id;
+                    return next;
+                });
+            }
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            Alert.alert('Upload failed', 'Failed to upload the image. Please try again.');
+        } finally {
+            setUploadingSlots((prev) => {
+                const next = [...prev];
+                next[index] = false;
+                return next;
+            });
+        }
+    };
+
+    const removeImage = (index: number) => {
+        setPovImages((prev) => {
+            const next = [...prev];
+            next.splice(index, 1);
+            return next;
+        });
+        setGalleryIds((prev) => {
+            const next = [...prev];
+            next.splice(index, 1);
+            return next;
+        });
+        setUploadingSlots((prev) => {
+            const next = [...prev];
+            next.splice(index, 1);
+            return next;
+        });
+    };
+
     return (
         <>
             <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -256,14 +363,30 @@ const AddPinSubmission = () => {
                         </YStack>
                     
                         <XStack style={styles.povGrid}>
-                            {Array.from({ length: 3 }).map((_, index) => (
-                                <Pressable key={`pov-${index}`} style={styles.povTile}>
-                                    <View style={styles.povContent}>
-                                        <MaterialCommunityIcons name="image-outline" size={22} color="#6b7280" />
-                                        <Text fontSize={12} opacity={0.7}>Upload</Text>
-                                    </View>
+                            {povImages.map((uri, index) => (
+                                <Pressable key={`pov-${index}`} style={styles.povTile} onPress={() => pickImage(index)}>
+                                    <Image source={{ uri }} style={styles.povImage} />
+                                    {uploadingSlots[index] ? (
+                                        <View style={styles.povUploading}>
+                                            <ActivityIndicator color="#111827" />
+                                        </View>
+                                    ) : null}
+                                    <Pressable style={styles.povRemove} onPress={() => removeImage(index)}>
+                                        <MaterialCommunityIcons name="close" size={14} color="#111827" />
+                                    </Pressable>
+                                    {galleryIds[index] ? (
+                                        <View style={styles.povIdBadge}>
+                                            <Text fontSize={10} color="#111827">#{galleryIds[index]}</Text>
+                                        </View>
+                                    ) : null}
                                 </Pressable>
                             ))}
+                            <Pressable style={styles.povTile} onPress={() => pickImage(povImages.length)}>
+                                <View style={styles.povContent}>
+                                    <MaterialCommunityIcons name="plus" size={22} color="#6b7280" />
+                                    <Text fontSize={12} opacity={0.7}>Add</Text>
+                                </View>
+                            </Pressable>
                         </XStack>
 
                         <YStack gap="$3">
@@ -300,7 +423,7 @@ const AddPinSubmission = () => {
                     </YStack>
                 </KeyboardAwareScrollView>
 
-                <View style={{ marginTop: 'auto', paddingHorizontal: 16, paddingBlockEnd: 6 }}>
+                <View style={{ marginTop: 'auto', paddingHorizontal: 16, paddingBlockEnd: 6, paddingBlockStart: 16 }}>
                     <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton} disabled={submitSpothuntLoading ? true : false}>
                         {submitSpothuntLoading ? <ActivityIndicator color={'#fff'} /> : null}
                         <Text color={'white'} fontSize={20}>Set Pin</Text>
@@ -391,10 +514,12 @@ const styles = StyleSheet.create({
         marginBottom: 6,
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
+        columnGap: 12,
+        rowGap: 12,
     },
     povTile: {
-        width: '32%',
+        width: '31%',
         aspectRatio: 16 / 10,
         borderRadius: 8,
         borderWidth: 1,
@@ -407,6 +532,41 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 4,
+    },
+    povImage: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    povUploading: {
+        ...StyleSheet.absoluteFillObject,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    },
+    povRemove: {
+        position: 'absolute',
+        top: 6,
+        right: 6,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: '#fff',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+    },
+    povIdBadge: {
+        position: 'absolute',
+        left: 6,
+        bottom: 6,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 10,
+        backgroundColor: '#f3f4f6',
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
     },
     inputStack: {
 		alignItems: 'center',

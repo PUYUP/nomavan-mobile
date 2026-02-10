@@ -1,6 +1,7 @@
 import { activityApi } from '@/services/activity';
 import { connectivityApi } from '@/services/connectivity';
 import { expenseApi } from '@/services/expense';
+import { mediaApi } from '@/services/media';
 import { meetupApi } from '@/services/meetup';
 import { receiptApi } from '@/services/receipt-extractor';
 import { signinApi } from '@/services/signin';
@@ -17,6 +18,7 @@ export const AppStore = configureStore({
         [meetupApi.reducerPath]: meetupApi.reducer,
         [activityApi.reducerPath]: activityApi.reducer,
         [expenseApi.reducerPath]: expenseApi.reducer,
+        [mediaApi.reducerPath]: mediaApi.reducer,
         [connectivityApi.reducerPath]: connectivityApi.reducer,
         [storyApi.reducerPath]: storyApi.reducer,
         [spothuntApi.reducerPath]: spothuntApi.reducer,
@@ -29,6 +31,7 @@ export const AppStore = configureStore({
             meetupApi.middleware,
             activityApi.middleware,
             expenseApi.middleware,
+            mediaApi.middleware,
             connectivityApi.middleware,
             storyApi.middleware,
             spothuntApi.middleware,

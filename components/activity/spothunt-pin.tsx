@@ -14,8 +14,6 @@ type SpotHuntPinProps = {
     userLng?: number | null
 
     title?: string
-    photos?: string[]
-    morePhotosLabel?: string
     visitorsLabel?: string
     viewPinLabel?: string
     contributorMeta?: string
@@ -40,16 +38,10 @@ const SpotHuntPin = ({
     activity = null,
     userLat = null,
     userLng = null,
-    photos = [
-        'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300&q=80',
-        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=300&q=80',
-        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=300&q=80',
-    ],
-    morePhotosLabel = '+7',
     visitorsLabel = '10 were here',
     viewPinLabel = 'Find Spot',
     contributorMeta = '1.276 contribs.',
-    PinsAddedLabel = '36 Pin Added',
+    PinsAddedLabel = '36 Spots Listed',
 }: SpotHuntPinProps) => {
     if (!activity) {
         return null;
@@ -58,7 +50,11 @@ const SpotHuntPin = ({
     const coordinates = activity.secondary_item.meta.latitude + ', ' + activity.secondary_item.meta.longitude;
     const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
     const placeLabel = activity.secondary_item.meta.address ? activity.secondary_item.meta.address : null;
-    const title = activity.secondary_item.title.rendered ? stripHtml(activity.secondary_item.title.rendered) : 'New Pin Dropped';
+    const gallery = activity.secondary_item?.meta?.gallery ?? [];
+    const extraPhotos = Math.max(0, gallery.length - 3);
+    const morePhotosLabel = extraPhotos > 0 ? `+${extraPhotos}` : '';
+    const rawTitle = activity.secondary_item.title.rendered ? stripHtml(activity.secondary_item.title.rendered) : 'New Pin Dropped';
+    const title = rawTitle.replace(/\s+by\s+.+$/i, '').trim();
     const [distanceMeters, setDistanceMeters] = useState<number | null>(null)
     
     const handleOpenDirections = (item: BPActivityResponse | null) => {
@@ -122,18 +118,20 @@ const SpotHuntPin = ({
                 }
 
                 <XStack style={styles.photoRow}>
-                    {photos.slice(0, 3).map((photoUrl, index) => (
-                        <Avatar key={`${photoUrl}-${index}`} circular size="$4" style={styles.photoItem}>
+                    {gallery.slice(0, 3).map((item: any, index: number) => (
+                        <Avatar key={`${item.id}`} circular size="$4" style={styles.photoItem}>
                             <Avatar.Image
-                                src={photoUrl}
+                                src={item.thumbnail_url}
                                 accessibilityLabel="Pin photo"
                             />
                             <Avatar.Fallback />
                         </Avatar>
                     ))}
-                    <YStack style={styles.photoMore}>
-                        <Text style={styles.photoMoreText}>{morePhotosLabel}</Text>
-                    </YStack>
+                    {extraPhotos > 0 ? (
+                        <YStack style={styles.photoMore}>
+                            <Text style={styles.photoMoreText}>{morePhotosLabel}</Text>
+                        </YStack>
+                    ) : null}
                 </XStack>
                 
                 <XStack style={styles.metaContainer}>
