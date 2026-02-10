@@ -62,6 +62,7 @@ const Login = () => {
                         email: data.user_email,
                         nicename: data.user_nicename,
                         displayName: data.user_display_name,
+                        avatar: data.user_avatar,
                     },
                 });
                 

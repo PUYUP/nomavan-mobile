@@ -1,6 +1,7 @@
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getAuth } from '@/services/auth-storage';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
@@ -133,12 +134,14 @@ export default function TabLayout() {
                 </XStack>
               )
             },
-            headerLeft: () => {
+            headerLeft: async () => {
+              const auth = await getAuth();
+              
               return (
                 <Pressable onPress={() => router.push('/')}>
                   <Avatar circular size="$2.5" style={{ marginHorizontal: 16 }}>
                     <Avatar.Image
-                      src="https://i.pravatar.cc/100?img=17"
+                      src={auth ? 'https:' + auth.user?.avatar?.thumb : "https://i.pravatar.cc/100?img=17"}
                       accessibilityLabel="Contributor avatar"
                     />
                     <Avatar.Fallback />

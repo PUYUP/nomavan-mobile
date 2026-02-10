@@ -5,6 +5,10 @@ export type AuthUser = {
     email: string;
     nicename?: string;
     displayName?: string;
+    avatar?: {
+        full: string;
+        thumb: string;
+    }
 };
 
 export type AuthState = {

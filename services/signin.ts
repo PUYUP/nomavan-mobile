@@ -11,6 +11,10 @@ export type SigninResponse = {
 	user_email: string;
 	user_nicename: string;
 	user_display_name: string;
+	user_avatar: {
+		full: string;
+		thumb: string;
+	}
 };
 
 const rawBaseUrl = process.env.EXPO_PUBLIC_BP_API_BASE ?? '';
