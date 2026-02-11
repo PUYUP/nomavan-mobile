@@ -280,160 +280,158 @@ const AddPinSubmission = () => {
     };
 
     return (
-        <>
-            <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-                <Stack.Screen 
-                    options={{ 
-                        title: 'Spot Hunt Pin', 
-                        headerTitleStyle: {
-                            fontSize: 22,
-                            fontFamily: 'Inter-Black',
-                            color: '#1F3D2B',
-                        },
-                        headerBackButtonDisplayMode: 'minimal' 
-                    }} 
-                />
+        <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+            <Stack.Screen 
+                options={{ 
+                    title: 'Spot Hunt Pin', 
+                    headerTitleStyle: {
+                        fontSize: 22,
+                        fontFamily: 'Inter-Black',
+                        color: '#1F3D2B',
+                    },
+                    headerBackButtonDisplayMode: 'minimal' 
+                }} 
+            />
 
-                <KeyboardAwareScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    enableOnAndroid
-                    extraScrollHeight={24}
-                    keyboardOpeningTime={0}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
-                    contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'never' : 'automatic'}
-                >
-                    <YStack paddingStart="$0" paddingEnd="$0" flex={1} gap="$2">
-                        <View style={styles.mapCard}>
-                            {isLoading || !region ? (
-                                <View style={styles.mapLoading}>
-                                    <ActivityIndicator size="small" />
-                                    <Text opacity={0.7} fontSize={12}>Loading map…</Text>
+            <KeyboardAwareScrollView
+                contentContainerStyle={styles.scrollContent}
+                enableOnAndroid
+                extraScrollHeight={24}
+                keyboardOpeningTime={0}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'never' : 'automatic'}
+            >
+                <YStack paddingStart="$0" paddingEnd="$0" flex={1} gap="$2">
+                    <View style={styles.mapCard}>
+                        {isLoading || !region ? (
+                            <View style={styles.mapLoading}>
+                                <ActivityIndicator size="small" />
+                                <Text opacity={0.7} fontSize={12}>Loading map…</Text>
+                            </View>
+                        ) : (
+                            <View style={styles.mapWrapper}>
+                                <View style={styles.mapHint}>
+                                    <Text fontSize={12} opacity={0.7}>
+                                        Drag the map to place the pin.
+                                    </Text>
                                 </View>
-                            ) : (
-                                <View style={styles.mapWrapper}>
-                                    <View style={styles.mapHint}>
-                                        <Text fontSize={12} opacity={0.7}>
-                                            Drag the map to place the pin.
-                                        </Text>
-                                    </View>
-                                    <MapView
-                                        ref={(ref) => { mapRef.current = ref; }}
-                                        style={styles.map}
-                                        initialRegion={region}
-                                        onRegionChange={handleRegionChange}
-                                        onRegionChangeComplete={handleRegionChangeComplete}
-                                    />
-                                    <View style={styles.centerMarker} pointerEvents="none">
-                                        <Animated.View style={{ transform: [{ scale: pinScale }] }}>
-                                            <MaterialCommunityIcons name="map-marker" size={42} color="#ff3b30" />
-                                        </Animated.View>
-                                    </View>
-                                    <View style={styles.zoomControls}>
-                                        <Button
-                                            size="$2"
-                                            style={styles.zoomButton}
-                                            onPress={() => zoomBy(0.5)}
-                                        >
-                                            <MaterialCommunityIcons name="plus" size={18} />
-                                        </Button>
-                                        <Button
-                                            size="$2"
-                                            style={styles.zoomButton}
-                                            onPress={() => zoomBy(2)}
-                                        >
-                                            <MaterialCommunityIcons name="minus" size={18} />
-                                        </Button>
-                                    </View>
+                                <MapView
+                                    ref={(ref) => { mapRef.current = ref; }}
+                                    style={styles.map}
+                                    initialRegion={region}
+                                    onRegionChange={handleRegionChange}
+                                    onRegionChangeComplete={handleRegionChangeComplete}
+                                />
+                                <View style={styles.centerMarker} pointerEvents="none">
+                                    <Animated.View style={{ transform: [{ scale: pinScale }] }}>
+                                        <MaterialCommunityIcons name="map-marker" size={42} color="#ff3b30" />
+                                    </Animated.View>
                                 </View>
-                            )}
-                        </View>
-                        
-                        <YStack gap="$0" marginBlockStart="$2">
-                            <XStack style={[styles.metaRow, { flex: 1, paddingEnd: 16 }]}>
-                                <MaterialCommunityIcons name="map-marker-radius-outline" size={26} color="#6b7280" />
-                                <Text fontSize={13}>{placeName ? placeName : '-'}</Text>
-                            </XStack>
-
-                            <XStack style={styles.metaRow}>
-                                <MaterialCommunityIcons name="crosshairs-gps" size={26} color="#6b7280" />
-                                <XStack>
-                                    <Text fontSize={13} opacity={0.7}>{centerCoords?.latitude}</Text>
-                                    <Text marginStart={1} marginEnd={3}>,</Text>
-                                    <Text fontSize={13} opacity={0.7}>{centerCoords?.longitude}</Text>
-                                </XStack>
-                            </XStack>
-                        </YStack>
+                                <View style={styles.zoomControls}>
+                                    <Button
+                                        size="$2"
+                                        style={styles.zoomButton}
+                                        onPress={() => zoomBy(0.5)}
+                                    >
+                                        <MaterialCommunityIcons name="plus" size={18} />
+                                    </Button>
+                                    <Button
+                                        size="$2"
+                                        style={styles.zoomButton}
+                                        onPress={() => zoomBy(2)}
+                                    >
+                                        <MaterialCommunityIcons name="minus" size={18} />
+                                    </Button>
+                                </View>
+                            </View>
+                        )}
+                    </View>
                     
-                        <XStack style={styles.povGrid}>
-                            {povImages.map((item, index) => (
-                                <Pressable key={item.clientId} style={styles.povTile} onPress={() => pickImage(index)}>
-                                    <Image source={{ uri: item.uri }} style={styles.povImage} />
-                                    {item.uploading ? (
-                                        <View style={styles.povUploading}>
-                                            <ActivityIndicator color="#111827" />
-                                        </View>
-                                    ) : null}
-                                    <Pressable style={styles.povRemove} onPress={() => removeImage(item.clientId)}>
-                                        <MaterialCommunityIcons name="close" size={14} color="#111827" />
-                                    </Pressable>
-                                    {item.id > 0 ? (
-                                        <View style={styles.povIdBadge}>
-                                            <Text fontSize={10} color="#111827">#{item.id}</Text>
-                                        </View>
-                                    ) : null}
-                                </Pressable>
-                            ))}
-                            <Pressable style={styles.povTile} onPress={() => pickImage(povImages.length)}>
-                                <View style={styles.povContent}>
-                                    <MaterialCommunityIcons name="plus" size={22} color="#6b7280" />
-                                    <Text fontSize={12} opacity={0.7}>Add</Text>
-                                </View>
-                            </Pressable>
+                    <YStack gap="$0" marginBlockStart="$2">
+                        <XStack style={[styles.metaRow, { flex: 1, paddingEnd: 16 }]}>
+                            <MaterialCommunityIcons name="map-marker-radius-outline" size={26} color="#6b7280" />
+                            <Text fontSize={13}>{placeName ? placeName : '-'}</Text>
                         </XStack>
 
-                        <YStack gap="$3">
-                            <Controller
-                                control={control}
-                                name={'title'}
-                                rules={{ required: false }}
-                                render={({ field: { onChange, value } }) => (
-                                    <XStack style={styles.inputStack}>
-                                        <Input
-                                            onChangeText={onChange}
-                                            value={value}
-                                            flex={1}
-                                            size="$3"
-                                            placeholder={'Spot name'}
-                                            autoCapitalize="none"
-                                            autoComplete="off"
-                                            spellCheck={false}
-                                            autoCorrect={false}
-                                        />
-                                    </XStack>
-                                )}
-                            />
-
-                            <Controller
-                                control={control}
-                                name={'content'}
-                                rules={{ required: false }}
-                                render={({ field: { onChange, value } }) => (
-                                    <TextArea onChange={onChange} size="$3" placeholder="Description…" rows={4} value={value} />
-                                )}
-                            />
-                        </YStack>
+                        <XStack style={styles.metaRow}>
+                            <MaterialCommunityIcons name="crosshairs-gps" size={26} color="#6b7280" />
+                            <XStack>
+                                <Text fontSize={13} opacity={0.7}>{centerCoords?.latitude}</Text>
+                                <Text marginStart={1} marginEnd={3}>,</Text>
+                                <Text fontSize={13} opacity={0.7}>{centerCoords?.longitude}</Text>
+                            </XStack>
+                        </XStack>
                     </YStack>
-                </KeyboardAwareScrollView>
+                
+                    <XStack style={styles.povGrid}>
+                        {povImages.map((item, index) => (
+                            <Pressable key={item.clientId} style={styles.povTile} onPress={() => pickImage(index)}>
+                                <Image source={{ uri: item.uri }} style={styles.povImage} />
+                                {item.uploading ? (
+                                    <View style={styles.povUploading}>
+                                        <ActivityIndicator color="#111827" />
+                                    </View>
+                                ) : null}
+                                <Pressable style={styles.povRemove} onPress={() => removeImage(item.clientId)}>
+                                    <MaterialCommunityIcons name="close" size={14} color="#111827" />
+                                </Pressable>
+                                {item.id > 0 ? (
+                                    <View style={styles.povIdBadge}>
+                                        <Text fontSize={10} color="#111827">#{item.id}</Text>
+                                    </View>
+                                ) : null}
+                            </Pressable>
+                        ))}
+                        <Pressable style={styles.povTile} onPress={() => pickImage(povImages.length)}>
+                            <View style={styles.povContent}>
+                                <MaterialCommunityIcons name="plus" size={22} color="#6b7280" />
+                                <Text fontSize={12} opacity={0.7}>Add</Text>
+                            </View>
+                        </Pressable>
+                    </XStack>
 
-                <View style={{ marginTop: 'auto', paddingHorizontal: 16, paddingBlockEnd: 6, paddingBlockStart: 16 }}>
-                    <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton} disabled={submitSpothuntLoading ? true : false}>
-                        {submitSpothuntLoading ? <ActivityIndicator color={'#fff'} /> : null}
-                        <Text color={'white'} fontSize={20}>Set Pin</Text>
-                    </Button>
-                </View>
-            </SafeAreaView>
-        </>
+                    <YStack gap="$3">
+                        <Controller
+                            control={control}
+                            name={'title'}
+                            rules={{ required: false }}
+                            render={({ field: { onChange, value } }) => (
+                                <XStack style={styles.inputStack}>
+                                    <Input
+                                        onChangeText={onChange}
+                                        value={value}
+                                        flex={1}
+                                        size="$3"
+                                        placeholder={'Spot name'}
+                                        autoCapitalize="none"
+                                        autoComplete="off"
+                                        spellCheck={false}
+                                        autoCorrect={false}
+                                    />
+                                </XStack>
+                            )}
+                        />
+
+                        <Controller
+                            control={control}
+                            name={'content'}
+                            rules={{ required: false }}
+                            render={({ field: { onChange, value } }) => (
+                                <TextArea onChange={onChange} size="$3" placeholder="Description…" rows={4} value={value} />
+                            )}
+                        />
+                    </YStack>
+                </YStack>
+            </KeyboardAwareScrollView>
+
+            <View style={{ marginTop: 'auto', paddingHorizontal: 16, paddingBlockEnd: 6, paddingBlockStart: 16 }}>
+                <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton} disabled={submitSpothuntLoading ? true : false}>
+                    {submitSpothuntLoading ? <ActivityIndicator color={'#fff'} /> : null}
+                    <Text color={'white'} fontSize={20}>Set Pin</Text>
+                </Button>
+            </View>
+        </SafeAreaView>
     )
 }
 

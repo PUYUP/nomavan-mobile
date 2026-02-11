@@ -4,8 +4,9 @@ import { Card } from "@tamagui/card";
 import { Separator } from "@tamagui/separator";
 import { XStack, YStack } from "@tamagui/stacks";
 import { formatDistanceToNow } from 'date-fns';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Platform, StyleSheet } from "react-native";
+import { Linking, Platform, Pressable, StyleSheet } from "react-native";
 import { Avatar, Button, Paragraph, Text } from "tamagui";
 
 type SpotHuntPinProps = {
@@ -40,13 +41,14 @@ const SpotHuntPin = ({
     userLng = null,
     visitorsLabel = '10 were here',
     viewPinLabel = 'Find Spot',
-    contributorMeta = '1.276 contribs.',
-    PinsAddedLabel = '36 Spots Listed',
+    contributorMeta = '634 spots',
+    PinsAddedLabel = 'hunted 2h ago',
 }: SpotHuntPinProps) => {
     if (!activity) {
         return null;
     }
 
+    const router = useRouter();
     const coordinates = activity.secondary_item.meta.latitude + ', ' + activity.secondary_item.meta.longitude;
     const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
     const placeLabel = activity.secondary_item.meta.place_name ? activity.secondary_item.meta.place_name : null;
@@ -155,29 +157,31 @@ const SpotHuntPin = ({
             </YStack>
             
             <Separator my={10} />
+            
+            <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
+                <XStack style={styles.contributorRow}>
+                    <Avatar circular size="$4" style={styles.avatar}>
+                        <Avatar.Image
+                            src={'https:' + activity.user_avatar.thumb}
+                            accessibilityLabel="Contributor avatar"
+                        />
+                        <Avatar.Fallback />
+                    </Avatar>
 
-            <XStack style={styles.contributorRow}>
-                <Avatar circular size="$4" style={styles.avatar}>
-                    <Avatar.Image
-                        src={'https:' + activity.user_avatar.thumb}
-                        accessibilityLabel="Contributor avatar"
-                    />
-                    <Avatar.Fallback />
-                </Avatar>
+                    <YStack style={styles.contributorInfo}>
+                        <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
+                        <Text style={styles.contributorMeta}>{contributorMeta}</Text>
+                    </YStack>
 
-                <YStack style={styles.contributorInfo}>
-                    <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
-                    <Text style={styles.contributorMeta}>{contributorMeta}</Text>
-                </YStack>
-
-                <YStack style={styles.locationColumn}>
-                    <XStack style={styles.locationRow}>
-                        <MaterialCommunityIcons name="map-marker-radius" size={16} />
-                        <Text style={styles.locationText}>{PinsAddedLabel}</Text>
-                    </XStack>
-                    <Text style={styles.postedTime}>{postedTime}</Text>
-                </YStack>
-            </XStack>
+                    <YStack style={styles.locationColumn}>
+                        <XStack style={styles.locationRow}>
+                            <MaterialCommunityIcons name="map-clock" size={16} />
+                            <Text style={styles.locationText}>{PinsAddedLabel}</Text>
+                        </XStack>
+                        <Text style={styles.postedTime}>{postedTime}</Text>
+                    </YStack>
+                </XStack>
+            </Pressable>
         </Card>
     )
 }

@@ -95,7 +95,7 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
 
                     <View style={styles.signalGraph}>
                         {[28, 28, 28, 28, 28].map((height, index) => {
-                            const isActive = strengthLevel !== null && index <= strengthLevel;
+                            const isActive = strengthLevel !== null && strengthLevel > 0 && index < strengthLevel;
                             const barColor = isActive ? strengthColor : SIGNAL_COLORS.inactive;
 
                             return (
@@ -155,7 +155,7 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
                     <Button size="$2" style={styles.viewLocationButton} onPress={() => handleOpenDirections(activity)}>
                         <XStack style={styles.thanksContent}>
                             <MaterialCommunityIcons name="map" size={14} />
-                            <Text style={styles.thanksText}>See Location</Text>
+                            <Text style={styles.thanksText}>Location</Text>
                         </XStack>
                     </Button>
                 </XStack>

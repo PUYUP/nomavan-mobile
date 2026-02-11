@@ -1,7 +1,8 @@
 import { BPActivityResponse } from '@/services/activity';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
-import { StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, StyleSheet } from 'react-native';
 import { Avatar, Button, Card, Paragraph, Separator, Text, View, XStack, YStack } from 'tamagui';
 
 type StoryUpdateProps = {
@@ -15,6 +16,7 @@ const StoryUpdate = ({ activity }: StoryUpdateProps) => {
         return;
     }
 
+    const router = useRouter();
     const contentText = activity.secondary_item.content.rendered
         ? stripHtml(activity.secondary_item.content.rendered)
         : stripHtml(activity.content.rendered) ?? '';
@@ -29,31 +31,33 @@ const StoryUpdate = ({ activity }: StoryUpdateProps) => {
 
                 <Separator my={10} />
 
-                <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$4" style={styles.avatar}>
-                        <Avatar.Image
-                            src={'https:' + activity.user_avatar?.thumb}
-                            accessibilityLabel="Contributor avatar"
-                        />
-                        <Avatar.Fallback />
-                    </Avatar>
+                <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
+                    <XStack style={styles.contributorRow}>
+                        <Avatar circular size="$4" style={styles.avatar}>
+                            <Avatar.Image
+                                src={'https:' + activity.user_avatar?.thumb}
+                                accessibilityLabel="Contributor avatar"
+                            />
+                            <Avatar.Fallback />
+                        </Avatar>
 
-                    <YStack style={styles.contributorInfo}>
-                        <Text style={styles.contributorName}>{activity.user_profile?.name}</Text>
-                        <Text style={styles.contributorMeta}>10 contribs.</Text>
-                    </YStack>
+                        <YStack style={styles.contributorInfo}>
+                            <Text style={styles.contributorName}>{activity.user_profile?.name}</Text>
+                            <Text style={styles.contributorMeta}>10 stories</Text>
+                        </YStack>
 
-                    <YStack maxW={120} style={styles.locationColumn}>
-                        {componentLabel ?
-                            <XStack style={styles.locationRow}>
-                                <MaterialCommunityIcons name="map-marker-radius" size={16} />
-                                <Text style={styles.locationText} numberOfLines={1}>{componentLabel}</Text>
-                            </XStack>
-                            : null
-                        }
-                        <Text style={styles.postedTime}>{postedTime}</Text>
-                    </YStack>
-                </XStack>
+                        <YStack maxW={120} style={styles.locationColumn}>
+                            {componentLabel ?
+                                <XStack style={styles.locationRow}>
+                                    <MaterialCommunityIcons name="map-marker-radius" size={16} />
+                                    <Text style={styles.locationText} numberOfLines={1}>{componentLabel}</Text>
+                                </XStack>
+                                : null
+                            }
+                            <Text style={styles.postedTime}>{postedTime}</Text>
+                        </YStack>
+                    </XStack>
+                </Pressable>
 
                 <Separator my={10} />
 

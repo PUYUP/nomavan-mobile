@@ -8,10 +8,13 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { PortalProvider } from '@tamagui/portal';
 import { TamaguiProvider } from 'tamagui';
 
+import { getAuth } from '@/services/auth-storage';
 import { AppStore } from '@/utils/store';
 import { Inter_400Regular, Inter_900Black, useFonts } from '@expo-google-fonts/inter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { tamaguiConfig } from '../tamagui.config';
@@ -39,6 +42,26 @@ export default function RootLayout() {
   if (!loaded && error) {
     return null
   }
+
+  useEffect(() => {
+    const configureRevenueCat = async () => {
+      Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+
+      const auth = await getAuth();
+      const appUserID = auth?.user?.id;
+
+      if (Platform.OS === 'ios') {
+        // pass
+      } else if (Platform.OS === 'android') {
+        Purchases.configure({ 
+          apiKey: process.env.EXPO_PUBLIC_REVENUECAT_KEY || '',
+          appUserID,
+        });
+      }
+    };
+
+    configureRevenueCat();
+  }, []);
 
   return (
     <Provider store={AppStore}>

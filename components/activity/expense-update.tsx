@@ -1,7 +1,8 @@
 import { BPActivityResponse } from '@/services/activity';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
-import { Linking, Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Linking, Platform, Pressable, StyleSheet } from 'react-native';
 import { Avatar, Button, Card, Separator, Text, View, XStack, YStack } from 'tamagui';
 
 type ExpenseUpdateProps = {
@@ -13,6 +14,7 @@ const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
         return null;
     }
 
+    const router = useRouter();
     const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
     const total = activity.secondary_item.meta.expense_items_inline.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
 
@@ -32,36 +34,36 @@ const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
     }
 
     return (
-        <>
-            <Card style={styles.card}>
-                <XStack gap="$3" style={styles.row}>
-                    <YStack style={styles.itemsList}>
-                        {activity.secondary_item.meta.expense_items_inline.map((item: any) => {
-                            const subtotal = item.price * item.quantity
+        <Card style={styles.card}>
+            <XStack gap="$3" style={styles.row}>
+                <YStack style={styles.itemsList}>
+                    {activity.secondary_item.meta.expense_items_inline.map((item: any) => {
+                        const subtotal = item.price * item.quantity
 
-                            return (
-                                <XStack key={item.name} style={styles.itemRow}>
-                                    <YStack width={'70%'}>
-                                        <Text style={styles.itemName}>{item.name}</Text>
-                                        <Text style={styles.itemValue}>
-                                            {item.price.toFixed(2)} x {item.quantity}
-                                        </Text>
-                                    </YStack>
+                        return (
+                            <XStack key={item.name} style={styles.itemRow}>
+                                <YStack width={'70%'}>
+                                    <Text style={styles.itemName}>{item.name}</Text>
+                                    <Text style={styles.itemValue}>
+                                        <Text color={'$orange10'} fontWeight={700}>{item.price.toFixed(2)}</Text> x {item.quantity}
+                                    </Text>
+                                </YStack>
 
-                                    <Text fontSize={14}>{subtotal.toFixed(2)}</Text>
-                                </XStack>
-                            )
-                        })}
+                                <Text fontSize={14} fontWeight={700} color={'$green10'}>{subtotal.toFixed(2)}</Text>
+                            </XStack>
+                        )
+                    })}
 
-                        <XStack style={styles.totalRow}>
-                            <Text style={styles.totalLabel}>Total</Text>
-                            <Text style={styles.totalValue}>{total.toFixed(2)}</Text>
-                        </XStack>
-                    </YStack>
-                </XStack>
+                    <XStack style={styles.totalRow}>
+                        <Text style={styles.totalLabel}>Total</Text>
+                        <Text style={styles.totalValue} fontWeight={700} color={'$red10'}>{total.toFixed(2)}</Text>
+                    </XStack>
+                </YStack>
+            </XStack>
 
-                <Separator my={10} />
-
+            <Separator my={10} />
+            
+            <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
                 <XStack style={styles.contributorRow}>
                     <Avatar circular size="$4" style={styles.avatar}>
                         <Avatar.Image
@@ -73,7 +75,7 @@ const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
 
                     <YStack style={styles.contributorInfo}>
                         <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
-                        <Text style={styles.contributorMeta}>1.276 contribs.</Text>
+                        <Text style={styles.contributorMeta}>78 expenses</Text>
                     </YStack>
 
                     <YStack style={styles.locationColumn}>
@@ -99,32 +101,32 @@ const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
                         </Text>
                     </YStack>
                 </XStack>
+            </Pressable>
 
-                <Separator my={10} />
+            <Separator my={10} />
 
-                <XStack style={styles.thanksRow}>
-                    <XStack style={styles.thanksLeft}>
-                        <Button size="$2" style={styles.thanksButton}>
-                            <XStack style={styles.thanksContent}>
-                                <MaterialCommunityIcons name="thumb-up" size={14} />
-                                <Text style={styles.thanksText}>Say Thanks</Text>
-                            </XStack>
-                        </Button>
-
-                        <View style={styles.thanksCount}>
-                            <Text style={styles.thanksCountText}>1.230 thanks</Text>
-                        </View>
-                    </XStack>
-
-                    <Button size="$2" style={styles.viewLocationButton} onPress={() => handleOpenDirections(activity)}>
+            <XStack style={styles.thanksRow}>
+                <XStack style={styles.thanksLeft}>
+                    <Button size="$2" style={styles.thanksButton}>
                         <XStack style={styles.thanksContent}>
-                            <MaterialCommunityIcons name="map" size={14} />
-                            <Text style={styles.thanksText}>See Location</Text>
+                            <MaterialCommunityIcons name="thumb-up" size={14} />
+                            <Text style={styles.thanksText}>Say Thanks</Text>
                         </XStack>
                     </Button>
+
+                    <View style={styles.thanksCount}>
+                        <Text style={styles.thanksCountText}>1.230 thanks</Text>
+                    </View>
                 </XStack>
-            </Card>
-        </>
+
+                <Button size="$2" style={styles.viewLocationButton} onPress={() => handleOpenDirections(activity)}>
+                    <XStack style={styles.thanksContent}>
+                        <MaterialCommunityIcons name="map" size={14} />
+                        <Text style={styles.thanksText}>Location</Text>
+                    </XStack>
+                </Button>
+            </XStack>
+        </Card>
     )
 }
 
@@ -163,11 +165,11 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
         textAlign: 'left',
+        marginBottom: 3,
     },
     itemValue: {
         width: '100%',
         fontSize: 12,
-        fontWeight: 700,
         opacity: 0.9,
     },
     totalRow: {

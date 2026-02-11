@@ -3,6 +3,7 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getAuth } from '@/services/auth-storage';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Menu } from '@tamagui/menu';
 import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
 import { BackHandler, Platform, Pressable, StyleSheet } from 'react-native';
@@ -12,6 +13,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
+  const [selectedFilter, setSelectedFilter] = React.useState<string[]>([]);
 
   React.useEffect(() => {
     if (!open) {
@@ -102,35 +104,136 @@ export default function TabLayout() {
             headerRight: () => {
               return (
                 <XStack gap="$2" marginInlineEnd={16} style={{ alignItems: 'center' }}>
-                  <Pressable onPress={() => {}}>
-                    <Button
-                      circular
-                      size="$3"
-                      style={{
-                        
-                        borderRadius: 18,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <MaterialCommunityIcons name="bell-badge-outline" size={22} />
-                    </Button>
-                  </Pressable>
+                  <Button
+                    circular
+                    size="$3"
+                    onPress={() => router.push({
+                      pathname: '/feed/map-view',
+                      params: {
+                        component: 'activity',
+                        type: ['new_connectivity'],
+                        title: 'Connectivities Map',
+                      }
+                    })}
+                  >
+                    <MaterialCommunityIcons name="map-search" size={22} />
+                  </Button>
 
-                  <Pressable onPress={() => {}}>
-                    <Button
-                      circular
-                      size="$3"
-                      style={{
-                        
-                        borderRadius: 18,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
+                  <Menu closeOnSelect={false}>
+                    <Menu.Trigger asChild>
+                      <Button
+                        circular
+                        size="$3"
+                      >
+                        <MaterialCommunityIcons name="filter-cog-outline" size={22} />
+                      </Button>
+                    </Menu.Trigger>
+
+                    <Menu.Content
+                      loop
+                      sideOffset={5}
+                      alignOffset={-5}
+                      minWidth={200}
                     >
-                      <MaterialCommunityIcons name="filter-cog-outline" size={22} />
-                    </Button>
-                  </Pressable>
+                      <Menu.Label>Filter Activity Type</Menu.Label>
+                      <Menu.Separator />
+                      
+                      <Menu.CheckboxItem
+                        value="new_expense"
+                        checked={selectedFilter.includes('new_expense')}
+                        onCheckedChange={(checked: boolean) => {
+                          setSelectedFilter(prev => 
+                            checked ? [...prev, 'new_expense'] : prev.filter(f => f !== 'new_expense')
+                          );
+                        }}
+                      >
+                        <Menu.ItemIndicator>
+                          <MaterialCommunityIcons name="check" size={16} />
+                        </Menu.ItemIndicator>
+                        <Menu.ItemTitle>Expense</Menu.ItemTitle>
+                      </Menu.CheckboxItem>
+
+                      <Menu.CheckboxItem
+                        value="new_connectivity"
+                        checked={selectedFilter.includes('new_connectivity')}
+                        onCheckedChange={(checked: boolean) => {
+                          setSelectedFilter(prev => 
+                            checked ? [...prev, 'new_connectivity'] : prev.filter(f => f !== 'new_connectivity')
+                          );
+                        }}
+                      >
+                        <Menu.ItemIndicator>
+                          <MaterialCommunityIcons name="check" size={16} />
+                        </Menu.ItemIndicator>
+                        <Menu.ItemTitle>Connectivity</Menu.ItemTitle>
+                      </Menu.CheckboxItem>
+
+                      <Menu.CheckboxItem
+                        value="new_spothunt"
+                        checked={selectedFilter.includes('new_spothunt')}
+                        onCheckedChange={(checked: boolean) => {
+                          setSelectedFilter(prev => 
+                            checked ? [...prev, 'new_spothunt'] : prev.filter(f => f !== 'new_spothunt')
+                          );
+                        }}
+                      >
+                        <Menu.ItemIndicator>
+                          <MaterialCommunityIcons name="check" size={16} />
+                        </Menu.ItemIndicator>
+                        <Menu.ItemTitle>Spot Hunt</Menu.ItemTitle>
+                      </Menu.CheckboxItem>
+
+                      <Menu.CheckboxItem
+                        value="new_route_point"
+                        checked={selectedFilter.includes('new_route_point')}
+                        onCheckedChange={(checked: boolean) => {
+                          setSelectedFilter(prev => 
+                            checked ? [...prev, 'new_route_point'] : prev.filter(f => f !== 'new_route_point')
+                          );
+                        }}
+                      >
+                        <Menu.ItemIndicator>
+                          <MaterialCommunityIcons name="check" size={16} />
+                        </Menu.ItemIndicator>
+                        <Menu.ItemTitle>Route Point</Menu.ItemTitle>
+                      </Menu.CheckboxItem>
+
+                      <Menu.CheckboxItem
+                        value="created_group"
+                        checked={selectedFilter.includes('created_group')}
+                        onCheckedChange={(checked: boolean) => {
+                          setSelectedFilter(prev => 
+                            checked ? [...prev, 'created_group'] : prev.filter(f => f !== 'created_group')
+                          );
+                        }}
+                      >
+                        <Menu.ItemIndicator>
+                          <MaterialCommunityIcons name="check" size={16} />
+                        </Menu.ItemIndicator>
+                        <Menu.ItemTitle>Created Group</Menu.ItemTitle>
+                      </Menu.CheckboxItem>
+
+                      <Menu.CheckboxItem
+                        value="new_story"
+                        checked={selectedFilter.includes('new_story')}
+                        onCheckedChange={(checked: boolean) => {
+                          setSelectedFilter(prev => 
+                            checked ? [...prev, 'new_story'] : prev.filter(f => f !== 'new_story')
+                          );
+                        }}
+                      >
+                        <Menu.ItemIndicator>
+                          <MaterialCommunityIcons name="check" size={16} />
+                        </Menu.ItemIndicator>
+                        <Menu.ItemTitle>Story</Menu.ItemTitle>
+                      </Menu.CheckboxItem>
+
+                      <Menu.Separator />
+                      <Menu.Item onSelect={() => setSelectedFilter([])}>
+                        <Menu.ItemTitle>Clear All</Menu.ItemTitle>
+                      </Menu.Item>
+                    </Menu.Content>
+                  </Menu>
                 </XStack>
               )
             },
@@ -331,7 +434,6 @@ export default function TabLayout() {
           </XStack>
         </Sheet.Frame>
       </Sheet>
-
     </>
   );
 }

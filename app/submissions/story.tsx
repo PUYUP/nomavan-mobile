@@ -7,7 +7,7 @@ import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { ActivityIndicator, Platform, StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, ListItem, Text, TextArea, View, XStack, YGroup, YStack } from "tamagui";
+import { Button, Text, TextArea, View, XStack, YStack } from "tamagui";
 
 export interface Story {
     content: string;
@@ -101,7 +101,7 @@ const StorySubmission = () => {
                             )}
 						/>
                         
-                        <YGroup>
+                        {/* <YGroup>
                             <YGroup.Item>
                                 <ListItem 
                                     rounded={8} 
@@ -110,7 +110,7 @@ const StorySubmission = () => {
                                     onPress={() => {alert('Coming soon')}}
                                 />
                             </YGroup.Item>
-                        </YGroup>
+                        </YGroup> */}
                     </YStack>
                 </KeyboardAwareScrollView>
 

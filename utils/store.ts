@@ -3,6 +3,7 @@ import { connectivityApi } from '@/services/connectivity';
 import { expenseApi } from '@/services/expense';
 import { mediaApi } from '@/services/media';
 import { meetupApi } from '@/services/meetup';
+import { profileApi } from '@/services/profile-api';
 import { receiptApi } from '@/services/receipt-extractor';
 import { routeContextApi } from '@/services/route-context';
 import { routePointApi } from '@/services/route-point';
@@ -26,6 +27,7 @@ export const AppStore = configureStore({
         [spothuntApi.reducerPath]: spothuntApi.reducer,
         [routePointApi.reducerPath]: routePointApi.reducer,
         [routeContextApi.reducerPath]: routeContextApi.reducer,
+        [profileApi.reducerPath]: profileApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(
@@ -41,6 +43,7 @@ export const AppStore = configureStore({
             spothuntApi.middleware,
             routePointApi.middleware,
             routeContextApi.middleware,
+            profileApi.middleware,
         ),
 })
 

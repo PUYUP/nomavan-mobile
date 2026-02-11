@@ -138,11 +138,13 @@ export const activityApi = createApi({
     }),
     endpoints: (builder) => ({
         getActivities: builder.query<BPActivityResponse[], BPActivityFilterArgs | void>({
-            query: (args) => ({
-                url: '/buddypress/v1/activity',
-                method: 'GET',
-                params: args ?? {},
-            }),
+            query: (args) => {
+                return {
+                    url: '/buddypress/v1/activity',
+                    method: 'GET',
+                    params: args ?? {},
+                }
+            },
         }),
         createActivity: builder.mutation<BPActivityResponse, BPActivityPayload>({
             query: (body) => ({

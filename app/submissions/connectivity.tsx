@@ -94,8 +94,10 @@ const ConnectivitySubmission = () => {
 		onMount();
 	}, []);
 
+	// Set initial form values only once when signalInfo is first loaded
 	useEffect(() => {
-		if (signalInfo) {
+		if (signalInfo && signalInfo.lat === 0 && signalInfo.lng === 0) {
+			// Only set initial values on first mount (when lat/lng are still 0)
 			(Object.entries(signalInfo) as Array<[keyof SignalInfo, SignalInfo[keyof SignalInfo]]>)
 				.forEach(([key, value]) => {
 					setValue(key, value);
@@ -107,6 +109,10 @@ const ConnectivitySubmission = () => {
 		const unsubscribeLocation = subscribeLocationSelected((selection) => {
 			if (selection && selection.purpose === 'connectivity') {
 				setPlaceName(selection.placeName as string);
+				// Only update lat/lng in form, don't overwrite other fields
+				if (selection.latitude) setValue('lat', selection.latitude);
+				if (selection.longitude) setValue('lng', selection.longitude);
+				// Update state for internal tracking
 				setSignalInfo((prev: SignalInfo | undefined) => {
 					return prev ? {
 						...prev,
@@ -120,7 +126,7 @@ const ConnectivitySubmission = () => {
 		return () => {
 			unsubscribeLocation();
 		};
-	}, []);
+	}, [setValue]);
 
 	return (
 		<SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -152,9 +158,9 @@ const ConnectivitySubmission = () => {
 								<XStack style={{ alignItems: 'center' }}>
 									<MaterialCommunityIcons name='crosshairs-gps' size={26} style={styles.inputIcon} />
 									
-									<Text style={styles.inputText}>{signalInfo?.lat}</Text>
+									<Text style={[styles.inputText, { fontSize: 13 }]}>{signalInfo?.lat}</Text>
 									<Text marginStart={1} marginEnd={3}>,</Text>
-									<Text style={styles.inputText}>{signalInfo?.lng}</Text>
+									<Text style={[styles.inputText, { fontSize: 13 }]}>{signalInfo?.lng}</Text>
 								</XStack>
 							</XStack>
 						</XStack>
@@ -220,7 +226,7 @@ const ConnectivitySubmission = () => {
 					<Controller
 						control={control}
 						name={'internetAvailable'}
-						rules={{ required: true }}
+
 						render={({ field: { onChange, value } }) => (
 							<XStack style={styles.inputStack}>
 								<MaterialCommunityIcons name='microsoft-internet-explorer' size={26} style={styles.inputIcon} />

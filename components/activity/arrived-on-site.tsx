@@ -1,7 +1,8 @@
 import { BPActivityResponse } from '@/services/activity';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
-import { StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, StyleSheet } from 'react-native';
 import { Avatar, Button, Card, Separator, Text, View, XStack, YStack } from 'tamagui';
 
 type ComponentProps = {
@@ -26,10 +27,11 @@ const ArrivedOnSite = ({ activity = null }: ComponentProps) => {
         return null;
     }
     
-    const postedTime = (activity.secondary_item.meta?.previous_route_point_id ? formatDistanceToNow(new Date(activity.secondary_item.meta?.previous_route_point_id?.date)) : '-').replace('about', '');
+    const router = useRouter();
+    const postedTime = (activity.secondary_item?.meta?.previous_route_point_id ? formatDistanceToNow(new Date(activity?.secondary_item.meta?.previous_route_point_id?.date)) : '-').replace('about', '');
     const distance = distanceInMeters(
-        { latitude: activity.secondary_item.meta.latitude, longitude: activity.secondary_item.meta.longitude },
-        { latitude: activity.secondary_item.meta?.previous_route_point_id?.latitude, longitude: activity.secondary_item.meta?.previous_route_point_id?.longitude }
+        { latitude: activity.secondary_item?.meta.latitude, longitude: activity.secondary_item?.meta.longitude },
+        { latitude: activity.secondary_item?.meta?.previous_route_point_id?.latitude, longitude: activity.secondary_item?.meta?.previous_route_point_id?.longitude }
     );
 
     return (
@@ -50,7 +52,7 @@ const ArrivedOnSite = ({ activity = null }: ComponentProps) => {
                         <XStack style={styles.arrivedStats} marginBlockStart="$2.5">
                             <XStack style={styles.arrivedStatItem}>
                                 <MaterialCommunityIcons name="clock-time-four-outline" size={14} color="#6b7280" />
-                                <Text style={styles.arrivedStatText}>{activity.secondary_item.meta?.time_from_prev / 60} hours</Text>
+                                <Text style={styles.arrivedStatText}>{Math.round((activity.secondary_item?.meta?.time_from_prev / 60) * 100) / 100} hours</Text>
                             </XStack>
                             <XStack style={styles.arrivedStatItem}>
                                 <MaterialCommunityIcons name="road-variant" size={14} color="#6b7280" />
@@ -71,8 +73,8 @@ const ArrivedOnSite = ({ activity = null }: ComponentProps) => {
                             <YStack style={styles.arrivedInfo}>
                                 <Text style={styles.arrivedLabel}>From</Text>
                                 <Text style={styles.arrivedTitle}>
-                                    {activity.secondary_item.meta?.previous_route_point_id?.place_name ?
-                                        activity.secondary_item.meta.previous_route_point_id.place_name
+                                    {activity.secondary_item?.meta?.previous_route_point_id?.place_name ?
+                                        activity.secondary_item?.meta?.previous_route_point_id?.place_name
                                         : 'Unknown'
                                     }
                                 </Text>
@@ -84,30 +86,32 @@ const ArrivedOnSite = ({ activity = null }: ComponentProps) => {
             </YStack>
 
             <Separator my={10} />
+            
+            <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
+                <XStack style={styles.contributorRow}>
+                    <Avatar circular size="$4" style={styles.avatar}>
+                        <Avatar.Image
+                            src={'https:' + activity.user_avatar.thumb}
+                            accessibilityLabel="Contributor avatar"
+                        />
+                        <Avatar.Fallback />
+                    </Avatar>
 
-            <XStack style={styles.contributorRow}>
-                <Avatar circular size="$4" style={styles.avatar}>
-                    <Avatar.Image
-                        src={'https:' + activity.user_avatar.thumb}
-                        accessibilityLabel="Contributor avatar"
-                    />
-                    <Avatar.Fallback />
-                </Avatar>
+                    <YStack style={styles.contributorInfo}>
+                        <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
+                        <Text style={styles.contributorMeta}>713 checkpoints</Text>
+                    </YStack>
 
-                <YStack style={styles.contributorInfo}>
-                    <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
-                    <Text style={styles.contributorMeta}>1.276 contribs.</Text>
-                </YStack>
-
-                <Text style={styles.onWayText}>87 en route</Text>
-                
-                <Button size="$2" style={styles.viewLocationButton}>
-                    <XStack style={styles.thanksContent}>
-                        <MaterialCommunityIcons name="history" size={16} />
-                        <Text style={styles.thanksText}>View Log</Text>
-                    </XStack>
-                </Button>
-            </XStack>
+                    <Text style={styles.onWayText}>87 en route</Text>
+                    
+                    <Button size="$2" style={styles.viewLocationButton}>
+                        <XStack style={styles.thanksContent}>
+                            <MaterialCommunityIcons name="map-marker-path" size={16} />
+                            <Text style={styles.thanksText}>Route</Text>
+                        </XStack>
+                    </Button>
+                </XStack>
+            </Pressable>
         </Card>
     )
 }

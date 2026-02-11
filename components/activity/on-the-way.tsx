@@ -1,7 +1,8 @@
 import { BPActivityResponse } from '@/services/activity';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
-import { StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, StyleSheet } from 'react-native';
 import { Avatar, Button, Card, Separator, Text, View, XStack, YStack } from 'tamagui';
 
 type ComponentProps = {
@@ -26,10 +27,11 @@ const OnTheWay = ({ activity = null }: ComponentProps) => {
         return null;
     }
 
-    const postedTime = (activity.secondary_item.meta?.previous_route_point_id ? formatDistanceToNow(new Date(activity.secondary_item.meta?.previous_route_point_id?.date)) : '-').replace('about', '');
+    const router = useRouter();
+    const postedTime = (activity.secondary_item?.meta?.previous_route_point_id ? formatDistanceToNow(new Date(activity.secondary_item.meta?.previous_route_point_id?.date)) : '-').replace('about', '');
     const distance = distanceInMeters(
-        { latitude: activity.secondary_item.meta.latitude, longitude: activity.secondary_item.meta.longitude },
-        { latitude: activity.secondary_item.meta?.previous_route_point_id?.latitude, longitude: activity.secondary_item.meta?.previous_route_point_id?.longitude }
+        { latitude: activity.secondary_item?.meta.latitude, longitude: activity.secondary_item?.meta.longitude },
+        { latitude: activity.secondary_item?.meta?.previous_route_point_id?.latitude, longitude: activity.secondary_item?.meta?.previous_route_point_id?.longitude }
     );
 
     return (
@@ -42,8 +44,8 @@ const OnTheWay = ({ activity = null }: ComponentProps) => {
                             <YStack style={styles.directionInfo}>
                                 <Text style={styles.directionLabel}>From</Text>
                                 <Text style={styles.directionTitle}>
-                                    {activity.secondary_item.meta?.previous_route_point_id?.place_name ?
-                                        activity.secondary_item.meta.previous_route_point_id.place_name
+                                    {activity.secondary_item?.meta?.previous_route_point_id?.place_name ?
+                                        activity.secondary_item?.meta?.previous_route_point_id?.place_name
                                         : 'Unknown'
                                     }
                                 </Text>
@@ -61,7 +63,7 @@ const OnTheWay = ({ activity = null }: ComponentProps) => {
                         <XStack style={styles.directionRow}>
                             <YStack style={styles.directionInfo}>
                                 <Text style={styles.directionLabel}>To</Text>
-                                <Text style={styles.directionTitle}>{activity.secondary_item.title.rendered}</Text>
+                                <Text style={styles.directionTitle}>{activity.secondary_item?.title?.rendered}</Text>
                             </YStack>
                             <Text style={styles.directionDistance}>
                                 {distance || distance == 0 ? Math.round((distance / 1000) * 100) / 100 : '-'} km
@@ -72,30 +74,32 @@ const OnTheWay = ({ activity = null }: ComponentProps) => {
             </YStack>
 
             <Separator my={10} />
+                                    
+            <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
+                <XStack style={styles.contributorRow}>
+                    <Avatar circular size="$4" style={styles.avatar}>
+                        <Avatar.Image
+                            src={'https:' + activity.user_avatar.thumb}
+                            accessibilityLabel="Contributor avatar"
+                        />
+                        <Avatar.Fallback />
+                    </Avatar>
 
-            <XStack style={styles.contributorRow}>
-                <Avatar circular size="$4" style={styles.avatar}>
-                    <Avatar.Image
-                        src={'https:' + activity.user_avatar.thumb}
-                        accessibilityLabel="Contributor avatar"
-                    />
-                    <Avatar.Fallback />
-                </Avatar>
+                    <YStack style={styles.contributorInfo}>
+                        <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
+                        <Text style={styles.contributorMeta}>713 checkpoints</Text>
+                    </YStack>
 
-                <YStack style={styles.contributorInfo}>
-                    <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
-                    <Text style={styles.contributorMeta}>1.276 contribs.</Text>
-                </YStack>
-
-                <Text style={styles.onWayText}>102 en route</Text>
-                
-                <Button size="$2" style={styles.viewLocationButton}>
-                    <XStack style={styles.thanksContent}>
-                        <MaterialCommunityIcons name="directions" size={14} />
-                        <Text style={styles.thanksText}>Me Too</Text>
-                    </XStack>
-                </Button>
-            </XStack>
+                    <Text style={styles.onWayText}>102 en route</Text>
+                    
+                    <Button size="$2" style={styles.viewLocationButton}>
+                        <XStack style={styles.thanksContent}>
+                            <MaterialCommunityIcons name="directions" size={14} />
+                            <Text style={styles.thanksText}>Me Too</Text>
+                        </XStack>
+                    </Button>
+                </XStack>
+            </Pressable>
         </Card>
     )
 }
