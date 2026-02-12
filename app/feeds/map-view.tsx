@@ -28,7 +28,7 @@ const MapViewScreen = () => {
     const activitiesQueryArgs: BPActivityFilterArgs = { 
         page: 1,
         per_page: 50,
-        component: params.component || 'activity',
+        // component: params.component || 'activity',
         type: params.type ? (Array.isArray(params.type) ? params.type : [params.type]) : ['new_expense'],
     };
     const { data, isLoading, error, refetch } = useGetActivitiesQuery(activitiesQueryArgs);
@@ -87,9 +87,9 @@ const MapViewScreen = () => {
         if (data && data.length > 0) {
             const newMarkers: MarkerData[] = data
                 .filter(activity => {
-                    const lat = activity.secondary_item?.meta?.latitude;
-                    const lng = activity.secondary_item?.meta?.longitude;
-                    
+                    const lat = activity.secondary_item?.meta?.latitude || activity.primary_item?.latitude;
+                    const lng = activity.secondary_item?.meta?.longitude || activity.primary_item?.longitude;
+
                     if (!lat || !lng) return false;
                     
                     // Parse and validate coordinates
@@ -99,17 +99,18 @@ const MapViewScreen = () => {
                     // Check if valid numbers and within valid ranges
                     const isValidLat = !isNaN(latitude) && isFinite(latitude) && latitude >= -90 && latitude <= 90;
                     const isValidLng = !isNaN(longitude) && isFinite(longitude) && longitude >= -180 && longitude <= 180;
-                    
+ 
                     return isValidLat && isValidLng;
                 })
                 .map(activity => ({
                     id: activity.id.toString(),
                     coordinate: {
-                        latitude: parseFloat(activity.secondary_item.meta.latitude),
-                        longitude: parseFloat(activity.secondary_item.meta.longitude),
+                        latitude: activity.secondary_item ? parseFloat(activity.secondary_item.meta.latitude) : parseFloat(activity.primary_item.latitude),
+                        longitude: activity.secondary_item ? parseFloat(activity.secondary_item.meta.longitude) : parseFloat(activity.primary_item.longitude),
                     },
                     items: activity.secondary_item?.meta?.expense_items_inline || [],
                     secondary_item: activity.secondary_item,
+                    primary_item: activity.primary_item,
                     user_profile: activity.user_profile,
                     activityType: activity.type,
                 }));

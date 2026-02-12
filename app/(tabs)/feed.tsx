@@ -58,7 +58,7 @@ const FeedScreen = React.forwardRef<FeedScreenRef, FeedScreenProps>(({ filter, c
   const activitiesQueryArgs: BPActivityFilterArgs = { 
     page: 1,
     per_page: 50,
-    component: 'activity',
+    // component: 'activity',
     ...filter,
     ...(filterType !== 'all' && { type: [FILTER_TYPE_MAP[filterType]] })
   };

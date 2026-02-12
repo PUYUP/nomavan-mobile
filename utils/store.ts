@@ -3,6 +3,7 @@ import { connectivityApi } from '@/services/connectivity';
 import { expenseApi } from '@/services/expense';
 import { mediaApi } from '@/services/media';
 import { meetupApi } from '@/services/meetup';
+import { membersApi } from '@/services/members-api';
 import { profileApi } from '@/services/profile-api';
 import { receiptApi } from '@/services/receipt-extractor';
 import { routeContextApi } from '@/services/route-context';
@@ -28,6 +29,7 @@ export const AppStore = configureStore({
         [routePointApi.reducerPath]: routePointApi.reducer,
         [routeContextApi.reducerPath]: routeContextApi.reducer,
         [profileApi.reducerPath]: profileApi.reducer,
+        [membersApi.reducerPath]: membersApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(
@@ -44,6 +46,7 @@ export const AppStore = configureStore({
             routePointApi.middleware,
             routeContextApi.middleware,
             profileApi.middleware,
+            membersApi.middleware,
         ),
 })
 

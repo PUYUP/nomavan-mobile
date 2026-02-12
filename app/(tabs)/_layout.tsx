@@ -136,15 +136,30 @@ export default function TabLayout() {
                     circular
                     size="$3"
                     onPress={() => router.push({
-                      pathname: '/feed/map-view',
+                      pathname: '/searchs/members',
                       params: {
-                        component: 'activity',
+                        // component: 'activity',
                         type: mapParams.type,
                         title: mapParams.title,
                       }
                     })}
                   >
-                    <MaterialCommunityIcons name="map-search" size={22} />
+                    <MaterialCommunityIcons name="account-search" size={22} />
+                  </Button>
+
+                  <Button
+                    circular
+                    size="$3"
+                    onPress={() => router.push({
+                      pathname: '/feeds/map-view',
+                      params: {
+                        // component: 'activity',
+                        type: mapParams.type,
+                        title: mapParams.title,
+                      }
+                    })}
+                  >
+                    <MaterialCommunityIcons name="land-plots-marker" size={22} />
                   </Button>
                 </XStack>
               )

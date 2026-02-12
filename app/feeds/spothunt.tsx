@@ -23,7 +23,6 @@ const SpotHuntFeed = () => {
 
     useEffect(() => {
         if (activity && Array.isArray(activity) && activity.length > 0) {
-            console.log('Activity data loaded:', activity[0]);
             setActivityData(activity[0]);
         }
     }, [activity]);

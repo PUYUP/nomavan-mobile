@@ -74,7 +74,7 @@ export default function ProfileLayout() {
         <SafeAreaView style={styles.safeArea} edges={['bottom']}>
             <Stack.Screen 
                 options={{ 
-                    title: 'Profile', 
+                    title: isMe === 'true' ? 'My Profile' : 'Profile', 
                     headerTitleStyle: {
                         fontSize: 22,
                         fontFamily: 'Inter-Black',
@@ -142,7 +142,7 @@ export default function ProfileLayout() {
                                     pressStyle={{ bg: '$orange3' }}
                                     color={'$orange11'}
                                     icon={<MaterialCommunityIcons name="account-tie-voice" size={20} style={{ color: '#d8a109' }} />}
-                                >Tune</Button>
+                                >Watch</Button>
                             }
                         </XStack>
 

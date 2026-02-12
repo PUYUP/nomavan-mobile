@@ -12,7 +12,7 @@ export default function EnRouteScreen() {
   const activitiesQueryArgs: BPActivityFilterArgs = { 
     page: 1,
     per_page: 50,
-    component: 'activity',
+    // component: 'activity',
     type: ['new_route_point'],
   };
   const { data, isLoading, error, refetch } = useGetActivitiesQuery(activitiesQueryArgs);

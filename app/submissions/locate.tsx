@@ -53,7 +53,7 @@ const LocateSubmission = () => {
     const routeContextQueryArgs: BPActivityFilterArgs = {
         page: 1,
         per_page: 1,
-        component: 'activity',
+        // component: 'activity',
         type: ['new_route_context'],
         user_id: userId,
         secondary_item_meta_query: [
@@ -64,7 +64,7 @@ const LocateSubmission = () => {
     const routePointQueryArgs: BPActivityFilterArgs = {
         page: 1,
         per_page: 2,
-        component: 'activity',
+        // component: 'activity',
         type: ['new_route_point'],
         user_id: userId,
     }
@@ -268,7 +268,6 @@ const LocateSubmission = () => {
                 const latestPoint = routePointData[0];
                 const meta = latestPoint.secondary_item.meta;
                 if (meta.latitude && meta.longitude) {
-                    console.log('Setting current location from API', meta.latitude, meta.longitude, latestPoint.secondary_item.title);
                     setCurrentLocation({
                         latitude: truncateCoordinate(meta.latitude),
                         longitude: truncateCoordinate(meta.longitude),

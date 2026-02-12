@@ -62,7 +62,7 @@ const SpotHuntPin = ({
     const handleOpenDirections = (item: BPActivityResponse | null) => {
         if (1 > 0) {
             router.push({
-                pathname: '/feed/spothunt',
+                pathname: '/feeds/spothunt',
                 params: {
                     id: item?.id,
                 }

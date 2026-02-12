@@ -3,7 +3,7 @@ import { getAuth } from '@/services/auth-storage'
 import { JoinPayload, LeavePayload, MembershipPayload, useJoinMeetupMutation, useLeaveMeetupMutation, useRequestMembershipMutation } from '@/services/meetup'
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { Card } from '@tamagui/card'
-import { format, isSameDay, isValid } from 'date-fns'
+import { format, formatDistanceToNow, isSameDay, isValid } from 'date-fns'
 import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { Linking, Platform, Pressable, StyleSheet } from 'react-native'
@@ -26,7 +26,7 @@ const Meetup = ({
     }
 
     const router = useRouter();
-    const directionsColor = '#00bcd4'
+    const directionsColor = '#029baf'
     const [distanceMeters, setDistanceMeters] = useState<number | null>(null)
     const descriptionText = activity?.primary_item?.description?.rendered
         ? stripHtml(activity?.primary_item?.description?.rendered)
@@ -37,6 +37,7 @@ const Meetup = ({
     const startAt = startAtRaw ? new Date(startAtRaw) : null;
     const endAt = endAtRaw ? new Date(endAtRaw) : null;
 
+    const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
     const dateRangeText = startAt && endAt && isValid(startAt) && isValid(endAt)
         ? isSameDay(startAt, endAt)
             ? `${format(startAt, 'MMM dd, yyyy')} • ${format(startAt, 'hh:mm a')} - ${format(endAt, 'hh:mm a')}`
@@ -68,6 +69,16 @@ const Meetup = ({
     }, [activity?.primary_item?.latitude, activity?.primary_item?.longitude, userLat, userLng])
 
     const handleOpenDirections = (item: BPActivityResponse | null) => {
+        if (1 > 0) {
+            router.push({
+                pathname: '/feeds/meetup',
+                params: {
+                    id: item?.id,
+                }
+            });
+            return;
+        }
+
         const latitude = item?.primary_item?.latitude?.trim()
         const longitude = item?.primary_item?.longitude?.trim()
 
@@ -237,14 +248,7 @@ const Meetup = ({
                         <Text style={styles.contributorMeta}>10 contribs.</Text>
                     </YStack>
 
-                    <Text style={styles.onWayText}>72 meets</Text>
-                    
-                    <Button size="$2" style={styles.viewLocationButton}>
-                        <XStack style={{ alignItems: 'center', gap: 3 }}>
-                            <MaterialCommunityIcons name="database-search-outline" size={16} />
-                            <Text style={styles.thanksText}>View</Text>
-                        </XStack>
-                    </Button>
+                    <Text style={styles.onWayText}>{postedTime}</Text>
                 </XStack>
             </Pressable>
         </Card>
