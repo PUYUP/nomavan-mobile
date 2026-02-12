@@ -36,6 +36,10 @@ export const clearAuth = async () => {
     await AsyncStorage.removeItem(AUTH_KEY);
 };
 
+export const logout = async (): Promise<void> => {
+    await clearAuth();
+};
+
 export const isLoggedIn = async (): Promise<boolean> => {
     const auth = await getAuth();
     return Boolean(auth?.token);

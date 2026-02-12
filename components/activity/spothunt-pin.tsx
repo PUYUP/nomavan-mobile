@@ -40,7 +40,7 @@ const SpotHuntPin = ({
     userLat = null,
     userLng = null,
     visitorsLabel = '10 were here',
-    viewPinLabel = 'Find Spot',
+    viewPinLabel = 'View Spot',
     contributorMeta = '634 spots',
     PinsAddedLabel = 'hunted 2h ago',
 }: SpotHuntPinProps) => {
@@ -60,6 +60,16 @@ const SpotHuntPin = ({
     const [distanceMeters, setDistanceMeters] = useState<number | null>(null)
     
     const handleOpenDirections = (item: BPActivityResponse | null) => {
+        if (1 > 0) {
+            router.push({
+                pathname: '/feed/spothunt',
+                params: {
+                    id: item?.id,
+                }
+            });
+            return;
+        }
+
         const latitude = item?.secondary_item?.meta?.latitude;
         const longitude = item?.secondary_item?.meta?.longitude;
 

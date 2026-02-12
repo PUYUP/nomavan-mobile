@@ -57,6 +57,7 @@ const AddPinSubmission = () => {
             }
         };
         const result = await submitSpothunt(payload);
+        console.log('Spothunt submission result:', result);
         if (result && result.data) {
             router.back();
         }

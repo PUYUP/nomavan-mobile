@@ -1,12 +1,16 @@
+import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
+import { getAuth } from '@/services/auth-storage';
 import { getCurrentLocation, reverseGeocodeLocation } from '@/services/location';
 import { RouteContextPayload, useCreateRouteContextMutation } from '@/services/route-context';
 import { RoutePointPayload, useCreateRoutePointMutation } from '@/services/route-point';
 import { LocationSelection, subscribeLocationSelected } from '@/utils/location-selector';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Stack, useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { formatDistanceToNow } from 'date-fns';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import RenderHtml from 'react-native-render-html';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { Button, Text, View, XStack, YStack } from 'tamagui';
@@ -24,17 +28,83 @@ const distanceInMeters = (a: { latitude: number; longitude: number }, b: { latit
     return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
 };
 
+const truncateCoordinate = (value: number, decimals: number = 8): number => {
+    const multiplier = Math.pow(10, decimals);
+    return Math.floor(value * multiplier) / multiplier;
+};
+
+interface LocationSelectionExtended extends LocationSelection {
+    lastUpdated?: string;
+}
+
 const LocateSubmission = () => {
     const router = useRouter();
-    const [nextLocation, setNextLocation] = React.useState<LocationSelection>();
-    const [currentLocation, setCurrentLocation] = React.useState<LocationSelection>();
-    const [previousLocation, setPreviousLocation] = React.useState<LocationSelection>();
+    const [userId, setUserId] = React.useState<number>();
+    const [nextLocation, setNextLocation] = React.useState<LocationSelectionExtended>();
+    const [currentLocation, setCurrentLocation] = React.useState<LocationSelectionExtended>();
+    const [previousLocation, setPreviousLocation] = React.useState<LocationSelectionExtended>();
     const [currentDistanceFromPrev, setCurrentDistanceFromPrev] = React.useState<number>();
     const [nextDistanceFromCurrent, setNextDistanceFromCurrent] = React.useState<number>();
+    const isLoadingFromAPI = useRef(false);
+    const isRefreshingLocation = useRef(false);
+    const { width } = useWindowDimensions();
+    const htmlContentWidth = width - 100;
+
+    const routeContextQueryArgs: BPActivityFilterArgs = {
+        page: 1,
+        per_page: 1,
+        component: 'activity',
+        type: ['new_route_context'],
+        user_id: userId,
+        secondary_item_meta_query: [
+            { key: 'status', value: 'active' }
+        ],
+    }
+
+    const routePointQueryArgs: BPActivityFilterArgs = {
+        page: 1,
+        per_page: 2,
+        component: 'activity',
+        type: ['new_route_point'],
+        user_id: userId,
+    }
+    
     const [createRouteContext, { isLoading: createContextLoading }] = useCreateRouteContextMutation({ fixedCacheKey: 'create-route-context-process' });
     const [createRoutePoint, { isLoading: createPointLoading }] = useCreateRoutePointMutation({ fixedCacheKey: 'create-route-point-process' });
+    const { 
+        data: routeContextData, 
+        isLoading: routeContextLoading, 
+        error, 
+        refetch: refetchRouteContext
+    } = useGetActivitiesQuery(routeContextQueryArgs);
+
+    const { 
+        data: routePointData, 
+        isLoading: routePointLoading, 
+        refetch: refetchRoutePoint
+    } = useGetActivitiesQuery(routePointQueryArgs);
+
+    // Refetch data setiap kali screen di-focus
+    useFocusEffect(
+        useCallback(() => {
+            refetchRouteContext();
+            refetchRoutePoint();
+        }, [])
+    );
+
+    // Get user_id from auth storage
+    useEffect(() => {
+        const fetchUserId = async () => {
+            const auth = await getAuth();
+            if (auth && auth.user && typeof auth.user.id === 'number') {
+                setUserId(auth.user.id);
+            }
+        };
+        fetchUserId();
+    }, []);
 
     const refreshLocation = async (isArrived: boolean = false) => {
+        isRefreshingLocation.current = true;
         const location = await getCurrentLocation();
         if (location.ok) {
             const coords = location.data.coords;
@@ -57,14 +127,16 @@ const LocateSubmission = () => {
                 if (isArrived && nextLocation) {
                     setCurrentLocation({
                         placeName: nextLocation?.placeName,
-                        latitude: nextLocation?.latitude,
-                        longitude: nextLocation?.longitude,
+                        latitude: truncateCoordinate(nextLocation?.latitude),
+                        longitude: truncateCoordinate(nextLocation?.longitude),
+                        lastUpdated: new Date().toISOString(),
                     });
                 } else {
                     setCurrentLocation({
                         placeName: placeName,
-                        latitude: coords.latitude,
-                        longitude: coords.longitude,
+                        latitude: truncateCoordinate(coords.latitude),
+                        longitude: truncateCoordinate(coords.longitude),
+                        lastUpdated: new Date().toISOString(),
                     });
                 }
 
@@ -83,8 +155,8 @@ const LocateSubmission = () => {
                     content: '',
                     status: 'publish',
                     meta: {
-                        latitude: isArrived && nextLocation?.latitude ? nextLocation?.latitude : coords.latitude,
-                        longitude: isArrived && nextLocation?.longitude ? nextLocation?.longitude : coords.longitude,
+                        latitude: truncateCoordinate(isArrived && nextLocation?.latitude ? nextLocation?.latitude : coords.latitude),
+                        longitude: truncateCoordinate(isArrived && nextLocation?.longitude ? nextLocation?.longitude : coords.longitude),
                         arrived_at: isArrived ? new Date().toISOString() : '',
                     }
                 }
@@ -96,6 +168,7 @@ const LocateSubmission = () => {
                         text1: 'Information',
                         text2: 'Your location updated successfully',
                     });
+                    refetchRoutePoint();
                 }
 
                 if (isArrived) {
@@ -103,12 +176,18 @@ const LocateSubmission = () => {
                 }
             }
         }
+        isRefreshingLocation.current = false;
     }
 
     useEffect(() => {
         const unsubscribeLocation = subscribeLocationSelected((selection) => {
             if (selection && selection.purpose === 'next-location') {
-                setNextLocation(selection);
+                isLoadingFromAPI.current = false;
+                setNextLocation({
+                    ...selection,
+                    latitude: truncateCoordinate(selection.latitude),
+                    longitude: truncateCoordinate(selection.longitude),
+                });
             }
         }, { emitLast: false });
 
@@ -119,7 +198,8 @@ const LocateSubmission = () => {
 
     useEffect(() => {
         const mounted = async () => {
-            if (nextLocation) {
+            // Only create route context if the location was set by user, not from API
+            if (nextLocation && !isLoadingFromAPI.current) {
                 // calculate distance
                 if (currentLocation) {
                     const distance = distanceInMeters(
@@ -135,8 +215,8 @@ const LocateSubmission = () => {
                     content: '',
                     status: 'publish',
                     meta: {
-                        next_latitude: nextLocation?.latitude,
-                        next_longitude: nextLocation?.longitude,
+                        next_latitude: truncateCoordinate(nextLocation?.latitude),
+                        next_longitude: truncateCoordinate(nextLocation?.longitude),
                         next_place_name: nextLocation?.placeName,
                         started_at: new Date().toISOString(),
                     }
@@ -150,10 +230,77 @@ const LocateSubmission = () => {
                         text2: 'Destination saved successfully',
                     });
                 }
-            }   
+            } else if (nextLocation && currentLocation) {
+                // Just calculate distance if loaded from API
+                const distance = distanceInMeters(
+                    { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
+                    { latitude: nextLocation?.latitude, longitude: nextLocation?.longitude }
+                );
+
+                setNextDistanceFromCurrent(distance);
+            }
         }
         mounted();
     }, [nextLocation]);
+
+    useEffect(() => {
+        const mounted = async () => {
+            if (routeContextData && routeContextData.length > 0) {
+                const latestContext = routeContextData[0];
+                const meta = latestContext.secondary_item.meta;
+                if (meta.next_latitude && meta.next_longitude && meta.next_place_name) {
+                    isLoadingFromAPI.current = true;
+                    setNextLocation({
+                        latitude: truncateCoordinate(meta.next_latitude),
+                        longitude: truncateCoordinate(meta.next_longitude),
+                        placeName: meta.next_place_name,
+                    });
+                }
+            }
+        }
+        mounted();
+    }, [routeContextData]);
+
+    useEffect(() => {
+        const mounted = async () => {
+            if (routePointData && routePointData.length > 0 && !isRefreshingLocation.current) {
+                // Get the latest route point (current location)
+                const latestPoint = routePointData[0];
+                const meta = latestPoint.secondary_item.meta;
+                if (meta.latitude && meta.longitude) {
+                    console.log('Setting current location from API', meta.latitude, meta.longitude, latestPoint.secondary_item.title);
+                    setCurrentLocation({
+                        latitude: truncateCoordinate(meta.latitude),
+                        longitude: truncateCoordinate(meta.longitude),
+                        placeName: latestPoint.secondary_item.title.rendered,
+                        lastUpdated: latestPoint.date,
+                    });
+
+                    // Get the second latest point (previous location)
+                    if (routePointData.length > 1) {
+                        const previousPoint = routePointData[0];
+                        const prevMeta = previousPoint.secondary_item.meta;
+                        if (prevMeta.latitude && prevMeta.longitude) {
+                            setPreviousLocation({
+                                latitude: truncateCoordinate(prevMeta.latitude),
+                                longitude: truncateCoordinate(prevMeta.longitude),
+                                placeName: previousPoint.secondary_item.title.rendered,
+                                lastUpdated: previousPoint.date,
+                            });
+
+                            // Calculate distance between previous and current
+                            const distance = distanceInMeters(
+                                { latitude: prevMeta.latitude, longitude: prevMeta.longitude },
+                                { latitude: meta.latitude, longitude: meta.longitude }
+                            );
+                            setCurrentDistanceFromPrev(distance);
+                        }
+                    }
+                }
+            }
+        }
+        mounted();
+    }, [routePointData]);
 
 	return (
         <>
@@ -185,15 +332,16 @@ const LocateSubmission = () => {
                         </YStack>
 
                         <YStack style={styles.card} gap="$2">
-                            <XStack style={styles.cardHeader}>
+                            <XStack style={[styles.cardHeader, { alignItems: previousLocation ? 'start' : 'center' }]}>
                                 <XStack style={[styles.iconCircle, { backgroundColor: '#efbb11' }]}>
                                     <MaterialCommunityIcons name="map-marker-outline" size={28} color="#fff" />
                                 </XStack>
                                 <YStack width={'80%'}>
                                     <Text fontSize={12} opacity={0.7}>Previous</Text>
-                                    <Text fontSize={14} numberOfLines={1} ellipsizeMode='tail'>
-                                        {previousLocation ? previousLocation.placeName : 'Location history empty'}
-                                    </Text>
+                                    {previousLocation ?
+                                        <RenderHtml contentWidth={htmlContentWidth} source={{ html: previousLocation?.placeName ? previousLocation.placeName : '' }} />
+                                        : <Text fontSize={14} numberOfLines={1}>Location history empty.</Text>
+                                    }
                                 </YStack>
                             </XStack>
 
@@ -223,19 +371,23 @@ const LocateSubmission = () => {
                         </View>
 
                         <YStack style={styles.card} gap="$2">
-                            <XStack style={styles.cardHeader}>
+                            <XStack style={[styles.cardHeader, { alignItems: currentLocation ? 'start' : 'center' }]}>
                                 <XStack style={[styles.iconCircle, { backgroundColor: '#00bcd4' }]}>
                                     <MaterialCommunityIcons name="map-marker-radius" size={28} color="#fff" />
                                 </XStack>
                                 <YStack width={'80%'}>
                                     <XStack style={{ justifyContent: 'space-between', marginBlockEnd: 2 }}>
-                                        <Text fontSize={12} opacity={0.7}>Last update</Text>
-                                        <Text fontSize={12} opacity={0.7}>2 hours ago</Text>
+                                        <Text fontSize={12} opacity={0.7}>Current</Text>
+                                        <Text fontSize={12} opacity={0.7}>
+                                            {currentLocation?.lastUpdated ? formatDistanceToNow(new Date(currentLocation.lastUpdated || ''), { addSuffix: false, includeSeconds: true }) : null} 
+                                        </Text>
                                     </XStack>
-                                    <Text fontSize={14} numberOfLines={1} ellipsizeMode='tail'>
-                                        {currentLocation ? currentLocation.placeName : 'Where are you now?'}
-                                    </Text>
-                                </YStack>
+
+                                    {currentLocation ?
+                                        <RenderHtml contentWidth={htmlContentWidth} source={{ html: currentLocation?.placeName ? currentLocation.placeName : '' }} />
+                                        : <Text fontSize={14} numberOfLines={1}>Where are you now?</Text>
+                                    }
+                                    </YStack>
                             </XStack>
 
                             <XStack style={{ alignItems: 'flex-end' }}>
@@ -257,10 +409,10 @@ const LocateSubmission = () => {
                                             </Text>
                                         </XStack>
 
-                                        <XStack style={styles.metaRow}>
+                                        {/* <XStack style={styles.metaRow}>
                                             <MaterialCommunityIcons name="timer-outline" size={16} color="#6b7280" />
                                             <Text fontSize={13} opacity={0.7}>Time spent: 1 day 12 h</Text>
-                                        </XStack>
+                                        </XStack> */}
                                     </YStack>
                                     : null
                                 }
@@ -288,15 +440,16 @@ const LocateSubmission = () => {
                         </View>
 
                         <YStack style={styles.card} gap="$2">
-                            <XStack style={styles.cardHeader}>
+                            <XStack style={[styles.cardHeader, { alignItems: nextLocation ? 'start' : 'center' }]}>
                                 <XStack style={[styles.iconCircle, { backgroundColor: '#ff817b' }]}>
                                     <MaterialCommunityIcons name="map-marker-path" size={28} color="#fff" />
                                 </XStack>
                                 <YStack width={'80%'}>
                                     <Text fontSize={12} opacity={0.7}>Next</Text>
-                                    <Text fontSize={14} numberOfLines={1} ellipsizeMode='tail'>
-                                        {nextLocation ? nextLocation.placeName : 'Where you want to go?'}
-                                    </Text>
+                                    {nextLocation ?
+                                        <RenderHtml contentWidth={htmlContentWidth} source={{ html: nextLocation?.placeName ? nextLocation.placeName : '' }} />
+                                        : <Text fontSize={14} numberOfLines={1}>Where you want to go?</Text>
+                                    }
                                 </YStack>
                             </XStack>
 
@@ -308,7 +461,7 @@ const LocateSubmission = () => {
                                             <XStack>
                                                 <Text fontSize={13} opacity={0.7}>{nextLocation.latitude}</Text>
                                                 <Text marginStart={1} marginEnd={3}>,</Text>
-                                                <Text fontSize={13} opacity={0.7}>{nextLocation.longitude}</Text>
+                                                <Text fontSize={13} opacity={0.7} numberOfLines={1}>{nextLocation.longitude}</Text>
                                             </XStack>
                                         </XStack>
                                     
@@ -319,10 +472,10 @@ const LocateSubmission = () => {
                                             </Text>
                                         </XStack>
 
-                                        <XStack style={styles.metaRow}>
+                                        {/* <XStack style={styles.metaRow}>
                                             <MaterialCommunityIcons name="timer-outline" size={16} color="#6b7280" />
                                             <Text fontSize={13} opacity={0.7}>Time: ±10 hours</Text>
-                                        </XStack>
+                                        </XStack> */}
                                     </YStack>
                                     : null
                                 }

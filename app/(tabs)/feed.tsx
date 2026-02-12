@@ -14,10 +14,13 @@ import { useCreateRouteContextMutation } from '@/services/route-context';
 import { useCreateRoutePointMutation } from '@/services/route-point';
 import { useCreateSpothuntMutation } from '@/services/spothunt';
 import { useCreateStoryMutation } from '@/services/story';
+import { setActivityFilter } from '@/utils/activity-filter';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useImperativeHandle, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { Text, YStack } from 'tamagui';
+import { Button, Text, YStack } from 'tamagui';
 
 interface FeedScreenProps {
   filter?: BPActivityFilterArgs;
@@ -28,13 +31,38 @@ export interface FeedScreenRef {
   refetch: () => void;
 }
 
-const FeedScreen = React.forwardRef<FeedScreenRef, FeedScreenProps>(
-  ({ filter, context = 'feed' }, ref) => {
+const ACTIVITY_FILTERS = [
+  { type: 'all', label: 'All', icon: 'format-list-bulleted' },
+  { type: 'expenses', label: 'Expenses', icon: 'cart-arrow-down' },
+  { type: 'routes', label: 'Routes', icon: 'map-marker-path' },
+  { type: 'spothunts', label: 'Spot hunts', icon: 'magnify' },
+  { type: 'connections', label: 'Connectivity', icon: 'microsoft-internet-explorer' },
+  { type: 'meetups', label: 'Meetups', icon: 'account-group' },
+  { type: 'stories', label: 'Stories', icon: 'book-open-page-variant' },
+] as const;
+
+// Map UI filter types to API activity types
+const FILTER_TYPE_MAP: Record<string, string> = {
+  expenses: 'new_expense',
+  routes: 'new_route_point',
+  connections: 'new_connectivity',
+  meetups: 'created_group',
+  stories: 'new_story',
+  spothunts: 'new_spothunt',
+};
+
+const FeedScreen = React.forwardRef<FeedScreenRef, FeedScreenProps>(({ filter, context = 'feed' }, ref) => {
+  const router = useRouter();
+  const [filterType, setFilterType] = useState<string>('all');
+  
   const activitiesQueryArgs: BPActivityFilterArgs = { 
     page: 1,
     per_page: 50,
-    ...filter
+    component: 'activity',
+    ...filter,
+    ...(filterType !== 'all' && { type: [FILTER_TYPE_MAP[filterType]] })
   };
+  
   const [location, setLocation] = useState<{ lat: number, lng: number }>();
   const { data, isLoading, error, refetch } = useGetActivitiesQuery(activitiesQueryArgs);
   const [, joinMeetupResult] = useJoinMeetupMutation({ fixedCacheKey: 'join-meetup-process' });
@@ -99,6 +127,16 @@ const FeedScreen = React.forwardRef<FeedScreenRef, FeedScreenProps>(
     submitSpothuntResult.isLoading ||
     createRouteContextResult.isLoading ||
     createRoutePointResult.isLoading;
+
+  // Update route params when filterType changes
+  useEffect(() => {
+    router.setParams({ filterType });
+  }, [filterType]);
+
+  const getActivity = async (type: string) => {
+    setFilterType(type);
+    setActivityFilter(type); // Publish filter change
+  }
 
   const content = (
     <>
@@ -181,6 +219,34 @@ const FeedScreen = React.forwardRef<FeedScreenRef, FeedScreenProps>(
 
   return (
     <>
+      <View style={{ backgroundColor: '#fff' }}>
+        <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ 
+              gap: 8, 
+              paddingHorizontal: 16, 
+              paddingVertical: 8, 
+              paddingBottom: 8,
+            }}
+        >
+          {ACTIVITY_FILTERS.map((filter) => (
+              <Button 
+                key={filter.type}
+                size="$2" 
+                variant="outlined"
+                borderColor={filterType === filter.type ? '#1F3D2B' : '$borderColor'}
+                bg={filterType === filter.type ? '#F0F9FF' : 'transparent'}
+                onPress={() => getActivity(filter.type)}
+                icon={<MaterialCommunityIcons name={filter.icon as any} size={14} />}
+                px="$2.5"
+              >
+                {filter.label}
+              </Button>
+          ))}
+        </ScrollView>
+      </View>
+
       <Animated.ScrollView contentContainerStyle={containerStyle}>
         {content}
       </Animated.ScrollView>

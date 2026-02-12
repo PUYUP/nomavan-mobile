@@ -36,6 +36,9 @@ const ProfileActivity = ({ filter }: ProfileActivityProps) => {
             case 'spothunts':
                 setCurrentFilter({ ...baseFilter, type: ['new_spothunt'] });
                 break;
+            case 'connections':
+                setCurrentFilter({ ...baseFilter, type: ['new_connectivity'] });
+                break;
             case 'meetups':
                 setCurrentFilter({ ...baseFilter, type: ['created_group', 'joined_group'] });
                 break;

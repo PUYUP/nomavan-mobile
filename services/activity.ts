@@ -1,5 +1,6 @@
 import { getAuth } from '@/services/auth-storage';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import qs from "qs";
 
 export interface BPActivityPayload {
     primary_item_id?: number;
@@ -93,6 +94,11 @@ export interface BPActivityFavoriteLink {
     href: string;
 }
 
+export interface BPMetaQuery {
+    key: string;
+    value: string;
+}
+
 export interface BPActivityFilterArgs {
     context?: "view" | "edit";
     page?: number;
@@ -112,6 +118,7 @@ export interface BPActivityFilterArgs {
     component?: BPActivityComponent;
     type?: BPActivityType[];
     display_comments?: "" | "stream" | "threaded";
+    secondary_item_meta_query?: BPMetaQuery[];
 }
 
 export type BPActivityScope =
@@ -140,11 +147,19 @@ export const activityApi = createApi({
         getActivities: builder.query<BPActivityResponse[], BPActivityFilterArgs | void>({
             query: (args) => {
                 return {
-                    url: '/buddypress/v1/activity',
+                    url: '/buddypress/v1/activity?' + qs.stringify(args, {
+                        encode: false,
+                        arrayFormat: "indices"
+                    }),
                     method: 'GET',
-                    params: args ?? {},
                 }
             },
+        }),
+        getActivity: builder.query<BPActivityResponse, number>({
+            query: (activityId) => ({
+                url: `/buddypress/v1/activity/${activityId}`,
+                method: 'GET',
+            }),
         }),
         createActivity: builder.mutation<BPActivityResponse, BPActivityPayload>({
             query: (body) => ({
@@ -159,4 +174,4 @@ export const activityApi = createApi({
     }),
 });
 
-export const { useGetActivitiesQuery, useCreateActivityMutation } = activityApi;
+export const { useGetActivitiesQuery, useGetActivityQuery, useCreateActivityMutation } = activityApi;

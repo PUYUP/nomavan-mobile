@@ -1,6 +1,7 @@
+import { isLoggedIn } from "@/services/auth-storage";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useRef } from "react";
+import { Redirect, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import { Animated, Platform, StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,9 +9,18 @@ import { Button, Text, View, YStack } from "tamagui";
 
 const Index = () => {
     const router = useRouter();
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const floatA = useRef(new Animated.Value(0)).current;
     const floatB = useRef(new Animated.Value(0)).current;
     const floatC = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            const loggedIn = await isLoggedIn();
+            setIsAuthenticated(loggedIn);
+        };
+        checkAuth();
+    }, []);
 
     useEffect(() => {
         const loopA = Animated.loop(
@@ -43,17 +53,15 @@ const Index = () => {
         };
     }, [floatA, floatB, floatC]);
 
-  // Add any logic here to determine where to redirect
-  // For example, an authentication check
-//   const isAuthenticated = true; 
+    // Show loading state while checking authentication
+    if (isAuthenticated === null) {
+        return null; // or a loading spinner
+    }
 
-//   if (isAuthenticated) {
-//     // Redirect to the tabs layout file path, typically wrapped in a group like '(tabs)'
-//     return <Redirect href="/(auth)/register" />; 
-//   }
-  
-  // Or redirect to a login page if not authenticated
-  // return <Redirect href="/login" />;
+    // Redirect to feed if authenticated
+    if (isAuthenticated) {
+        return <Redirect href="/(tabs)/feed" />;
+    }
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>

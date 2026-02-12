@@ -1,7 +1,8 @@
 import { BPActivityResponse } from '@/services/activity';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
-import { Linking, Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Linking, Platform, Pressable, StyleSheet } from 'react-native';
 import { Avatar, Button, Card, Separator, Text, View, XStack, YStack } from 'tamagui';
 
 const SIGNAL_COLORS = {
@@ -50,6 +51,7 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
         return null;
     }
 
+    const router = useRouter();
     const rawStrength = Number(activity.secondary_item.meta.strength);
     const strengthLevel = Number.isFinite(rawStrength) ? clampStrength(rawStrength) : null;
     const strengthRange = signalLevelToDbmRange(strengthLevel ?? 0);
@@ -110,31 +112,33 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
                 </XStack>
 
                 <Separator my={10} />
+                
+                <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
+                    <XStack style={styles.contributorRow}>
+                        <Avatar circular size="$4" style={styles.avatar}>
+                            <Avatar.Image
+                                src={'https:' + activity.user_avatar.thumb}
+                                accessibilityLabel="Contributor avatar"
+                            />
+                            <Avatar.Fallback />
+                        </Avatar>
 
-                <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$4" style={styles.avatar}>
-                        <Avatar.Image
-                            src={'https:' + activity.user_avatar.thumb}
-                            accessibilityLabel="Contributor avatar"
-                        />
-                        <Avatar.Fallback />
-                    </Avatar>
+                        <YStack style={styles.contributorInfo}>
+                            <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
+                            <Text style={styles.contributorMeta}>1.276 contribs.</Text>
+                        </YStack>
 
-                    <YStack style={styles.contributorInfo}>
-                        <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
-                        <Text style={styles.contributorMeta}>1.276 contribs.</Text>
-                    </YStack>
-
-                    <YStack style={styles.locationColumn}>
-                        <XStack style={styles.locationRow}>
-                            <MaterialCommunityIcons name="map-marker-radius" size={16} />
-                            <Text style={styles.locationText} numberOfLines={1}>
-                                {activity.secondary_item.meta.place_name}
-                            </Text>
-                        </XStack>
-                        <Text style={styles.postedTime}>{postedTime}</Text>
-                    </YStack>
-                </XStack>
+                        <YStack style={styles.locationColumn}>
+                            <XStack style={styles.locationRow}>
+                                <MaterialCommunityIcons name="map-marker-radius" size={16} />
+                                <Text style={styles.locationText} numberOfLines={1}>
+                                    {activity.secondary_item.meta.place_name}
+                                </Text>
+                            </XStack>
+                            <Text style={styles.postedTime}>{postedTime}</Text>
+                        </YStack>
+                    </XStack>
+                </Pressable>
 
                 <Separator my={10} />
 

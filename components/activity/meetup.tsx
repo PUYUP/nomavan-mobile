@@ -4,8 +4,9 @@ import { JoinPayload, LeavePayload, MembershipPayload, useJoinMeetupMutation, us
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { Card } from '@tamagui/card'
 import { format, isSameDay, isValid } from 'date-fns'
+import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { Linking, Platform, StyleSheet } from 'react-native'
+import { Linking, Platform, Pressable, StyleSheet } from 'react-native'
 import Toast from 'react-native-toast-message'
 import { Avatar, Button, Paragraph, Separator, Text, XStack, YStack } from 'tamagui'
 
@@ -20,6 +21,11 @@ const Meetup = ({
     userLat = null,
     userLng = null,
 }: MeetupProps) => {
+    if (!activity) {
+        return null
+    }
+
+    const router = useRouter();
     const directionsColor = '#00bcd4'
     const [distanceMeters, setDistanceMeters] = useState<number | null>(null)
     const descriptionText = activity?.primary_item?.description?.rendered
@@ -215,30 +221,32 @@ const Meetup = ({
             </YStack>
 
             <Separator my={10} />
+            
+            <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
+                <XStack style={styles.contributorRow}>
+                    <Avatar circular size="$4" style={styles.avatar}>
+                        <Avatar.Image
+                            src={'https:' + activity?.user_avatar?.thumb}
+                            accessibilityLabel="Contributor avatar"
+                        />
+                        <Avatar.Fallback />
+                    </Avatar>
 
-            <XStack style={styles.contributorRow}>
-                <Avatar circular size="$4" style={styles.avatar}>
-                    <Avatar.Image
-                        src={'https:' + activity?.user_avatar?.thumb}
-                        accessibilityLabel="Contributor avatar"
-                    />
-                    <Avatar.Fallback />
-                </Avatar>
+                    <YStack style={styles.contributorInfo}>
+                        <Text style={styles.contributorName}>{activity?.user_profile?.name}</Text>
+                        <Text style={styles.contributorMeta}>10 contribs.</Text>
+                    </YStack>
 
-                <YStack style={styles.contributorInfo}>
-                    <Text style={styles.contributorName}>{activity?.user_profile?.name}</Text>
-                    <Text style={styles.contributorMeta}>10 contribs.</Text>
-                </YStack>
-
-                <Text style={styles.onWayText}>72 meets</Text>
-                
-                <Button size="$2" style={styles.viewLocationButton}>
-                    <XStack style={{ alignItems: 'center', gap: 3 }}>
-                        <MaterialCommunityIcons name="database-search-outline" size={16} />
-                        <Text style={styles.thanksText}>View</Text>
-                    </XStack>
-                </Button>
-            </XStack>
+                    <Text style={styles.onWayText}>72 meets</Text>
+                    
+                    <Button size="$2" style={styles.viewLocationButton}>
+                        <XStack style={{ alignItems: 'center', gap: 3 }}>
+                            <MaterialCommunityIcons name="database-search-outline" size={16} />
+                            <Text style={styles.thanksText}>View</Text>
+                        </XStack>
+                    </Button>
+                </XStack>
+            </Pressable>
         </Card>
     )
 }

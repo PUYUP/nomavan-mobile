@@ -203,7 +203,7 @@ const ConnectivitySubmission = () => {
 						rules={{ required: true }}
 						render={({ field: { onChange, value } }) => (
 							<XStack style={styles.inputStack}>
-								<MaterialCommunityIcons name='flag-outline' size={26} style={styles.inputIcon} />
+								<MaterialCommunityIcons name='access-point-network' size={26} style={styles.inputIcon} />
 								{signalInfo?.carrier
 									? <View width={200}><Text fontSize={14} numberOfLines={1} ellipsizeMode='tail' overflow='hidden'>{value}</Text></View>
 									: <Input

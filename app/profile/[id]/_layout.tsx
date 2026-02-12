@@ -1,3 +1,4 @@
+import { logout } from "@/services/auth-storage";
 import { useGetProfileQuery } from "@/services/profile-api";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Stack, Tabs, useLocalSearchParams, useRouter } from "expo-router";
@@ -11,9 +12,10 @@ const ACTIVITY_FILTERS = [
     { type: 'all', label: 'All', icon: 'format-list-bulleted' },
     { type: 'expenses', label: 'Expenses', icon: 'cart-arrow-down' },
     { type: 'routes', label: 'Routes', icon: 'map-marker-path' },
+     { type: 'spothunts', label: 'Spot hunts', icon: 'magnify' },
+    { type: 'connections', label: 'Connectivity', icon: 'microsoft-internet-explorer' },
     { type: 'meetups', label: 'Meetups', icon: 'account-group' },
     { type: 'stories', label: 'Stories', icon: 'book-open-page-variant' },
-    { type: 'spothunts', label: 'Spothunts', icon: 'magnify' },
 ] as const;
 
 async function presentPaywall(): Promise<boolean> {
@@ -34,7 +36,7 @@ async function presentPaywall(): Promise<boolean> {
 }
 
 export default function ProfileLayout() {
-    const { id } = useLocalSearchParams();
+    const { id, isMe } = useLocalSearchParams();
     const profileId = typeof id === 'string' ? parseInt(id, 10) : undefined;
     const router = useRouter();
     const [filterType, setFilterType] = useState<string>('all');
@@ -61,6 +63,12 @@ export default function ProfileLayout() {
             // Handle cancellation or error
         }
     }
+
+    // Logout handler
+    const logoutHandler = async () => {
+        await logout();
+        router.replace('/(auth)/login');
+    }
     
     return (
         <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -74,16 +82,28 @@ export default function ProfileLayout() {
                     },
                     headerBackButtonDisplayMode: 'minimal',
                     headerRight: () => (
-                        <Button 
-                            size={'$2'}
-                            bg={'$green10'}
-                            pressStyle={{ bg: '$green11' }}
-                            style={{ color: 'white' }}
-                            icon={<MaterialCommunityIcons name="lock-check" size={20} style={{ color: 'white' }} />}
-                            onPress={async () => await subscribeHandler()}
-                        >
-                            <Text color={'white'}>Unlock</Text>
-                        </Button>
+                        <>  
+                            {isMe === 'true' ?
+                                <Button 
+                                    size={'$2'}
+                                    style={{ color: '$red11' }}
+                                    icon={<MaterialCommunityIcons name="logout" size={20} style={{ color: '#c1121f' }} />}
+                                    onPress={async () => await logoutHandler()}
+                                >
+                                    <Text color={'#c1121f'}>Logout</Text>
+                                </Button>
+                            :   <Button 
+                                    size={'$2'}
+                                    bg={'$green10'}
+                                    pressStyle={{ bg: '$green11' }}
+                                    style={{ color: 'white' }}
+                                    icon={<MaterialCommunityIcons name="lock-check" size={20} style={{ color: 'white' }} />}
+                                    onPress={async () => await subscribeHandler()}
+                                >
+                                    <Text color={'white'}>Unlock</Text>
+                                </Button>
+                            }
+                        </>
                     ),
                 }} 
             />
@@ -113,13 +133,17 @@ export default function ProfileLayout() {
                                 <Text style={styles.username}>@{profile.mention_name}</Text>
                             </YStack>
 
-                            <Button 
-                                size={'$3'}
-                                bg={'transparent'}
-                                pressStyle={{ bg: '$orange3' }}
-                                color={'$orange11'}
-                                icon={<MaterialCommunityIcons name="account-tie-voice" size={20} style={{ color: '#d8a109' }} />}
-                            >Tune</Button>
+                            {isMe === 'true' 
+                                ? null
+                                : 
+                                <Button 
+                                    size={'$3'}
+                                    bg={'transparent'}
+                                    pressStyle={{ bg: '$orange3' }}
+                                    color={'$orange11'}
+                                    icon={<MaterialCommunityIcons name="account-tie-voice" size={20} style={{ color: '#d8a109' }} />}
+                                >Tune</Button>
+                            }
                         </XStack>
 
                         <ScrollView 
