@@ -31,35 +31,43 @@ const SignalMarker = ({ level = 3 }) => {
     const borderColor = clampedLevel > 0 ? activeColor : SIGNAL_COLORS.inactive;
 
     return (
-        <View style={[styles.container, { borderColor }]}>
-            {[8, 12, 16, 20, 24].map((height, index) => {
-                const isActive = clampedLevel > 0 && index < clampedLevel;
-                const barColor = isActive ? activeColor : SIGNAL_COLORS.inactive;
+        <View style={styles.wrapper}>
+            <View style={[styles.container, { borderColor }]}>
+                {[8, 10, 12, 14, 16].map((height, index) => {
+                    const isActive = clampedLevel > 0 && index < clampedLevel;
+                    const barColor = isActive ? activeColor : SIGNAL_COLORS.inactive;
 
-                return (
-                    <View
-                        key={`bar-${index}`}
-                        style={[
-                            styles.bar,
-                            { 
-                                height: height,
-                                backgroundColor: barColor,
-                            }
-                        ]}
-                    />
-                );
-            })}
+                    return (
+                        <View
+                            key={`bar-${index}`}
+                            style={[
+                                styles.bar,
+                                { 
+                                    height: height,
+                                    backgroundColor: barColor,
+                                }
+                            ]}
+                        />
+                    );
+                })}
+            </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
+    wrapper: {
+        width: 40, 
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     container: {
         flexDirection: 'row',
         alignItems: 'flex-end',
         gap: 3,
         backgroundColor: '#fff',
-        padding: 6,
+        padding: 4,
         borderRadius: 8,
         borderWidth: 2,
         // borderColor will be set dynamically based on signal strength
@@ -72,7 +80,7 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
     bar: {
-        width: 4,
+        width: 2,
         borderRadius: 2,
     },
 });

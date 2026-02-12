@@ -5,10 +5,10 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Location from 'expo-location';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Text as NText, StyleSheet, TouchableOpacity } from 'react-native';
-import MapView, { Callout, Marker, Region } from 'react-native-maps';
+import { ActivityIndicator, BackHandler, StyleSheet } from 'react-native';
+import MapView, { Marker, Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Text, View, YStack } from 'tamagui';
+import { Button, Sheet, Text, View, XStack, YStack } from 'tamagui';
 
 type MarkerData = {
     id: string;
@@ -36,7 +36,8 @@ const MapViewScreen = () => {
     const mapRef = useRef<MapView>(null);
     const markerRefs = useRef<{ [key: string]: any }>({});
     const [markers, setMarkers] = useState<MarkerData[]>([]);
-    const [selectedMarker, setSelectedMarker] = useState<string | null>(null);
+    const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
+    const [sheetOpen, setSheetOpen] = useState(false);
     const [currentRegion, setCurrentRegion] = useState<Region>({
         latitude: -6.2088,
         longitude: 106.8456,
@@ -190,13 +191,23 @@ const MapViewScreen = () => {
         mapRef.current?.animateToRegion(newRegion, 300);
     };
 
-    const closeCallout = (markerId: string) => {
-        console.log('Closing callout for marker:', markerId);
-        if (markerRefs.current[markerId]) {
-            markerRefs.current[markerId].hideCallout();
-            setSelectedMarker(null);
-        }
+    const handleMarkerPress = (marker: MarkerData) => {
+        setSelectedMarker(marker);
+        setSheetOpen(true);
     };
+
+    // Handle Android back button
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            if (sheetOpen) {
+                setSheetOpen(false);
+                return true; // Prevent default back behavior
+            }
+            return false; // Allow default back behavior
+        });
+
+        return () => backHandler.remove();
+    }, [sheetOpen]);
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -247,30 +258,16 @@ const MapViewScreen = () => {
                                 }
                             }}
                             coordinate={marker.coordinate}
-                            pinColor={selectedMarker === marker.id ? '#1F3D2B' : '#DC2626'}
-                            onPress={() => setSelectedMarker(marker.id)}
-                            tracksViewChanges={false}
+                            pinColor={selectedMarker?.id === marker.id ? '#1F3D2B' : '#DC2626'}
+                            onPress={() => handleMarkerPress(marker)}
+                            tracksViewChanges={marker.activityType === 'new_connectivity'}
+                            anchor={{ x: 0.5, y: 0.5 }}
+                            centerOffset={{ x: 0, y: 0 }}
                         >
-                            {marker.activityType === 'new_connectivity' ? 
-                                <SignalMarker level={marker.secondary_item?.meta?.strength} /> 
-                                : null
+                            {marker.activityType === 'new_connectivity' ? (
+                                <SignalMarker level={marker.secondary_item?.meta?.strength} />
+                                ) : null
                             }
-
-                            <Callout tooltip style={styles.callout}>
-                                <View style={styles.calloutContentWrapper}>
-                                    <MarkerCallout marker={marker} activityType={marker.activityType} />
-                                    
-                                    {/* Close Button */}
-                                    <TouchableOpacity 
-                                        onPress={() => closeCallout(marker.id)}
-                                        style={styles.closeButton}
-                                        activeOpacity={0.7}
-                                    >
-                                        <MaterialCommunityIcons name="close" size={16} color="#6B7280" />
-                                        <NText style={styles.closeButtonText}>Close</NText>
-                                    </TouchableOpacity>
-                                </View>
-                            </Callout>
                         </Marker>
                     ))}
                 </MapView>
@@ -302,6 +299,44 @@ const MapViewScreen = () => {
                         </Text>
                     </View>
                 </View>
+
+                {/* Bottom Sheet for Marker Details */}
+                <Sheet
+                    open={sheetOpen}
+                    onOpenChange={setSheetOpen}
+                    snapPointsMode="fit"
+                    dismissOnSnapToBottom
+                    animation="medium"
+                >
+                    <Sheet.Frame padding="$4" backgroundColor="white" borderTopLeftRadius="$6" borderTopRightRadius="$6"
+                        shadowColor="#000"
+                        shadowOffset={{ width: 0, height: -2 }}
+                        shadowOpacity={0.1}
+                        shadowRadius={8}
+                        elevation={5}
+                    >
+                        <YStack gap="$3" paddingTop="$2" paddingBottom="$4">
+                            {/* Close Button */}
+                            <XStack justifyContent="space-between" alignItems="center" paddingBottom="$2">
+                                <Text fontSize="$6" fontWeight="700" color="$gray12">
+                                    Details
+                                </Text>
+                                <Button
+                                    size="$3"
+                                    circular
+                                    chromeless
+                                    icon={<MaterialCommunityIcons name="close" size={24} color="#6B7280" />}
+                                    onPress={() => setSheetOpen(false)}
+                                />
+                            </XStack>
+
+                            {/* Content */}
+                            {selectedMarker && (
+                                <MarkerCallout marker={selectedMarker} activityType={selectedMarker.activityType} />
+                            )}
+                        </YStack>
+                    </Sheet.Frame>
+                </Sheet>
             </View>
         </SafeAreaView>
     )
@@ -324,38 +359,6 @@ const styles = StyleSheet.create({
         position: 'absolute',
         right: 16,
         top: 16,
-    },
-    callout: {
-        width: 260,
-        zIndex: 99999,
-    },
-    calloutContentWrapper: {
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        padding: 0,
-        minWidth: 260,
-    },
-    calloutContent: {
-        gap: 0,
-        padding: 8,
-        width: '100%',
-    },
-    calloutTitle: {
-        fontSize: 16,
-        fontFamily: 'Inter-Black',
-        color: '#1F3D2B',
-        marginBottom: 4,
-    },
-    calloutDescription: {
-        fontSize: 13,
-        fontFamily: 'Inter',
-        color: '#6B7280',
-        marginBottom: 2,
-    },
-    calloutPrice: {
-        fontSize: 14,
-        fontFamily: 'Inter-Black',
-        color: '#059669',
     },
     infoPanel: {
         position: 'absolute',
@@ -411,21 +414,5 @@ const styles = StyleSheet.create({
         color: '#1F3D2B',
         textDecorationLine: 'underline',
         marginTop: 8,
-    },
-    closeButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 4,
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        marginTop: 8,
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-    },
-    closeButtonText: {
-        fontSize: 13,
-        fontFamily: 'Inter',
-        color: '#6B7280',
     },
 });

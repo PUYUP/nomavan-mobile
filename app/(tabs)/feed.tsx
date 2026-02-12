@@ -36,8 +36,8 @@ const ACTIVITY_FILTERS = [
   { type: 'expenses', label: 'Expenses', icon: 'cart-arrow-down' },
   { type: 'routes', label: 'Routes', icon: 'map-marker-path' },
   { type: 'spothunts', label: 'Spot hunts', icon: 'magnify' },
-  { type: 'connections', label: 'Connectivity', icon: 'microsoft-internet-explorer' },
   { type: 'meetups', label: 'Meetups', icon: 'account-group' },
+  { type: 'connections', label: 'Connectivity', icon: 'microsoft-internet-explorer' },
   { type: 'stories', label: 'Stories', icon: 'book-open-page-variant' },
 ] as const;
 

@@ -142,14 +142,13 @@ const SearchMembers = () => {
                             backgroundColor="transparent"
                             borderWidth={0}
                             fontSize="$4"
-                            paddingVertical="$3"
                         />
                         {searchQuery.length > 0 && (
                             <Button
                                 size="$2"
                                 circular
                                 chromeless
-                                icon={<MaterialCommunityIcons name="close" size={18} color="#6b7280" />}
+                                icon={<MaterialCommunityIcons name="close" size={20} color="#6b7280" />}
                                 onPress={() => {
                                     setSearchQuery('');
                                     setDebouncedSearch('');

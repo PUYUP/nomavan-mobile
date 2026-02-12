@@ -403,7 +403,6 @@ const AddPinSubmission = () => {
                                         onChangeText={onChange}
                                         value={value}
                                         flex={1}
-                                        size="$3"
                                         placeholder={'Spot name'}
                                         autoCapitalize="none"
                                         autoComplete="off"
