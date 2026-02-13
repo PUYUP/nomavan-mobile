@@ -54,6 +54,7 @@ const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 export const mediaApi = createApi({
 	reducerPath: 'mediaApi',
+	keepUnusedDataFor: 0,
 	baseQuery: fetchBaseQuery({
 		baseUrl,
 		prepareHeaders: async (headers) => {

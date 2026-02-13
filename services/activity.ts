@@ -1,6 +1,7 @@
 import { getAuth } from '@/services/auth-storage';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import qs from "qs";
+import { ReactNode } from 'react';
 
 export interface BPActivityPayload {
     primary_item_id?: number;
@@ -32,6 +33,7 @@ export type BPActivityType =
     | string;
 
 export interface BPActivityResponse {
+    favorited_count: ReactNode;
     user_id: number;
     component: string;
     content: BPActivityContent;
@@ -133,6 +135,8 @@ const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 export const activityApi = createApi({
     reducerPath: 'activityApi',
+    keepUnusedDataFor: 0,
+    tagTypes: ['Activity'],
     baseQuery: fetchBaseQuery({
         baseUrl,
         prepareHeaders: async (headers) => {
@@ -154,12 +158,20 @@ export const activityApi = createApi({
                     method: 'GET',
                 }
             },
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.map(({ id }) => ({ type: 'Activity' as const, id })),
+                        { type: 'Activity', id: 'LIST' },
+                    ]
+                    : [{ type: 'Activity', id: 'LIST' }],
         }),
         getActivity: builder.query<BPActivityResponse, number>({
             query: (activityId) => ({
                 url: `/buddypress/v1/activity/${activityId}`,
                 method: 'GET',
             }),
+            providesTags: (result, error, id) => [{ type: 'Activity', id }],
         }),
         createActivity: builder.mutation<BPActivityResponse, BPActivityPayload>({
             query: (body) => ({
@@ -170,8 +182,19 @@ export const activityApi = createApi({
                     types: 'activity',
                 }
             }),
+            invalidatesTags: [{ type: 'Activity', id: 'LIST' }],
+        }),
+        favoriteActivity: builder.mutation<BPActivityResponse, number>({
+            query: (activityId) => ({
+                url: `/buddypress/v1/activity/${activityId}/favorite`,
+                method: 'POST',
+            }),
+            invalidatesTags: (_result, _error, id) => [
+                { type: 'Activity', id },
+                { type: 'Activity', id: 'LIST' },
+            ],
         }),
     }),
 });
 
-export const { useGetActivitiesQuery, useGetActivityQuery, useCreateActivityMutation } = activityApi;
+export const { useGetActivitiesQuery, useGetActivityQuery, useCreateActivityMutation, useFavoriteActivityMutation } = activityApi;

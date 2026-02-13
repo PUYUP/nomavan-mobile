@@ -90,7 +90,7 @@ const MapViewScreen = () => {
                 .filter(activity => {
                     const lat = activity.secondary_item?.meta?.latitude || activity.primary_item?.latitude;
                     const lng = activity.secondary_item?.meta?.longitude || activity.primary_item?.longitude;
-
+                    
                     if (!lat || !lng) return false;
                     
                     // Parse and validate coordinates

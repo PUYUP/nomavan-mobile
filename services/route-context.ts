@@ -23,6 +23,7 @@ const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 export const routeContextApi = createApi({
     reducerPath: 'routeContextApi',
+    keepUnusedDataFor: 0,
     baseQuery: fetchBaseQuery({
         baseUrl,
         prepareHeaders: async (headers) => {
@@ -33,7 +34,7 @@ export const routeContextApi = createApi({
             return headers;
         },
     }),
-    tagTypes: ['RouteContext'],
+    tagTypes: ['RouteContext', 'Activity'],
     endpoints: (builder) => ({
         getRouteContexts: builder.query<RouteContext[], void>({
             query: () => '/wp/v2/route-contexts',
@@ -55,7 +56,10 @@ export const routeContextApi = createApi({
                 method: 'POST',
                 body,
             }),
-            invalidatesTags: [{ type: 'RouteContext', id: 'LIST' }],
+            invalidatesTags: [
+                { type: 'RouteContext', id: 'LIST' },
+                { type: 'Activity', id: 'LIST' },
+            ],
         }),
         updateRouteContext: builder.mutation<RouteContext, { id: number; data: RouteContextPayload }>({
             query: ({ id, data }) => ({
@@ -66,6 +70,7 @@ export const routeContextApi = createApi({
             invalidatesTags: (result, error, { id }) => [
                 { type: 'RouteContext', id },
                 { type: 'RouteContext', id: 'LIST' },
+                { type: 'Activity', id: 'LIST' },
             ],
         }),
         deleteRouteContext: builder.mutation<{ success: boolean }, number>({
@@ -76,6 +81,7 @@ export const routeContextApi = createApi({
             invalidatesTags: (result, error, id) => [
                 { type: 'RouteContext', id },
                 { type: 'RouteContext', id: 'LIST' },
+                { type: 'Activity', id: 'LIST' },
             ],
         }),
      }),

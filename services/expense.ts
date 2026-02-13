@@ -60,6 +60,7 @@ const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 export const expenseApi = createApi({
     reducerPath: 'expenseApi',
+    keepUnusedDataFor: 0,
     baseQuery: fetchBaseQuery({
         baseUrl,
         prepareHeaders: async (headers) => {
@@ -70,7 +71,7 @@ export const expenseApi = createApi({
             return headers;
         },
     }),
-    tagTypes: ['Expense'],
+    tagTypes: ['Expense', 'Activity'],
     endpoints: (builder) => ({
         getExpenses: builder.query<ExpenseResponse[], ExpenseFilterArgs | void>({
             query: (args) => ({
@@ -99,7 +100,10 @@ export const expenseApi = createApi({
                 method: 'POST',
                 body,
             }),
-            invalidatesTags: [{ type: 'Expense', id: 'LIST' }],
+            invalidatesTags: [
+                { type: 'Expense', id: 'LIST' },
+                { type: 'Activity', id: 'LIST' },
+            ],
         }),
         updateExpense: builder.mutation<ExpenseResponse, UpdateExpenseArgs>({
             query: ({ id, payload }) => ({
@@ -110,6 +114,7 @@ export const expenseApi = createApi({
             invalidatesTags: (_result, _error, arg) => [
                 { type: 'Expense', id: arg.id },
                 { type: 'Expense', id: 'LIST' },
+                { type: 'Activity', id: 'LIST' },
             ],
         }),
         deleteExpense: builder.mutation<{ deleted: boolean; previous?: ExpenseResponse }, DeleteExpenseArgs>({
@@ -121,6 +126,7 @@ export const expenseApi = createApi({
             invalidatesTags: (_result, _error, arg) => [
                 { type: 'Expense', id: arg.id },
                 { type: 'Expense', id: 'LIST' },
+                { type: 'Activity', id: 'LIST' },
             ],
         }),
     }),

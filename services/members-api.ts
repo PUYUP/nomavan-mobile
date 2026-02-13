@@ -69,6 +69,7 @@ const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 export const membersApi = createApi({
     reducerPath: 'membersApi',
+    keepUnusedDataFor: 0,
     baseQuery: fetchBaseQuery({
         baseUrl,
         prepareHeaders: async (headers) => {

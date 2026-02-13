@@ -18,9 +18,8 @@ import { setActivityFilter } from '@/utils/activity-filter';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useImperativeHandle, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { Button, Text, YStack } from 'tamagui';
 
 interface FeedScreenProps {
   filter?: BPActivityFilterArgs;
@@ -64,7 +63,7 @@ const FeedScreen = React.forwardRef<FeedScreenRef, FeedScreenProps>(({ filter, c
   };
   
   const [location, setLocation] = useState<{ lat: number, lng: number }>();
-  const { data, isLoading, error, refetch } = useGetActivitiesQuery(activitiesQueryArgs);
+  const { data, isLoading, error, refetch, isSuccess } = useGetActivitiesQuery(activitiesQueryArgs);
   const [, joinMeetupResult] = useJoinMeetupMutation({ fixedCacheKey: 'join-meetup-process' });
   const [, leaveMeetupResult] = useLeaveMeetupMutation({ fixedCacheKey: 'leave-meetup-process' });
   const [, createMeetupResult] = useCreateMeetupMutation({ fixedCacheKey: 'create-meetup-process' });
@@ -87,30 +86,32 @@ const FeedScreen = React.forwardRef<FeedScreenRef, FeedScreenProps>(({ filter, c
     refetch();
   }, [JSON.stringify(filter)]);
 
+  // Auto refetch when any mutation completes successfully
   useEffect(() => {
-    if (
-      joinMeetupResult.isSuccess 
-      || leaveMeetupResult.isSuccess 
-      || createMeetupResult.isSuccess
-      || submitExpenseResult.isSuccess
-      || submitConnectivityResult.isSuccess
-      || shareStoryResult.isSuccess
-      || submitSpothuntResult.isSuccess
-      || createRouteContextResult.isSuccess
-      || createRoutePointResult.isSuccess
-    ) {
+    const anyMutationData = 
+      joinMeetupResult.data ||
+      leaveMeetupResult.data ||
+      createMeetupResult.data ||
+      submitExpenseResult.data ||
+      submitConnectivityResult.data ||
+      shareStoryResult.data ||
+      submitSpothuntResult.data ||
+      createRouteContextResult.data ||
+      createRoutePointResult.data;
+    
+    if (anyMutationData) {
       refetch();
     }
   }, [
-    joinMeetupResult.isSuccess,
-    leaveMeetupResult.isSuccess,
-    createMeetupResult.isSuccess,
-    submitExpenseResult.isSuccess,
-    submitConnectivityResult.isSuccess,
-    shareStoryResult.isSuccess,
-    submitSpothuntResult.isSuccess,
-    createRouteContextResult.isSuccess,
-    createRoutePointResult.isSuccess
+    joinMeetupResult.data,
+    leaveMeetupResult.data,
+    createMeetupResult.data,
+    submitExpenseResult.data,
+    submitConnectivityResult.data,
+    shareStoryResult.data,
+    submitSpothuntResult.data,
+    createRouteContextResult.data,
+    createRoutePointResult.data
   ]);
 
   const containerStyle = context === 'profile' 
@@ -141,19 +142,19 @@ const FeedScreen = React.forwardRef<FeedScreenRef, FeedScreenProps>(({ filter, c
   const content = (
     <>
       {isLoading ? (
-        <YStack style={{ alignItems: 'center' }} paddingBlockStart="$4" gap="$2">
+        <View style={styles.centerContent}>
           <ActivityIndicator />
-          <Text opacity={0.7}>Loading activities...</Text>
-        </YStack>
+          <Text style={styles.loadingActivityText}>Loading activities...</Text>
+        </View>
       ) : error ? (
-        <YStack style={{ alignItems: 'center' }} paddingBlockStart="$4" gap="$2">
-          <Text color="$red10">Failed to load activities.</Text>
-          <Text opacity={0.7} onPress={() => refetch()}>
-            Tap to retry
-          </Text>
-        </YStack>
+        <View style={styles.centerContent}>
+          <Text style={styles.errorActivityText}>Failed to load activities.</Text>
+          <Pressable onPress={() => refetch()}>
+            <Text style={styles.retryText}>Tap to retry</Text>
+          </Pressable>
+        </View>
       ) : data && data.length > 0 ? (
-        <YStack gap="$3" paddingBlockEnd="$4">
+        <View style={styles.activityList}>
           {data.map((activity) => (
             <React.Fragment key={activity.id}>
               {activity.type === 'activity_update' || activity.type === 'new_story'
@@ -192,11 +193,11 @@ const FeedScreen = React.forwardRef<FeedScreenRef, FeedScreenProps>(({ filter, c
               }
             </React.Fragment>
           ))}
-        </YStack>
+        </View>
       ) : (
-        <YStack style={{ alignItems: 'center' }} paddingBlockStart="$4">
-          <Text opacity={0.7}>No activities yet.</Text>
-        </YStack>
+        <View style={styles.centerContent}>
+          <Text style={styles.emptyText}>No activities yet.</Text>
+        </View>
       )}
     </>
   );
@@ -231,18 +232,26 @@ const FeedScreen = React.forwardRef<FeedScreenRef, FeedScreenProps>(({ filter, c
             }}
         >
           {ACTIVITY_FILTERS.map((filter) => (
-              <Button 
+              <Pressable 
                 key={filter.type}
-                size="$2" 
-                variant="outlined"
-                borderColor={filterType === filter.type ? '#1F3D2B' : '$borderColor'}
-                bg={filterType === filter.type ? '#F0F9FF' : 'transparent'}
+                style={[
+                  styles.filterButton,
+                  filterType === filter.type && styles.filterButtonActive
+                ]}
                 onPress={() => getActivity(filter.type)}
-                icon={<MaterialCommunityIcons name={filter.icon as any} size={14} />}
-                px="$2.5"
               >
-                {filter.label}
-              </Button>
+                <MaterialCommunityIcons 
+                  name={filter.icon as any} 
+                  size={14} 
+                  color={filterType === filter.type ? '#1F3D2B' : '#6B7280'}
+                />
+                <Text style={[
+                  styles.filterButtonText,
+                  filterType === filter.type && styles.filterButtonTextActive
+                ]}>
+                  {filter.label}
+                </Text>
+              </Pressable>
           ))}
         </ScrollView>
       </View>
@@ -250,6 +259,7 @@ const FeedScreen = React.forwardRef<FeedScreenRef, FeedScreenProps>(({ filter, c
       <Animated.ScrollView contentContainerStyle={containerStyle}>
         {content}
       </Animated.ScrollView>
+
       {isMutationLoading && (
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingContainer}>
@@ -277,6 +287,58 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 12,
   },
+  centerContent: {
+    alignItems: 'center',
+    paddingTop: 16,
+    gap: 8,
+  },
+  activityList: {
+    gap: 12,
+    paddingBottom: 16,
+  },
+  loadingActivityText: {
+    opacity: 0.7,
+    color: '#000',
+    fontSize: 14,
+  },
+  errorActivityText: {
+    color: '#DC2626',
+    fontSize: 14,
+  },
+  retryText: {
+    opacity: 0.7,
+    color: '#000',
+    fontSize: 14,
+  },
+  emptyText: {
+    opacity: 0.7,
+    color: '#000',
+    fontSize: 14,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    backgroundColor: 'transparent',
+  },
+  filterButtonActive: {
+    borderColor: '#1F3D2B',
+    backgroundColor: '#F0F9FF',
+  },
+  filterButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  filterButtonTextActive: {
+    color: '#1F3D2B',
+    fontWeight: '600',
+  },
   loadingOverlay: {
     position: 'absolute',
     top: 0,
@@ -294,11 +356,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
   },
   loadingText: {
     fontSize: 14,

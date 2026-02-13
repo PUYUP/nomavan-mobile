@@ -1,10 +1,8 @@
 import { useGetMembersQuery } from '@/services/members-api';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Search, User } from '@tamagui/lucide-icons';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet } from 'react-native';
-import { Avatar, Button, Card, Input, Text, View, XStack, YStack } from 'tamagui';
+import { ActivityIndicator, FlatList, Image, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 const SearchMembers = () => {
     const router = useRouter();
@@ -38,81 +36,80 @@ const SearchMembers = () => {
     };
 
     const renderMemberItem = ({ item }: { item: any }) => (
-        <Card 
-            padding="$3" 
-            backgroundColor="white" 
-            borderRadius="$3" 
-            marginBottom="$3"
+        <Pressable 
+            style={styles.memberCard}
             onPress={() => router.push(`/profile/${item.id}`)}
-            pressStyle={{ backgroundColor: '$gray2' }}
         >
-            <XStack gap="$3" alignItems="center">
-                <Avatar circular size="$4">
-                    <Avatar.Image 
-                        src={'https:' + (item.avatar_urls?.full || item.avatar_urls?.thumb)}
-                        accessibilityLabel={item.name}
-                    />
-                    <Avatar.Fallback backgroundColor="$gray5">
-                        <User size={24} color="#6b7280" />
-                    </Avatar.Fallback>
-                </Avatar>
+            <View style={styles.memberCardContent}>
+                <View style={styles.avatarContainer}>
+                    {item.avatar_urls?.full || item.avatar_urls?.thumb ? (
+                        <Image 
+                            source={{ uri: 'https:' + (item.avatar_urls?.full || item.avatar_urls?.thumb) }}
+                            style={styles.avatar}
+                        />
+                    ) : (
+                        <View style={styles.avatarFallback}>
+                            <MaterialCommunityIcons name="account" size={24} color="#6b7280" />
+                        </View>
+                    )}
+                </View>
                 
-                <YStack flex={1} gap="$1.5">
-                    <XStack items={'center'} gap={'$2'}>
-                        <Text fontSize="$3" fontWeight="600" color="$gray12">
+                <View style={styles.memberInfo}>
+                    <View style={styles.memberNameRow}>
+                        <Text style={styles.memberName}>
                             {item.name}
                         </Text>
-                        <Text fontSize="$2" color="$gray10">
+                        <Text style={styles.memberUsername}>
                             @{item.mention_name || item.user_login}
                         </Text>
-                    </XStack>
+                    </View>
                     {item.last_activity && (
-                        <XStack gap="$2" alignItems="center">
+                        <View style={styles.memberMetaRow}>
                             <MaterialCommunityIcons 
                                 name="clock-outline" 
                                 size={14} 
                                 color="#6b7280" 
                             />
-                            <Text fontSize="$2" color="$gray10">
+                            <Text style={styles.memberMetaText}>
                                 Active {item.last_activity.timediff}
                             </Text>
-                        </XStack>
+                        </View>
                     )}
                     {item.total_friend_count !== undefined && (
-                        <XStack gap="$2" alignItems="center">
+                        <View style={styles.memberMetaRow}>
                             <MaterialCommunityIcons 
                                 name="account-group" 
                                 size={14} 
                                 color="#6b7280" 
                             />
-                            <Text fontSize="$2" color="$gray10">
+                            <Text style={styles.memberMetaText}>
                                 {item.total_friend_count} {item.total_friend_count === 1 ? 'friend' : 'friends'}
                             </Text>
-                        </XStack>
+                        </View>
                     )}
-                </YStack>
+                </View>
 
                 <MaterialCommunityIcons 
                     name="chevron-right" 
                     size={24}
                     color="#9ca3af"
                 />
-            </XStack>
-        </Card>
+            </View>
+        </Pressable>
     );
 
     const renderEmpty = () => (
-        <YStack alignItems="center" paddingTop="$8" gap="$2">
-            <User size={48} color="#9ca3af" />
-            <Text fontSize="$4" color="$gray10">
+        <View style={styles.emptyContainer}>
+            <MaterialCommunityIcons name="account-search" size={48} color="#9ca3af" />
+            <Text style={styles.emptyTitle}>
                 {debouncedSearch ? 'No members found' : 'Search for members'}
             </Text>
             {debouncedSearch && (
-                <Text fontSize="$3" color="$gray9" textAlign="center" paddingHorizontal="$4">
+                <Text style={styles.emptySubtitle}>
                     Try adjusting your search or filter
                 </Text>
             )}
-        </YStack>
+        </View>
     );
 
     return (
@@ -131,118 +128,86 @@ const SearchMembers = () => {
             
             <View style={styles.container}>
                 {/* Search Input */}
-                <View padding="$3" backgroundColor="white" borderBottomWidth={1} borderBottomColor="$gray4">
-                    <XStack gap="$2" alignItems="center" backgroundColor="$gray2" borderRadius="$3" paddingHorizontal="$3">
-                        <Search size={20} color="#6b7280" />
-                        <Input
-                            flex={1}
+                <View style={styles.searchContainer}>
+                    <View style={styles.searchInputWrapper}>
+                        <MaterialCommunityIcons name="magnify" size={20} color="#6b7280" />
+                        <TextInput
+                            style={styles.searchInput}
                             placeholder="Search members..."
+                            placeholderTextColor="#9ca3af"
                             value={searchQuery}
                             onChangeText={handleSearch}
-                            backgroundColor="transparent"
-                            borderWidth={0}
-                            fontSize="$4"
                         />
                         {searchQuery.length > 0 && (
-                            <Button
-                                size="$2"
-                                circular
-                                chromeless
-                                icon={<MaterialCommunityIcons name="close" size={20} color="#6b7280" />}
+                            <Pressable
+                                style={styles.clearButton}
                                 onPress={() => {
                                     setSearchQuery('');
                                     setDebouncedSearch('');
                                     setPage(1);
                                 }}
-                            />
+                            >
+                                <MaterialCommunityIcons name="close" size={20} color="#6b7280" />
+                            </Pressable>
                         )}
-                    </XStack>
+                    </View>
                 </View>
 
                 {/* Filter Buttons */}
-                <View padding="$3" backgroundColor="white" borderBottomWidth={1} borderBottomColor="$gray4">
-                    <XStack gap="$2" flexWrap="wrap">
-                        <Button
-                            size="$2"
-                            backgroundColor={selectedType === 'newest' ? '$blue9' : '$gray3'}
-                            borderRadius="$8"
+                <View style={styles.filterContainer}>
+                    <View style={styles.filterButtonsRow}>
+                        <Pressable
+                            style={[styles.filterButton, selectedType === 'newest' && styles.filterButtonActive]}
                             onPress={() => handleTypeFilter('newest')}
-                            pressStyle={{ scale: 0.95 }}
                         >
-                            <Text 
-                                fontSize="$2" 
-                                fontWeight="600" 
-                                color={selectedType === 'newest' ? 'white' : '$gray11'}
-                            >
+                            <Text style={[styles.filterButtonText, selectedType === 'newest' && styles.filterButtonTextActive]}>
                                 Newest
                             </Text>
-                        </Button>
-                        <Button
-                            size="$2"
-                            backgroundColor={selectedType === 'active' ? '$blue9' : '$gray3'}
-                            borderRadius="$8"
+                        </Pressable>
+                        <Pressable
+                            style={[styles.filterButton, selectedType === 'active' && styles.filterButtonActive]}
                             onPress={() => handleTypeFilter('active')}
-                            pressStyle={{ scale: 0.95 }}
                         >
-                            <Text 
-                                fontSize="$2" 
-                                fontWeight="600" 
-                                color={selectedType === 'active' ? 'white' : '$gray11'}
-                            >
+                            <Text style={[styles.filterButtonText, selectedType === 'active' && styles.filterButtonTextActive]}>
                                 Active
                             </Text>
-                        </Button>
-                        <Button
-                            size="$2"
-                            backgroundColor={selectedType === 'alphabetical' ? '$blue9' : '$gray3'}
-                            borderRadius="$8"
+                        </Pressable>
+                        <Pressable
+                            style={[styles.filterButton, selectedType === 'alphabetical' && styles.filterButtonActive]}
                             onPress={() => handleTypeFilter('alphabetical')}
-                            pressStyle={{ scale: 0.95 }}
                         >
-                            <Text 
-                                fontSize="$2" 
-                                fontWeight="600" 
-                                color={selectedType === 'alphabetical' ? 'white' : '$gray11'}
-                            >
+                            <Text style={[styles.filterButtonText, selectedType === 'alphabetical' && styles.filterButtonTextActive]}>
                                 A-Z
                             </Text>
-                        </Button>
-                        <Button
-                            size="$2"
-                            backgroundColor={selectedType === 'popular' ? '$blue9' : '$gray3'}
-                            borderRadius="$8"
+                        </Pressable>
+                        <Pressable
+                            style={[styles.filterButton, selectedType === 'popular' && styles.filterButtonActive]}
                             onPress={() => handleTypeFilter('popular')}
-                            pressStyle={{ scale: 0.95 }}
                         >
-                            <Text 
-                                fontSize="$2" 
-                                fontWeight="600" 
-                                color={selectedType === 'popular' ? 'white' : '$gray11'}
-                            >
+                            <Text style={[styles.filterButtonText, selectedType === 'popular' && styles.filterButtonTextActive]}>
                                 Popular
                             </Text>
-                        </Button>
-                    </XStack>
+                        </Pressable>
+                    </View>
                 </View>
 
                 {/* Members List */}
                 {isLoading && page === 1 ? (
-                    <YStack alignItems="center" paddingTop="$8" gap="$2">
+                    <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" />
-                        <Text opacity={0.7}>Loading members...</Text>
-                    </YStack>
+                        <Text style={styles.loadingText}>Loading members...</Text>
+                    </View>
                 ) : error ? (
-                    <YStack alignItems="center" paddingTop="$8" gap="$3">
+                    <View style={styles.errorContainer}>
                         <MaterialCommunityIcons name="alert-circle" size={48} color="#ef4444" />
-                        <Text color="$red10" fontSize="$4">Failed to load members</Text>
-                        <Button 
-                            size="$3" 
-                            backgroundColor="$blue9"
+                        <Text style={styles.errorText}>Failed to load members</Text>
+                        <Pressable 
+                            style={styles.retryButton}
                             onPress={() => refetch()}
                         >
-                            <Text color="white" fontWeight="600">Retry</Text>
-                        </Button>
-                    </YStack>
+                            <Text style={styles.retryButtonText}>Retry</Text>
+                        </Pressable>
+                    </View>
                 ) : (
                     <FlatList
                         data={members || []}
@@ -258,9 +223,9 @@ const SearchMembers = () => {
                         onEndReachedThreshold={0.5}
                         ListFooterComponent={
                             isLoading && page > 1 ? (
-                                <YStack padding="$4" alignItems="center">
+                                <View style={styles.footerLoading}>
                                     <ActivityIndicator />
-                                </YStack>
+                                </View>
                             ) : null
                         }
                     />
@@ -275,9 +240,176 @@ export default SearchMembers;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#f9fafb',
+    },
+    searchContainer: {
+        padding: 12,
+        backgroundColor: 'white',
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
+    },
+    searchInputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f3f4f6',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        gap: 8,
+    },
+    searchInput: {
+        flex: 1,
+        height: 40,
+        fontSize: 16,
+        color: '#000',
+    },
+    clearButton: {
+        padding: 4,
+    },
+    filterContainer: {
+        padding: 12,
+        backgroundColor: 'white',
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
+    },
+    filterButtonsRow: {
+        flexDirection: 'row',
+        gap: 8,
+        flexWrap: 'wrap',
+    },
+    filterButton: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 16,
+        backgroundColor: '#e5e7eb',
+    },
+    filterButtonActive: {
+        backgroundColor: '#2563eb',
+    },
+    filterButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#6b7280',
+    },
+    filterButtonTextActive: {
+        color: 'white',
     },
     listContent: {
         padding: 16,
         paddingBottom: 32,
+    },
+    memberCard: {
+        backgroundColor: 'white',
+        borderRadius: 12,
+        marginBottom: 12,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
+    },
+    memberCardContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        gap: 12,
+    },
+    avatarContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        overflow: 'hidden',
+    },
+    avatar: {
+        width: '100%',
+        height: '100%',
+    },
+    avatarFallback: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#e5e7eb',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    memberInfo: {
+        flex: 1,
+        gap: 6,
+    },
+    memberNameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        flexWrap: 'wrap',
+    },
+    memberName: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#111827',
+    },
+    memberUsername: {
+        fontSize: 13,
+        color: '#6b7280',
+    },
+    memberMetaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    memberMetaText: {
+        fontSize: 13,
+        color: '#6b7280',
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        paddingTop: 64,
+        gap: 8,
+    },
+    emptyTitle: {
+        fontSize: 16,
+        color: '#6b7280',
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        color: '#9ca3af',
+        textAlign: 'center',
+        paddingHorizontal: 16,
+    },
+    loadingContainer: {
+        alignItems: 'center',
+        paddingTop: 64,
+        gap: 8,
+    },
+    loadingText: {
+        opacity: 0.7,
+        color: '#000',
+    },
+    errorContainer: {
+        alignItems: 'center',
+        paddingTop: 64,
+        gap: 12,
+    },
+    errorText: {
+        color: '#ef4444',
+        fontSize: 16,
+    },
+    retryButton: {
+        backgroundColor: '#2563eb',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 8,
+    },
+    retryButtonText: {
+        color: 'white',
+        fontWeight: '600',
+        fontSize: 15,
+    },
+    footerLoading: {
+        padding: 16,
+        alignItems: 'center',
     },
 });

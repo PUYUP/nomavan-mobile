@@ -1,9 +1,8 @@
-import { BPActivityResponse } from '@/services/activity';
+import { BPActivityResponse, useFavoriteActivityMutation } from '@/services/activity';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'expo-router';
-import { Linking, Platform, Pressable, StyleSheet } from 'react-native';
-import { Avatar, Button, Card, Separator, Text, View, XStack, YStack } from 'tamagui';
+import { Image, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 type ExpenseUpdateProps = {
     activity?: BPActivityResponse | null;
@@ -17,6 +16,7 @@ const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
     const router = useRouter();
     const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
     const total = activity.secondary_item.meta.expense_items_inline.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
+    const [favoriteActivity, { isLoading: isFavoriting }] = useFavoriteActivityMutation();
 
     const handleOpenDirections = (item: BPActivityResponse | null) => {
         const latitude = item?.secondary_item?.meta?.latitude;
@@ -33,100 +33,126 @@ const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
         Linking.openURL(url)
     }
 
+    const favoriteHandler = async (item: BPActivityResponse) => {
+        try {
+            await favoriteActivity(item.id).unwrap();
+        } catch (error) {
+            console.error('Failed to favorite activity:', error);
+        }
+    }
+
     return (
-        <Card style={styles.card}>
-            <XStack gap="$3" style={styles.row}>
-                <YStack style={styles.itemsList}>
+        <View style={styles.card}>
+            <View style={styles.row}>
+                <View style={styles.itemsList}>
                     {activity.secondary_item.meta.expense_items_inline.map((item: any) => {
                         const subtotal = item.price * item.quantity
 
                         return (
-                            <XStack key={item.name} style={styles.itemRow}>
-                                <YStack width={'70%'}>
+                            <View key={item.name} style={styles.itemRow}>
+                                <View style={styles.itemNameContainer}>
                                     <Text style={styles.itemName}>{item.name}</Text>
                                     <Text style={styles.itemValue}>
-                                        <Text color={'$orange10'} fontWeight={700}>{item.price.toFixed(2)}</Text> x {item.quantity}
+                                        <Text style={styles.itemPrice}>{item.price.toFixed(2)}</Text> x {item.quantity}
                                     </Text>
-                                </YStack>
+                                </View>
 
-                                <Text fontSize={14} fontWeight={700} color={'$green10'}>{subtotal.toFixed(2)}</Text>
-                            </XStack>
+                                <Text style={styles.itemSubtotal}>{subtotal.toFixed(2)}</Text>
+                            </View>
                         )
                     })}
 
-                    <XStack style={styles.totalRow}>
+                    <View style={styles.totalRow}>
                         <Text style={styles.totalLabel}>Total</Text>
-                        <Text style={styles.totalValue} fontWeight={700} color={'$red10'}>{total.toFixed(2)}</Text>
-                    </XStack>
-                </YStack>
-            </XStack>
+                        <Text style={styles.totalValue}>{total.toFixed(2)}</Text>
+                    </View>
+                </View>
+            </View>
 
-            <Separator my={10} />
+            <View style={styles.separator} />
             
             <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
-                <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$4" style={styles.avatar}>
-                        <Avatar.Image
-                            src={'https:' + activity.user_avatar.thumb}
-                            accessibilityLabel="Contributor avatar"
+                <View style={styles.contributorRow}>
+                    <View style={styles.avatarContainer}>
+                        <Image
+                            source={{ uri: 'https:' + activity.user_avatar.thumb }}
+                            style={styles.avatar}
                         />
-                        <Avatar.Fallback />
-                    </Avatar>
+                    </View>
 
-                    <YStack style={styles.contributorInfo}>
+                    <View style={styles.contributorInfo}>
                         <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
                         <Text style={styles.contributorMeta}>78 expenses</Text>
-                    </YStack>
+                    </View>
 
-                    <YStack style={styles.locationColumn}>
+                    <View style={styles.locationColumn}>
                         {activity.secondary_item.meta.store_name ? 
-                            <XStack maxW={140}  style={styles.locationRow}>
+                            <View style={styles.locationRow}>
                                 <MaterialCommunityIcons
                                     name="storefront-outline"
                                     size={16}
+                                    color="#000"
                                 />
                                 <Text style={styles.locationText} numberOfLines={1}>
                                     {activity.secondary_item.meta.store_name}
                                 </Text>
-                            </XStack>
+                            </View>
                             : null
                         }
 
                         <Text 
-                            style={styles.postedTime} 
-                            maxW={140} 
+                            style={styles.postedTime}
                             numberOfLines={activity.secondary_item.meta.store_name ? 1 : 2}
                         >
                             {postedTime} {activity.secondary_item.meta.place_name ? ' - ' + activity.secondary_item.meta.place_name : null}
                         </Text>
-                    </YStack>
-                </XStack>
+                    </View>
+                </View>
             </Pressable>
 
-            <Separator my={10} />
+            <View style={styles.separator} />
 
-            <XStack style={styles.thanksRow}>
-                <XStack style={styles.thanksLeft}>
-                    <Button size="$2" style={styles.thanksButton}>
-                        <XStack style={styles.thanksContent}>
-                            <MaterialCommunityIcons name="thumb-up" size={14} />
-                            <Text style={styles.thanksText}>Say Thanks</Text>
-                        </XStack>
-                    </Button>
+            <View style={styles.thanksRow}>
+                <View style={styles.thanksLeft}>
+                    <Pressable 
+                        style={[
+                            styles.thanksButton,
+                            activity.favorited && styles.thanksButtonActive,
+                            isFavoriting && styles.thanksButtonDisabled
+                        ]} 
+                        onPress={async () => favoriteHandler(activity)}
+                        disabled={isFavoriting}
+                    >
+                        <View style={styles.thanksContent}>
+                            <MaterialCommunityIcons 
+                                name={activity.favorited ? "thumb-up" : "thumb-up-outline"} 
+                                size={14} 
+                                color={activity.favorited ? "#3b82f6" : "#000"} 
+                            />
+                            <Text style={[
+                                styles.thanksText,
+                                activity.favorited && styles.thanksTextActive
+                            ]}>
+                                {activity.favorited ? 'Thanked' : 'Say Thanks'}
+                            </Text>
+                        </View>
+                    </Pressable>
+                    
+                    {activity.favorited_count > 0 &&
+                        <View style={styles.thanksCount}>
+                            <Text style={styles.thanksCountText}>{activity.favorited_count} thanks</Text>
+                        </View>
+                    }
+                </View>
 
-                    <View style={styles.thanksCount}>
-                        <Text style={styles.thanksCountText}>1.230 thanks</Text>
+                <Pressable style={styles.viewLocationButton} onPress={() => handleOpenDirections(activity)}>
+                    <View style={styles.thanksContent}>
+                        <MaterialCommunityIcons name="map" size={14} color="#3b82f6" />
+                        <Text style={styles.viewLocationText}>Location</Text>
                     </View>
-                </XStack>
-
-                <Button size="$2" style={styles.viewLocationButton} onPress={() => handleOpenDirections(activity)}>
-                    <XStack style={styles.thanksContent}>
-                        <MaterialCommunityIcons name="map" size={14} />
-                        <Text style={styles.thanksText}>Location</Text>
-                    </XStack>
-                </Button>
-            </XStack>
-        </Card>
+                </Pressable>
+            </View>
+        </View>
     )
 }
 
@@ -137,8 +163,20 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 12,
         backgroundColor: '#fff',
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
     },
     row: {
+        flexDirection: 'row',
         alignItems: 'center',
     },
     itemsList: {
@@ -146,6 +184,7 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     itemsHeader: {
+        flexDirection: 'row',
         justifyContent: 'space-between',
         borderBottomWidth: 1,
         borderBottomColor: '#e5e5e5',
@@ -158,7 +197,12 @@ const styles = StyleSheet.create({
         textAlign: 'right',
     },
     itemRow: {
+        flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    itemNameContainer: {
+        width: '70%',
     },
     itemName: {
         width: '100%',
@@ -166,13 +210,25 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         textAlign: 'left',
         marginBottom: 3,
+        color: '#000',
     },
     itemValue: {
         width: '100%',
         fontSize: 12,
         opacity: 0.9,
+        color: '#000',
+    },
+    itemPrice: {
+        color: '#f97316',
+        fontWeight: '700',
+    },
+    itemSubtotal: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#10b981',
     },
     totalRow: {
+        flexDirection: 'row',
         justifyContent: 'space-between',
         borderTopWidth: 1,
         borderTopColor: '#e5e5e5',
@@ -183,11 +239,18 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '700',
         textAlign: 'left',
+        color: '#000',
     },
     totalValue: {
         fontSize: 13,
         fontWeight: '700',
         textAlign: 'right',
+        color: '#ef4444',
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#e5e5e5',
+        marginVertical: 10,
     },
     strengthCol: {
         borderRightColor: '#e5e5e5',
@@ -201,19 +264,30 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '800',
         fontFamily: 'Inter-Black',
+        color: '#000',
     },
     subtitle: {
         fontSize: 10,
         opacity: 0.8,
         textAlign: 'center',
+        color: '#000',
     },
     contributorRow: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
     },
-    avatar: {
+    avatarContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         borderWidth: 1,
         borderColor: '#e5e5e5',
+        overflow: 'hidden',
+    },
+    avatar: {
+        width: '100%',
+        height: '100%',
     },
     contributorInfo: {
         flex: 1,
@@ -222,15 +296,18 @@ const styles = StyleSheet.create({
     contributorName: {
         fontSize: 14,
         fontWeight: '700',
+        color: '#000',
     },
     contributorMeta: {
         fontSize: 12,
         opacity: 0.8,
+        color: '#000',
     },
     locationRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
+        maxWidth: 140,
     },
     locationColumn: {
         alignItems: 'flex-end',
@@ -240,32 +317,51 @@ const styles = StyleSheet.create({
         fontSize: 12,
         opacity: 0.9,
         paddingRight: 10,
+        color: '#000',
+        maxWidth: 120,
     },
     postedTime: {
         fontSize: 11,
         opacity: 0.7,
+        maxWidth: 140,
+        color: '#000',
     },
     thanksButton: {
         height: 30,
         paddingHorizontal: 10,
         borderRadius: 16,
         backgroundColor: '#f3f4f6',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    thanksButtonActive: {
+        backgroundColor: '#dbeafe',
+    },
+    thanksButtonDisabled: {
+        opacity: 0.5,
     },
     thanksRow: {
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
     },
     thanksLeft: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
     },
     thanksContent: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
     },
     thanksText: {
         fontSize: 12,
         fontWeight: '600',
+        color: '#000',
+    },
+    thanksTextActive: {
+        color: '#3b82f6',
     },
     thanksCount: {
         alignItems: 'center',
@@ -273,11 +369,19 @@ const styles = StyleSheet.create({
     thanksCountText: {
         fontSize: 12,
         opacity: 0.7,
+        color: '#000',
     },
     viewLocationButton: {
         height: 30,
         paddingHorizontal: 10,
         borderRadius: 16,
         backgroundColor: '#eef2ff',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    viewLocationText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#3b82f6',
     },
 })

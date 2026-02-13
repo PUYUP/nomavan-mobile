@@ -1,13 +1,9 @@
 import { BPActivityResponse } from '@/services/activity';
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { Card } from "@tamagui/card";
-import { Separator } from "@tamagui/separator";
-import { XStack, YStack } from "@tamagui/stacks";
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Platform, Pressable, StyleSheet } from "react-native";
-import { Avatar, Button, Paragraph, Text } from "tamagui";
+import { Image, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 type SpotHuntPinProps = {
     activity?: BPActivityResponse | null
@@ -105,16 +101,16 @@ const SpotHuntPin = ({
     }, [activity?.secondary_item?.meta?.latitude, activity?.secondary_item?.meta?.longitude, userLat, userLng])
     
     return (
-        <Card style={styles.card}>
-            <YStack gap={10}>
-                <XStack style={styles.headerRow}>
-                    <YStack gap={4}>
+        <View style={styles.card}>
+            <View style={styles.contentContainer}>
+                <View style={styles.headerRow}>
+                    <View style={styles.headerLeft}>
                         <Text style={styles.title}>{title}</Text>
-                        <XStack style={styles.coordRow}>
+                        <View style={styles.coordRow}>
                             <MaterialCommunityIcons name="crosshairs-gps" size={14} color="#6b7280" />
                             <Text style={styles.coordText}>{coordinates}</Text>
-                        </XStack>
-                    </YStack>
+                        </View>
+                    </View>
 
                     {distanceMeters ?
                         <Text style={styles.timeText}>
@@ -122,77 +118,75 @@ const SpotHuntPin = ({
                         </Text>
                         : null
                     }
-                </XStack>
+                </View>
 
                 {activity.secondary_item.content.rendered ?
-                    <Paragraph style={{ marginBottom: 0, paddingBottom: 0 }} marginBlockEnd={0}>{stripHtml(activity.secondary_item.content.rendered)}</Paragraph>
+                    <Text style={styles.description}>{stripHtml(activity.secondary_item.content.rendered)}</Text>
                     : null
                 }
 
-                <XStack style={styles.photoRow}>
+                <View style={styles.photoRow}>
                     {gallery.slice(0, 3).map((item: any, index: number) => (
-                        <Avatar key={`${item.id}`} circular size="$4" style={styles.photoItem}>
-                            <Avatar.Image
-                                src={item.thumbnail_url}
-                                accessibilityLabel="Pin photo"
+                        <View key={`${item.id}`} style={styles.photoItemContainer}>
+                            <Image
+                                source={{ uri: item.thumbnail_url }}
+                                style={styles.photoItem}
                             />
-                            <Avatar.Fallback />
-                        </Avatar>
+                        </View>
                     ))}
                     {extraPhotos > 0 ? (
-                        <YStack style={styles.photoMore}>
+                        <View style={styles.photoMore}>
                             <Text style={styles.photoMoreText}>{morePhotosLabel}</Text>
-                        </YStack>
+                        </View>
                     ) : null}
-                </XStack>
+                </View>
                 
-                <XStack style={styles.metaContainer}>
-                    <XStack style={styles.metaRow} flex={1}>
-                        <XStack style={[styles.metaItem, { alignItems: placeLabel ? 'start' : 'center' }]}>
+                <View style={styles.metaContainer}>
+                    <View style={styles.metaRow}>
+                        <View style={[styles.metaItem, { alignItems: placeLabel ? 'flex-start' : 'center' }]}>
                             <MaterialCommunityIcons name="map-marker-radius" size={18} color="#10b981" />
-                            <Text style={[styles.metaText]} numberOfLines={2} maxW={'85%'}>{placeLabel ? placeLabel : 'Unknown'}</Text>
-                        </XStack>
-                        <XStack style={styles.metaItem}>
+                            <Text style={styles.metaText} numberOfLines={2}>{placeLabel ? placeLabel : 'Unknown'}</Text>
+                        </View>
+                        <View style={styles.metaItem}>
                             <MaterialCommunityIcons name="account-group" size={18} color="#3b82f6" />
                             <Text style={styles.metaText}>{visitorsLabel}</Text>
-                        </XStack>
-                    </XStack>
-                    <Button size="$2" style={styles.viewLocationButton} onPress={() => handleOpenDirections(activity)}>
-                        <XStack style={{ alignItems: 'center', gap: 4 }}>
+                        </View>
+                    </View>
+                    <Pressable style={styles.viewLocationButton} onPress={() => handleOpenDirections(activity)}>
+                        <View style={styles.viewLocationContent}>
                             <MaterialCommunityIcons name="map-search" size={14} color="#2563eb" />
                             <Text style={styles.viewLocationText}>{viewPinLabel}</Text>
-                        </XStack>
-                    </Button>
-                </XStack>
-            </YStack>
+                        </View>
+                    </Pressable>
+                </View>
+            </View>
             
-            <Separator my={10} />
+            <View style={styles.separator} />
             
             <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
-                <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$4" style={styles.avatar}>
-                        <Avatar.Image
-                            src={'https:' + activity.user_avatar.thumb}
-                            accessibilityLabel="Contributor avatar"
+                <View style={styles.contributorRow}>
+                    <View style={styles.avatarContainer}>
+                        <Image
+                            source={{ uri: 'https:' + activity.user_avatar.thumb }}
+                            style={styles.avatar}
                         />
-                        <Avatar.Fallback />
-                    </Avatar>
+                    </View>
 
-                    <YStack style={styles.contributorInfo}>
+                    <View style={styles.contributorInfo}>
                         <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
                         <Text style={styles.contributorMeta}>{contributorMeta}</Text>
-                    </YStack>
+                    </View>
 
-                    <YStack style={styles.locationColumn}>
-                        <XStack style={styles.locationRow}>
-                            <MaterialCommunityIcons name="map-clock" size={16} />
+                    <View style={styles.locationColumn}>
+                        <View style={styles.locationRow}>
+                            <MaterialCommunityIcons name="map-clock" size={16} color="#000" />
                             <Text style={styles.locationText}>{PinsAddedLabel}</Text>
-                        </XStack>
+                        </View>
                         <Text style={styles.postedTime}>{postedTime}</Text>
-                    </YStack>
-                </XStack>
+                    </View>
+                </View>
             </Pressable>
-        </Card>
+        </View>
     )
 }
 
@@ -203,14 +197,34 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 12,
         backgroundColor: '#fff',
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
+    },
+    contentContainer: {
+        gap: 10,
     },
     headerRow: {
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+    },
+    headerLeft: {
+        gap: 4,
+        flex: 1,
     },
     title: {
         fontSize: 15,
         fontWeight: '700',
+        color: '#000',
     },
     coordRow: {
         flexDirection: 'row',
@@ -220,19 +234,35 @@ const styles = StyleSheet.create({
     coordText: {
         fontSize: 12,
         opacity: 0.8,
+        color: '#000',
     },
     timeText: {
         fontSize: 11,
         opacity: 0.6,
+        color: '#000',
+    },
+    description: {
+        fontSize: 14,
+        color: '#000',
+        marginBottom: 0,
+        paddingBottom: 0,
     },
     photoRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
     },
-    photoItem: {
+    photoItemContainer: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         borderWidth: 1,
         borderColor: '#e5e7eb',
+        overflow: 'hidden',
+    },
+    photoItem: {
+        width: '100%',
+        height: '100%',
     },
     photoMore: {
         height: 36,
@@ -248,35 +278,55 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
         opacity: 0.8,
+        color: '#000',
     },
     metaRow: {
         alignItems: 'flex-start',
         justifyContent: 'space-around',
         flexDirection: 'column',
         gap: 0,
+        flex: 1,
     },
     metaItem: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
         flex: 1,
+        maxWidth: '85%',
     },
     metaText: {
         fontSize: 12,
         opacity: 0.8,
+        color: '#000',
+        flex: 1,
     },
     metaContainer: {
         width: '100%',
-        display: 'flex',
-        justifyContent: 'space-between'
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#e5e5e5',
+        marginVertical: 10,
     },
     contributorRow: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
     },
-    avatar: {
+    avatarContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         borderWidth: 1,
         borderColor: '#e5e5e5',
+        overflow: 'hidden',
+    },
+    avatar: {
+        width: '100%',
+        height: '100%',
     },
     contributorInfo: {
         flex: 1,
@@ -285,10 +335,12 @@ const styles = StyleSheet.create({
     contributorName: {
         fontSize: 14,
         fontWeight: '700',
+        color: '#000',
     },
     contributorMeta: {
         fontSize: 12,
         opacity: 0.8,
+        color: '#000',
     },
     locationRow: {
         flexDirection: 'row',
@@ -302,16 +354,25 @@ const styles = StyleSheet.create({
     locationText: {
         fontSize: 12,
         opacity: 0.9,
+        color: '#000',
     },
     postedTime: {
         fontSize: 11,
         opacity: 0.7,
+        color: '#000',
     },
     viewLocationButton: {
         height: 30,
         paddingHorizontal: 10,
         borderRadius: 16,
         backgroundColor: '#eef2ff',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    viewLocationContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
     },
     viewLocationText: {
         fontSize: 12,

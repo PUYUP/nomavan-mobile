@@ -1,7 +1,6 @@
 import { BPActivityResponse } from "@/services/activity"
 import { formatDistanceToNow } from "date-fns"
-import { StyleSheet } from "react-native"
-import { Avatar, Card, Text, XStack, YStack } from "tamagui"
+import { Image, Platform, StyleSheet, Text, View } from "react-native"
 
 type ComponentProps = {
     activity: BPActivityResponse | null
@@ -12,28 +11,29 @@ const JoinedGroup = ({
 }: ComponentProps) => {
     return (
         activity ? 
-            <Card style={styles.card}>
-                <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$4" style={styles.avatar}>
-                        <Avatar.Image
-                            src={'https:' + activity?.user_avatar?.thumb}
-                            accessibilityLabel={activity.user_profile.name}
+            <View style={styles.card}>
+                <View style={styles.contributorRow}>
+                    <View style={styles.avatarContainer}>
+                        <Image
+                            source={{ uri: 'https:' + activity?.user_avatar?.thumb }}
+                            style={styles.avatar}
                         />
-                        <Avatar.Fallback />
-                    </Avatar>
+                    </View>
     
-                    <YStack style={styles.contributorInfo}>
+                    <View style={styles.contributorInfo}>
                         <Text style={styles.contributorName}>{activity?.user_profile?.name}</Text>
                         <Text style={styles.contributorMeta}>
-                            <Text>Joined the</Text> <Text fontWeight={700}>{activity.primary_item.name}</Text> <Text>{activity.primary_item.types.includes('meetup') ? 'meetup' : 'group'}</Text>
+                            <Text>Joined the </Text>
+                            <Text style={styles.groupName}>{activity.primary_item.name}</Text>
+                            <Text> {activity.primary_item.types.includes('meetup') ? 'meetup' : 'group'}</Text>
                         </Text>
-                    </YStack>
+                    </View>
     
                     <Text style={styles.onWayText}>
                         {formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true })}
                     </Text>
-                </XStack>
-            </Card>
+                </View>
+            </View>
         : null
     )
 }
@@ -45,17 +45,38 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 12,
         backgroundColor: '#fff',
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
     },
     row: {
+        flexDirection: 'row',
         alignItems: 'center',
     },
     contributorRow: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
     },
-    avatar: {
+    avatarContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         borderWidth: 1,
         borderColor: '#e5e5e5',
+        overflow: 'hidden',
+    },
+    avatar: {
+        width: '100%',
+        height: '100%',
     },
     contributorInfo: {
         flex: 1,
@@ -64,13 +85,20 @@ const styles = StyleSheet.create({
     contributorName: {
         fontSize: 14,
         fontWeight: '700',
+        color: '#000',
     },
     contributorMeta: {
         fontSize: 12,
         opacity: 0.8,
+        color: '#000',
+    },
+    groupName: {
+        fontWeight: '700',
+        color: '#000',
     },
     onWayText: {
         fontSize: 12,
         opacity: 0.7,
+        color: '#000',
     },
 });

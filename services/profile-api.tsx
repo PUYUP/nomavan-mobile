@@ -59,6 +59,7 @@ const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 export const profileApi = createApi({
     reducerPath: 'profileApi',
+    keepUnusedDataFor: 0,
     baseQuery: fetchBaseQuery({
         baseUrl,
         prepareHeaders: async (headers) => {

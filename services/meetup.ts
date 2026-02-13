@@ -53,6 +53,8 @@ const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 export const meetupApi = createApi({
 	reducerPath: 'meetupApi',
+	keepUnusedDataFor: 0,
+	tagTypes: ['Meetup', 'Activity'],
 	baseQuery: fetchBaseQuery({
         baseUrl,
         prepareHeaders: async (headers) => {
@@ -73,6 +75,7 @@ export const meetupApi = createApi({
                     types: 'meetup',
                 }
 			}),
+			invalidatesTags: [{ type: 'Activity', id: 'LIST' }],
 		}),
         // for public meetup
         joinMeetup: builder.mutation<MeetupResponse, JoinPayload>({
@@ -83,6 +86,7 @@ export const meetupApi = createApi({
                     ...body,
                 }
 			}),
+			invalidatesTags: [{ type: 'Activity', id: 'LIST' }],
 		}),
         // private meetup
         requestMembership: builder.mutation<MeetupResponse, MembershipPayload>({
@@ -93,6 +97,7 @@ export const meetupApi = createApi({
                     ...body,
                 }
 			}),
+			invalidatesTags: [{ type: 'Activity', id: 'LIST' }],
 		}),
         leaveMeetup: builder.mutation<MeetupResponse, LeavePayload>({
 			query: (body) => {
@@ -104,6 +109,7 @@ export const meetupApi = createApi({
                     }
                 }
 			},
+			invalidatesTags: [{ type: 'Activity', id: 'LIST' }],
 		}),
 	}),
 });

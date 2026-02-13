@@ -67,6 +67,7 @@ const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 export const spothuntApi = createApi({
 	reducerPath: 'spothuntApi',
+	keepUnusedDataFor: 0,
 	baseQuery: fetchBaseQuery({
 		baseUrl,
 		prepareHeaders: async (headers) => {
@@ -77,7 +78,7 @@ export const spothuntApi = createApi({
 			return headers;
 		},
 	}),
-	tagTypes: ['Spothunt'],
+	tagTypes: ['Spothunt', 'Activity'],
 	endpoints: (builder) => ({
 		getSpothunts: builder.query<SpothuntResponse[], SpothuntFilterArgs | void>({
 			query: (args) => ({
@@ -106,7 +107,10 @@ export const spothuntApi = createApi({
 				method: 'POST',
 				body,
 			}),
-			invalidatesTags: [{ type: 'Spothunt', id: 'LIST' }],
+			invalidatesTags: [
+				{ type: 'Spothunt', id: 'LIST' },
+				{ type: 'Activity', id: 'LIST' },
+			],
 		}),
 		updateSpothunt: builder.mutation<SpothuntResponse, UpdateSpothuntArgs>({
 			query: ({ id, payload }) => ({
@@ -117,6 +121,7 @@ export const spothuntApi = createApi({
 			invalidatesTags: (_result, _error, arg) => [
 				{ type: 'Spothunt', id: arg.id },
 				{ type: 'Spothunt', id: 'LIST' },
+				{ type: 'Activity', id: 'LIST' },
 			],
 		}),
 		deleteSpothunt: builder.mutation<{ deleted: boolean; previous?: SpothuntResponse }, DeleteSpothuntArgs>({
@@ -128,6 +133,7 @@ export const spothuntApi = createApi({
 			invalidatesTags: (_result, _error, arg) => [
 				{ type: 'Spothunt', id: arg.id },
 				{ type: 'Spothunt', id: 'LIST' },
+				{ type: 'Activity', id: 'LIST' },
 			],
 		}),
 	}),

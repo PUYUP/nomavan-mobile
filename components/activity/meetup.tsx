@@ -2,13 +2,11 @@ import { BPActivityResponse } from '@/services/activity'
 import { getAuth } from '@/services/auth-storage'
 import { JoinPayload, LeavePayload, MembershipPayload, useJoinMeetupMutation, useLeaveMeetupMutation, useRequestMembershipMutation } from '@/services/meetup'
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
-import { Card } from '@tamagui/card'
 import { format, formatDistanceToNow, isSameDay, isValid } from 'date-fns'
 import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { Linking, Platform, Pressable, StyleSheet } from 'react-native'
+import { Image, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 import Toast from 'react-native-toast-message'
-import { Avatar, Button, Paragraph, Separator, Text, XStack, YStack } from 'tamagui'
 
 type MeetupProps = {
     activity: BPActivityResponse | null
@@ -149,109 +147,112 @@ const Meetup = ({
     }
 
     return (
-        <Card style={styles.card}>
-            <YStack gap="$3">
-                <YStack gap="$2">
-                    <XStack style={{ alignItems: 'start', justifyContent: 'space-between' }}>
-                        <Text fontSize={16} fontWeight="700" maxW={'80%'}>{activity?.primary_item?.name}</Text>
+        <View style={styles.card}>
+            <View style={styles.contentContainer}>
+                <View style={styles.detailsContainer}>
+                    <View style={styles.headerRow}>
+                        <Text style={styles.meetupTitle}>{activity?.primary_item?.name}</Text>
                         {activity?.primary_item?.member_detail?.is_creator 
-                            ?   <Button size="$2" onPress={async () => {}}>
-                                    <XStack gap="$2">
+                            ?   <Pressable style={styles.actionButton} onPress={async () => {}}>
+                                    <View style={styles.buttonContent}>
                                         <MaterialCommunityIcons 
                                             name="file-document-edit-outline" 
-                                            size={14} 
+                                            size={14}
+                                            color="#000"
                                         />
-                                        <Text fontSize={12} fontWeight="600">Edit</Text>
-                                    </XStack>
-                                </Button>
-                            :   <Button size="$2" onPress={async () => await handleJoinMeetup(activity?.primary_item)}>
-                                    <XStack gap="$2">
+                                        <Text style={styles.buttonText}>Edit</Text>
+                                    </View>
+                                </Pressable>
+                            :   <Pressable style={styles.actionButton} onPress={async () => await handleJoinMeetup(activity?.primary_item)}>
+                                    <View style={styles.buttonContent}>
                                         <MaterialCommunityIcons 
                                             name={activity?.primary_item?.member_detail?.is_member ? 'account-minus' : 'account-plus'} 
-                                            size={14} 
+                                            size={14}
+                                            color="#000"
                                         />
-                                        <Text fontSize={12} fontWeight="600">
+                                        <Text style={styles.buttonText}>
                                             {activity?.primary_item?.member_detail?.is_member ? 'Leave' : 'Join'}
                                         </Text>
-                                    </XStack>
-                                </Button>
+                                    </View>
+                                </Pressable>
                         }
-                    </XStack>
-                    <XStack gap="$2" marginBlockStart="$2">
+                    </View>
+                    <View style={styles.infoRow}>
                         <MaterialCommunityIcons name="calendar-range" size={16} color="#ff817b" />
-                        <Text fontSize={12} opacity={0.8}>{dateRangeText}</Text>
-                    </XStack>
-                    <XStack gap="$2" style={{ marginTop: -2 }}>
+                        <Text style={styles.infoText}>{dateRangeText}</Text>
+                    </View>
+                    <View style={styles.infoRowCompact}>
                         <MaterialCommunityIcons name="map-marker" size={16} color="#ff817b" />
-                        <Text fontSize={12} opacity={0.8} marginEnd={22}>
+                        <Text style={styles.infoTextWithMargin}>
                             {activity?.primary_item?.place_name ? activity?.primary_item?.place_name : '-'}
                         </Text>
-                    </XStack>
-                    <XStack gap="$2" style={{ marginTop: -2 }}>
+                    </View>
+                    <View style={styles.infoRowCompact}>
                         <MaterialCommunityIcons name="account-multiple-outline" size={16} color="#ff817b" />
-                        <Text fontSize={12} opacity={0.8}>
+                        <Text style={styles.infoText}>
                             {activity?.primary_item?.capacity ? activity?.primary_item?.capacity + ' spots left' : 'Unlimited'}
                         </Text>
-                    </XStack>
-                    <Paragraph fontSize={14} opacity={0.8} lineHeight={'$3'}>{descriptionText}</Paragraph>
-                </YStack>
+                    </View>
+                    <Text style={styles.descriptionText}>{descriptionText}</Text>
+                </View>
 
-                <XStack style={{ justifyContent: 'space-between' }}>
-                    <XStack gap="$2" style={{ alignItems: 'center' }}>
-                        <XStack gap="$2">
+                <View style={styles.actionsRow}>
+                    <View style={styles.membersRow}>
+                        <View style={styles.avatarsRow}>
                             {activity?.primary_item?.member_detail?.users?.map((user: any, index: number) => (
-                                <Avatar key={user.id} circular size="$2" style={{ marginLeft: index === 0 ? 0 : -4 }}>
-                                    <Avatar.Image src={'https:' + user.user_avatar.thumb} accessibilityLabel={user.name} />
-                                    <Avatar.Fallback />
-                                </Avatar>
+                                <View key={user.id} style={[styles.memberAvatarContainer, { marginLeft: index === 0 ? 0 : -4 }]}>
+                                    <Image 
+                                        source={{ uri: 'https:' + user.user_avatar.thumb }} 
+                                        style={styles.memberAvatar}
+                                    />
+                                </View>
                             ))}
-                        </XStack>
-                        <Text fontSize={12} opacity={0.7}>{'+' + activity?.primary_item?.member_detail?.count}</Text>
-                    </XStack>
+                        </View>
+                        <Text style={styles.memberCountText}>{'+' + activity?.primary_item?.member_detail?.count}</Text>
+                    </View>
 
-                    <XStack gap="$2">
-                        <Button size="$2" onPress={() => handleOpenDirections(activity)}>
-                            <XStack gap="$2" style={{ alignItems: 'center' }}>
+                    <View style={styles.directionsContainer}>
+                        <Pressable style={styles.directionsButton} onPress={() => handleOpenDirections(activity)}>
+                            <View style={styles.directionsContent}>
                                 <MaterialCommunityIcons name="directions" size={24} color={directionsColor} />
-                                <YStack>
-                                    <Text fontSize={12} fontWeight="600" color={directionsColor}>
+                                <View style={styles.directionsTextContainer}>
+                                    <Text style={styles.directionsText}>
                                         Directions
                                     </Text>
                                     
                                     {distanceMeters ?
-                                        <Text fontSize={10} fontWeight={700} opacity={0.8} color={'#333'}>
+                                        <Text style={styles.distanceText}>
                                             {((distanceMeters / 1000)).toFixed(2)} km
                                         </Text>
                                         : null
                                     }
-                                </YStack>
-                            </XStack>
-                        </Button>
-                    </XStack>
-                </XStack>
-            </YStack>
+                                </View>
+                            </View>
+                        </Pressable>
+                    </View>
+                </View>
+            </View>
 
-            <Separator my={10} />
+            <View style={styles.separator} />
             
             <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
-                <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$4" style={styles.avatar}>
-                        <Avatar.Image
-                            src={'https:' + activity?.user_avatar?.thumb}
-                            accessibilityLabel="Contributor avatar"
+                <View style={styles.contributorRow}>
+                    <View style={styles.avatarContainer}>
+                        <Image
+                            source={{ uri: 'https:' + activity?.user_avatar?.thumb }}
+                            style={styles.avatar}
                         />
-                        <Avatar.Fallback />
-                    </Avatar>
+                    </View>
 
-                    <YStack style={styles.contributorInfo}>
+                    <View style={styles.contributorInfo}>
                         <Text style={styles.contributorName}>{activity?.user_profile?.name}</Text>
                         <Text style={styles.contributorMeta}>10 contribs.</Text>
-                    </YStack>
+                    </View>
 
                     <Text style={styles.onWayText}>{postedTime}</Text>
-                </XStack>
+                </View>
             </Pressable>
-        </Card>
+        </View>
     )
 }
 
@@ -262,17 +263,166 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 12,
         backgroundColor: '#fff',
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
+    },
+    contentContainer: {
+        gap: 12,
+    },
+    detailsContainer: {
+        gap: 8,
+    },
+    headerRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+    },
+    meetupTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#000',
+        maxWidth: '80%',
+    },
+    actionButton: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+        backgroundColor: '#f3f4f6',
+    },
+    buttonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    buttonText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#000',
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 8,
+    },
+    infoRowCompact: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: -2,
+    },
+    infoText: {
+        fontSize: 12,
+        opacity: 0.8,
+        color: '#000',
+    },
+    infoTextWithMargin: {
+        fontSize: 12,
+        opacity: 0.8,
+        color: '#000',
+        marginRight: 22,
+    },
+    descriptionText: {
+        fontSize: 14,
+        opacity: 0.8,
+        color: '#000',
+        lineHeight: 20,
+    },
+    actionsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    membersRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    avatarsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    memberAvatarContainer: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        borderWidth: 2,
+        borderColor: '#fff',
+        overflow: 'hidden',
+    },
+    memberAvatar: {
+        width: '100%',
+        height: '100%',
+    },
+    memberCountText: {
+        fontSize: 12,
+        opacity: 0.7,
+        color: '#000',
+    },
+    directionsContainer: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    directionsButton: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+        backgroundColor: '#f3f4f6',
+    },
+    directionsContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    directionsTextContainer: {
+        gap: 2,
+    },
+    directionsText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#029baf',
+    },
+    distanceText: {
+        fontSize: 10,
+        fontWeight: '700',
+        opacity: 0.8,
+        color: '#333',
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#e5e5e5',
+        marginVertical: 10,
     },
     row: {
+        flexDirection: 'row',
         alignItems: 'center',
     },
     contributorRow: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
     },
-    avatar: {
+    avatarContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         borderWidth: 1,
         borderColor: '#e5e5e5',
+        overflow: 'hidden',
+    },
+    avatar: {
+        width: '100%',
+        height: '100%',
     },
     contributorInfo: {
         flex: 1,
@@ -281,14 +431,17 @@ const styles = StyleSheet.create({
     contributorName: {
         fontSize: 14,
         fontWeight: '700',
+        color: '#000',
     },
     contributorMeta: {
         fontSize: 12,
         opacity: 0.8,
+        color: '#000',
     },
     onWayText: {
         fontSize: 12,
         opacity: 0.7,
+        color: '#000',
     },
     viewLocationButton: {
         height: 30,
@@ -299,6 +452,7 @@ const styles = StyleSheet.create({
     thanksText: {
         fontSize: 12,
         fontWeight: '600',
+        color: '#000',
     },
 })
 

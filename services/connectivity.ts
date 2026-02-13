@@ -91,6 +91,7 @@ const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 export const connectivityApi = createApi({
 	reducerPath: 'connectivityApi',
+	keepUnusedDataFor: 0,
 	baseQuery: fetchBaseQuery({
 		baseUrl,
 		prepareHeaders: async (headers) => {
@@ -101,7 +102,7 @@ export const connectivityApi = createApi({
 			return headers;
 		},
 	}),
-	tagTypes: ['Connectivity'],
+	tagTypes: ['Connectivity', 'Activity'],
 	endpoints: (builder) => ({
 		getConnectivity: builder.query<ConnectivityResponse[], ConnectivityFilterArgs | void>({
 			query: (args) => ({
@@ -130,7 +131,10 @@ export const connectivityApi = createApi({
 				method: 'POST',
 				body,
 			}),
-			invalidatesTags: [{ type: 'Connectivity', id: 'LIST' }],
+			invalidatesTags: [
+				{ type: 'Connectivity', id: 'LIST' },
+				{ type: 'Activity', id: 'LIST' },
+			],
 		}),
 		updateConnectivity: builder.mutation<ConnectivityResponse, UpdateConnectivityArgs>({
 			query: ({ id, payload }) => ({
@@ -141,6 +145,7 @@ export const connectivityApi = createApi({
 			invalidatesTags: (_result, _error, arg) => [
 				{ type: 'Connectivity', id: arg.id },
 				{ type: 'Connectivity', id: 'LIST' },
+				{ type: 'Activity', id: 'LIST' },
 			],
 		}),
 		deleteConnectivity: builder.mutation<{ deleted: boolean; previous?: ConnectivityResponse }, DeleteConnectivityArgs>({
@@ -152,6 +157,7 @@ export const connectivityApi = createApi({
 			invalidatesTags: (_result, _error, arg) => [
 				{ type: 'Connectivity', id: arg.id },
 				{ type: 'Connectivity', id: 'LIST' },
+				{ type: 'Activity', id: 'LIST' },
 			],
 		}),
 	}),

@@ -1,9 +1,9 @@
 import { BPActivityResponse } from '@/services/activity';
+import { presentPaywall } from '@/utils/paywall';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet } from 'react-native';
-import { Avatar, Button, Card, Separator, Text, View, XStack, YStack } from 'tamagui';
+import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 type ComponentProps = {
     activity: BPActivityResponse | null
@@ -29,48 +29,57 @@ const ArrivedOnSite = ({ activity = null }: ComponentProps) => {
     
     const router = useRouter();
     const postedTime = (activity.secondary_item?.meta?.previous_route_point_id ? formatDistanceToNow(new Date(activity?.secondary_item.meta?.previous_route_point_id?.date)) : '-').replace('about', '');
+    
+    const handleUnlock = async () => {
+        const success = await presentPaywall();
+        if (success) {
+            // User purchased or restored
+            // You can add logic here to refresh data or unlock features
+        }
+    };
+    
     const distance = distanceInMeters(
         { latitude: activity.secondary_item?.meta.latitude, longitude: activity.secondary_item?.meta.longitude },
         { latitude: activity.secondary_item?.meta?.previous_route_point_id?.latitude, longitude: activity.secondary_item?.meta?.previous_route_point_id?.longitude }
     );
 
     return (
-        <Card style={styles.card}>
-            <YStack style={styles.arrivedBlock}>
-                <XStack flex={1}>
+        <View style={styles.card}>
+            <View style={styles.arrivedBlock}>
+                <View style={styles.arrivedRowContainer}>
                     <MaterialCommunityIcons name="map-marker-check" size={28} color="#22c55e" />
-                    <YStack flex={1} paddingStart="$2.5">
-                        <XStack style={styles.arrivedRow}>
-                            <YStack style={styles.arrivedInfo}>
+                    <View style={styles.arrivedContent}>
+                        <View style={styles.arrivedRow}>
+                            <View style={styles.arrivedInfo}>
                                 <Text style={styles.arrivedLabel}>Arrived</Text>
                                 <Text style={styles.arrivedTitle}>
                                     {activity.secondary_item.title.rendered}
                                 </Text>
-                            </YStack>
-                        </XStack>
+                            </View>
+                        </View>
 
-                        <XStack style={styles.arrivedStats} marginBlockStart="$2.5">
-                            <XStack style={styles.arrivedStatItem}>
+                        <View style={styles.arrivedStats}>
+                            <View style={styles.arrivedStatItem}>
                                 <MaterialCommunityIcons name="clock-time-four-outline" size={14} color="#6b7280" />
                                 <Text style={styles.arrivedStatText}>{Math.round((activity.secondary_item?.meta?.time_from_prev / 60) * 100) / 100} hours</Text>
-                            </XStack>
-                            <XStack style={styles.arrivedStatItem}>
+                            </View>
+                            <View style={styles.arrivedStatItem}>
                                 <MaterialCommunityIcons name="road-variant" size={14} color="#6b7280" />
                                 <Text style={styles.arrivedStatText}>
                                     {distance || distance == 0 ? Math.round((distance / 1000) * 100) / 100 : '-'} km
                                 </Text>
-                            </XStack>
-                        </XStack>
-                    </YStack>
-                </XStack>
+                            </View>
+                        </View>
+                    </View>
+                </View>
 
                 <View style={styles.arrivedDivider} />
                 
-                <XStack flex={1}>
+                <View style={styles.arrivedRowContainer}>
                     <MaterialCommunityIcons name="map-marker" size={28} color="#ef4444" />
-                    <YStack flex={1} paddingStart="$2.5">
-                        <XStack style={styles.arrivedRow}>
-                            <YStack style={styles.arrivedInfo}>
+                    <View style={styles.arrivedContent}>
+                        <View style={styles.arrivedRow}>
+                            <View style={styles.arrivedInfo}>
                                 <Text style={styles.arrivedLabel}>From</Text>
                                 <Text style={styles.arrivedTitle}>
                                     {activity.secondary_item?.meta?.previous_route_point_id?.place_name ?
@@ -78,41 +87,101 @@ const ArrivedOnSite = ({ activity = null }: ComponentProps) => {
                                         : 'Unknown'
                                     }
                                 </Text>
-                            </YStack>
+                            </View>
                             <Text style={styles.arrivedStatText}>{postedTime}</Text>
-                        </XStack>
-                    </YStack>
-                </XStack>
-            </YStack>
+                        </View>
+                    </View>
+                </View>
+            </View>
 
-            <Separator my={10} />
+            <View style={styles.separator} />
+
+            <View style={styles.statsContainer}>
+                <View style={styles.statsGrid}>
+                    <View style={styles.statBox}>
+                        <MaterialCommunityIcons name="map-marker-account" size={20} color="#22c55e" />
+                        <Text style={styles.statValue}>24</Text>
+                        <Text style={styles.statLabel}>Checkpoints</Text>
+                    </View>
+                    
+                    <View style={styles.statBox}>
+                        <MaterialCommunityIcons name="cash-multiple" size={20} color="#f59e0b" />
+                        <Text style={styles.statValue}>$2,450</Text>
+                        <Text style={styles.statLabel}>Expenses</Text>
+                    </View>
+                    
+                    <View style={styles.statBox}>
+                        <MaterialCommunityIcons name="cart" size={20} color="#8b5cf6" />
+                        <Text style={styles.statValue}>156</Text>
+                        <Text style={styles.statLabel}>Items</Text>
+                    </View>
+                    
+                    <View style={styles.statBox}>
+                        <MaterialCommunityIcons name="book-open-page-variant" size={20} color="#3b82f6" />
+                        <Text style={styles.statValue}>12</Text>
+                        <Text style={styles.statLabel}>Stories</Text>
+                    </View>
+                </View>
+
+                <View style={styles.statsGrid}>
+                    <View style={styles.statBox}>
+                        <MaterialCommunityIcons name="magnify" size={20} color="#ec4899" />
+                        <Text style={styles.statValue}>8</Text>
+                        <Text style={styles.statLabel}>Spot Hunts</Text>
+                    </View>
+                    
+                    <View style={styles.statBox}>
+                        <MaterialCommunityIcons name="account-group" size={20} color="#14b8a6" />
+                        <Text style={styles.statValue}>5</Text>
+                        <Text style={styles.statLabel}>Meetups</Text>
+                    </View>
+                    
+                    <View style={styles.statBox}>
+                        <MaterialCommunityIcons name="wifi" size={20} color="#06b6d4" />
+                        <Text style={styles.statValue}>18</Text>
+                        <Text style={styles.statLabel}>Connectivity</Text>
+                    </View>
+                    
+                    <View style={styles.statBox}>
+                        <MaterialCommunityIcons name="camera" size={20} color="#f97316" />
+                        <Text style={styles.statValue}>47</Text>
+                        <Text style={styles.statLabel}>Photos</Text>
+                    </View>
+                </View>
+
+                <Pressable style={styles.unlockButton} onPress={handleUnlock}>
+                    <MaterialCommunityIcons name="lock-open-variant" size={18} color="#fff" />
+                    <Text style={styles.unlockButtonText}>Unlock Full Journey Stats</Text>
+                </Pressable>
+            </View>
+
+            <View style={styles.separator} />
             
             <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
-                <XStack style={styles.contributorRow}>
-                    <Avatar circular size="$4" style={styles.avatar}>
-                        <Avatar.Image
-                            src={'https:' + activity.user_avatar.thumb}
-                            accessibilityLabel="Contributor avatar"
+                <View style={styles.contributorRow}>
+                    <View style={styles.avatarContainer}>
+                        <Image
+                            source={{ uri: 'https:' + activity.user_avatar.thumb }}
+                            style={styles.avatar}
                         />
-                        <Avatar.Fallback />
-                    </Avatar>
+                    </View>
 
-                    <YStack style={styles.contributorInfo}>
+                    <View style={styles.contributorInfo}>
                         <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
                         <Text style={styles.contributorMeta}>713 checkpoints</Text>
-                    </YStack>
+                    </View>
 
                     <Text style={styles.onWayText}>87 en route</Text>
                     
-                    <Button size="$2" style={styles.viewLocationButton}>
-                        <XStack style={styles.thanksContent}>
-                            <MaterialCommunityIcons name="map-marker-path" size={16} />
+                    <Pressable style={styles.viewLocationButton}>
+                        <View style={styles.thanksContent}>
+                            <MaterialCommunityIcons name="map-marker-path" size={16} color="#3b82f6" />
                             <Text style={styles.thanksText}>Route</Text>
-                        </XStack>
-                    </Button>
-                </XStack>
+                        </View>
+                    </Pressable>
+                </View>
             </Pressable>
-        </Card>
+        </View>
     )
 }
 
@@ -123,8 +192,20 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 12,
         backgroundColor: '#fff',
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
     },
     row: {
+        flexDirection: 'row',
         alignItems: 'center',
     },
     strengthCol: {
@@ -139,19 +220,35 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '800',
         fontFamily: 'Inter-Black',
+        color: '#000',
     },
     subtitle: {
         fontSize: 10,
         opacity: 0.8,
         textAlign: 'center',
+        color: '#000',
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#e5e5e5',
+        marginVertical: 10,
     },
     contributorRow: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
     },
-    avatar: {
+    avatarContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         borderWidth: 1,
         borderColor: '#e5e5e5',
+        overflow: 'hidden',
+    },
+    avatar: {
+        width: '100%',
+        height: '100%',
     },
     contributorInfo: {
         flex: 1,
@@ -160,10 +257,12 @@ const styles = StyleSheet.create({
     contributorName: {
         fontSize: 14,
         fontWeight: '700',
+        color: '#000',
     },
     contributorMeta: {
         fontSize: 12,
         opacity: 0.8,
+        color: '#000',
     },
     locationRow: {
         flexDirection: 'row',
@@ -177,10 +276,12 @@ const styles = StyleSheet.create({
     locationText: {
         fontSize: 12,
         opacity: 0.9,
+        color: '#000',
     },
     postedTime: {
         fontSize: 11,
         opacity: 0.7,
+        color: '#000',
     },
     thanksButton: {
         height: 30,
@@ -189,24 +290,29 @@ const styles = StyleSheet.create({
         backgroundColor: '#f3f4f6',
     },
     thanksRow: {
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
     },
     thanksLeft: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
     },
     thanksContent: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
     },
     thanksText: {
         fontSize: 12,
         fontWeight: '600',
+        color: '#3b82f6',
     },
     onWayText: {
         fontSize: 12,
         opacity: 0.7,
+        color: '#000',
     },
     thanksCount: {
         alignItems: 'center',
@@ -214,18 +320,30 @@ const styles = StyleSheet.create({
     thanksCountText: {
         fontSize: 12,
         opacity: 0.7,
+        color: '#000',
     },
     viewLocationButton: {
         height: 30,
         paddingHorizontal: 10,
         borderRadius: 16,
         backgroundColor: '#eef2ff',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     arrivedBlock: {
         gap: 12,
         paddingVertical: 6,
     },
+    arrivedRowContainer: {
+        flexDirection: 'row',
+        flex: 1,
+    },
+    arrivedContent: {
+        flex: 1,
+        paddingLeft: 10,
+    },
     arrivedRow: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
     },
@@ -238,13 +356,16 @@ const styles = StyleSheet.create({
         opacity: 0.6,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
+        color: '#000',
     },
     arrivedTitle: {
         fontSize: 14,
+        color: '#000',
     },
     arrivedMeta: {
         fontSize: 12,
         opacity: 0.8,
+        color: '#000',
     },
     arrivedDivider: {
         height: 1,
@@ -254,8 +375,10 @@ const styles = StyleSheet.create({
     arrivedStats: {
         flexDirection: 'row',
         gap: 12,
+        marginTop: 10,
     },
     arrivedStatItem: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
     },
@@ -263,5 +386,53 @@ const styles = StyleSheet.create({
         fontSize: 12,
         opacity: 0.8,
         fontWeight: '600',
+        color: '#000',
+    },
+    statsContainer: {
+        gap: 12,
+    },
+    statsGrid: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    statBox: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f9fafb',
+        paddingVertical: 8,
+        paddingHorizontal: 8,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+        gap: 4,
+    },
+    statValue: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#000',
+        marginTop: 4,
+    },
+    statLabel: {
+        fontSize: 10,
+        opacity: 0.7,
+        color: '#000',
+        textAlign: 'center',
+    },
+    unlockButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        backgroundColor: '#059669',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginTop: 4,
+    },
+    unlockButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#fff',
     },
 })

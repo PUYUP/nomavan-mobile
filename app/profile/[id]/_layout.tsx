@@ -1,12 +1,10 @@
 import { logout } from "@/services/auth-storage";
 import { useGetProfileQuery } from "@/services/profile-api";
+import { presentPaywall } from "@/utils/paywall";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { Stack, Tabs, useLocalSearchParams, useRouter } from "expo-router";
+import { Slot, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, ScrollView, StyleSheet } from "react-native";
-import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Text, View, XStack, YStack } from "tamagui";
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 const ACTIVITY_FILTERS = [
     { type: 'all', label: 'All', icon: 'format-list-bulleted' },
@@ -17,23 +15,6 @@ const ACTIVITY_FILTERS = [
     { type: 'connections', label: 'Connectivity', icon: 'microsoft-internet-explorer' },
     { type: 'stories', label: 'Stories', icon: 'book-open-page-variant' },
 ] as const;
-
-async function presentPaywall(): Promise<boolean> {
-    // Present paywall for current offering:
-    const paywallResult: PAYWALL_RESULT = await RevenueCatUI.presentPaywall();
-
-    switch (paywallResult) {
-        case PAYWALL_RESULT.NOT_PRESENTED:
-        case PAYWALL_RESULT.ERROR:
-        case PAYWALL_RESULT.CANCELLED:
-            return false;
-        case PAYWALL_RESULT.PURCHASED:
-        case PAYWALL_RESULT.RESTORED:
-            return true;
-        default:
-            return false;
-    }
-}
 
 export default function ProfileLayout() {
     const { id, isMe } = useLocalSearchParams();
@@ -71,7 +52,7 @@ export default function ProfileLayout() {
     }
     
     return (
-        <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+        <View style={styles.safeArea}>
             <Stack.Screen 
                 options={{ 
                     title: isMe === 'true' ? 'My Profile' : 'Profile', 
@@ -84,24 +65,20 @@ export default function ProfileLayout() {
                     headerRight: () => (
                         <>  
                             {isMe === 'true' ?
-                                <Button 
-                                    size={'$2'}
-                                    style={{ color: '$red11' }}
-                                    icon={<MaterialCommunityIcons name="logout" size={20} style={{ color: '#c1121f' }} />}
+                                <Pressable 
+                                    style={styles.logoutButton}
                                     onPress={async () => await logoutHandler()}
                                 >
-                                    <Text color={'#c1121f'}>Logout</Text>
-                                </Button>
-                            :   <Button 
-                                    size={'$2'}
-                                    bg={'$green10'}
-                                    pressStyle={{ bg: '$green11' }}
-                                    style={{ color: 'white' }}
-                                    icon={<MaterialCommunityIcons name="lock-check" size={20} style={{ color: 'white' }} />}
+                                    <MaterialCommunityIcons name="logout" size={20} color="#c1121f" />
+                                    <Text style={styles.logoutText}>Logout</Text>
+                                </Pressable>
+                            :   <Pressable 
+                                    style={styles.unlockButton}
                                     onPress={async () => await subscribeHandler()}
                                 >
-                                    <Text color={'white'}>Unlock</Text>
-                                </Button>
+                                    <MaterialCommunityIcons name="lock-check" size={20} color="white" />
+                                    <Text style={styles.unlockText}>Unlock</Text>
+                                </Pressable>
                             }
                         </>
                     ),
@@ -122,80 +99,70 @@ export default function ProfileLayout() {
                 )}
                 
                 {profile && (
-                    <YStack>
-                        <XStack style={styles.profileContainer} items="center" gap={16}>
+                    <View style={{ backgroundColor: '#fff', padding: 16 }}>
+                        <View style={styles.profileContainer}>
                             <Image 
                                 source={{ uri: 'https:' + profile.avatar_urls.full }}
                                 style={styles.avatar}
                             />
-                            <YStack maxW={'60%'} flex={1}>
+                            <View style={styles.profileInfo}>
                                 <Text style={styles.name}>{profile.name}</Text>
                                 <Text style={styles.username}>@{profile.mention_name}</Text>
-                            </YStack>
+                            </View>
 
-                            {isMe === 'true' 
-                                ? null
-                                : 
-                                <Button 
-                                    size={'$3'}
-                                    bg={'transparent'}
-                                    pressStyle={{ bg: '$orange3' }}
-                                    color={'$orange11'}
-                                    icon={<MaterialCommunityIcons name="account-tie-voice" size={20} style={{ color: '#d8a109' }} />}
-                                >Watch</Button>
-                            }
-                        </XStack>
+                            {isMe !== 'true' && (
+                                <Pressable 
+                                    style={styles.watchButton}
+                                >
+                                    <MaterialCommunityIcons name="account-tie-voice" size={20} color="#d8a109" />
+                                    <Text style={styles.watchText}>Watch</Text>
+                                </Pressable>
+                            )}
+                        </View>
 
                         <ScrollView 
                             horizontal 
                             showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={{ gap: 8, paddingVertical: 12, paddingBottom: 0 }}
+                            contentContainerStyle={styles.filterScrollContent}
                         >
                             {ACTIVITY_FILTERS.map((filter) => (
-                                <Button 
+                                <Pressable 
                                     key={filter.type}
-                                    size="$2" 
-                                    variant="outlined"
-                                    borderColor={filterType === filter.type ? '#1F3D2B' : '$borderColor'}
-                                    bg={filterType === filter.type ? '#F0F9FF' : 'transparent'}
+                                    style={[
+                                        styles.filterButton,
+                                        filterType === filter.type && styles.filterButtonActive
+                                    ]}
                                     onPress={() => getActivity(filter.type)}
-                                    icon={<MaterialCommunityIcons name={filter.icon as any} size={14} />}
-                                    px="$2.5"
                                 >
-                                    {filter.label}
-                                </Button>
+                                    <MaterialCommunityIcons 
+                                        name={filter.icon as any} 
+                                        size={14} 
+                                        color={filterType === filter.type ? '#1F3D2B' : '#6B7280'} 
+                                    />
+                                    <Text style={[
+                                        styles.filterButtonText,
+                                        filterType === filter.type && styles.filterButtonTextActive
+                                    ]}>
+                                        {filter.label}
+                                    </Text>
+                                </Pressable>
                             ))}
                         </ScrollView>
-                    </YStack>
+                    </View>
                 )}
             </View>
 
-            {/* TABS */}
-            <Tabs
-                screenOptions={{
-                    headerShown: false,
-                    tabBarStyle: { display: "none" },
-                }}
-            >
-                <Tabs.Screen 
-                    name="index" 
-                    initialParams={{ 
-                        userId: profileId,
-                        filterType: 'all',
-                    }}
-                />
-            </Tabs>
-        </SafeAreaView>
+            <Slot />
+        </View>
     )
 }
 
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     content: {
-        padding: 16,
+        padding: 0,
     },
     scrollContent: {
         flexGrow: 1,
@@ -205,6 +172,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        paddingTop: 32,
     },
     errorText: {
         fontSize: 16,
@@ -212,9 +180,14 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter-Medium',
     },
     profileContainer: {
+        flexDirection: 'row',
         alignItems: 'center',
-        display: 'flex',
-        justifyContent: 'flex-start',
+        gap: 10,
+        marginBottom: 12,
+    },
+    profileInfo: {
+        flex: 1,
+        maxWidth: '60%',
     },
     avatar: {
         width: 46,
@@ -223,13 +196,96 @@ const styles = StyleSheet.create({
     },
     name: {
         fontSize: 16,
-        fontFamily: 'Inter-Black',
-        color: '#1F3D2B',
+        color: '#070d09',
         marginBottom: 2,
     },
     username: {
         fontSize: 14,
         fontFamily: 'Inter-Regular',
+        color: '#797f8c',
+    },
+    logoutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 6,
+    },
+    logoutText: {
+        color: '#c1121f',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    unlockButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 6,
+        backgroundColor: '#059669',
+    },
+    unlockText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    watchButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 6,
+        backgroundColor: 'transparent',
+    },
+    watchText: {
+        color: '#d8a109',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    creatorButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 5,
+        borderRadius: 6,
+        backgroundColor: '#059669',
+    },
+    creatorText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    filterScrollContent: {
+        gap: 8,
+        paddingVertical: 0,
+        paddingBottom: 0,
+    },
+    filterButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+        backgroundColor: 'transparent',
+    },
+    filterButtonActive: {
+        borderColor: '#1F3D2B',
+        backgroundColor: '#F0F9FF',
+    },
+    filterButtonText: {
+        fontSize: 13,
+        fontWeight: '500',
         color: '#6B7280',
+    },
+    filterButtonTextActive: {
+        color: '#1F3D2B',
+        fontWeight: '600',
     },
 });

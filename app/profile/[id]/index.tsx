@@ -1,9 +1,8 @@
 import FeedScreen, { FeedScreenRef } from '@/app/(tabs)/feed';
 import { BPActivityFilterArgs } from '@/services/activity';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { StyleSheet } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 
 interface ProfileActivityProps {
     filter?: BPActivityFilterArgs;
@@ -11,13 +10,24 @@ interface ProfileActivityProps {
 
 const ProfileActivity = ({ filter }: ProfileActivityProps) => {
     const params = useLocalSearchParams();
-    const userId = params.userId as string;
+    const userId = params.id as string;
     const filterType = params.filterType as string;
     const feedRef = useRef<FeedScreenRef>(null);
-    const [currentFilter, setCurrentFilter] = useState<BPActivityFilterArgs>({});
+    const [isMounted, setIsMounted] = useState(false);
     
-    // Update filter based on filterType from parent
+    // Delay feed loading until after navigation transition completes
+    // Reset only when userId changes (not filterType)
     useEffect(() => {
+        setIsMounted(false);
+        const timer = setTimeout(() => {
+            setIsMounted(true);
+        }, 50);
+        
+        return () => clearTimeout(timer);
+    }, [userId]);
+    
+    // Calculate filter based on filterType - using useMemo instead of useState + useEffect for better performance
+    const currentFilter = useMemo((): BPActivityFilterArgs => {
         const baseFilter: BPActivityFilterArgs = {
             ...filter,
             user_id: userId ? parseInt(userId, 10) : undefined,
@@ -25,45 +35,43 @@ const ProfileActivity = ({ filter }: ProfileActivityProps) => {
 
         switch (filterType) {
             case 'expenses':
-                setCurrentFilter({ ...baseFilter, type: ['new_expense'] });
-                break;
+                return { ...baseFilter, type: ['new_expense'] };
             case 'routes':
-                setCurrentFilter({ ...baseFilter, type: ['new_route_point'] });
-                break;
+                return { ...baseFilter, type: ['new_route_point'] };
             case 'stories':
-                setCurrentFilter({ ...baseFilter, type: ['new_story'] });
-                break;
+                return { ...baseFilter, type: ['new_story'] };
             case 'spothunts':
-                setCurrentFilter({ ...baseFilter, type: ['new_spothunt'] });
-                break;
+                return { ...baseFilter, type: ['new_spothunt'] };
             case 'connections':
-                setCurrentFilter({ ...baseFilter, type: ['new_connectivity'] });
-                break;
+                return { ...baseFilter, type: ['new_connectivity'] };
             case 'meetups':
-                setCurrentFilter({ ...baseFilter, type: ['created_group', 'joined_group'] });
-                break;
+                return { ...baseFilter, type: ['created_group', 'joined_group'] };
             case 'all':
             default:
-                setCurrentFilter(baseFilter);
-                break;
+                return baseFilter;
         }
     }, [filterType, userId, filter]);
     
     return (
-        <Animated.ScrollView contentContainerStyle={styles.content}>
-            <FeedScreen ref={feedRef} context='profile' filter={currentFilter} />
-        </Animated.ScrollView>
+        <ScrollView 
+            style={{ flex: 1 }} 
+            contentContainerStyle={{ padding: 16 }}
+            showsVerticalScrollIndicator={true}
+        >
+            {isMounted ? (
+                <FeedScreen 
+                    key={`profile-feed-${userId}`}
+                    ref={feedRef} 
+                    context='profile' 
+                    filter={currentFilter} 
+                />
+            ) : (
+                <View style={{ paddingTop: 32, alignItems: 'center' }}>
+                    <ActivityIndicator size="small" color="#1F3D2B" />
+                </View>
+            )}
+        </ScrollView>
     )
 }
 
 export default ProfileActivity
-
-const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
-    content: {
-        padding: 16,
-    },
-});

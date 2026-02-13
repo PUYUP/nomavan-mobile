@@ -67,6 +67,7 @@ const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 export const storyApi = createApi({
 	reducerPath: 'storyApi',
+	keepUnusedDataFor: 0,
 	baseQuery: fetchBaseQuery({
 		baseUrl,
 		prepareHeaders: async (headers) => {
@@ -77,7 +78,7 @@ export const storyApi = createApi({
 			return headers;
 		},
 	}),
-	tagTypes: ['Story'],
+	tagTypes: ['Story', 'Activity'],
 	endpoints: (builder) => ({
 		getStories: builder.query<StoryResponse[], StoryFilterArgs | void>({
 			query: (args) => ({
@@ -106,7 +107,10 @@ export const storyApi = createApi({
 				method: 'POST',
 				body,
 			}),
-			invalidatesTags: [{ type: 'Story', id: 'LIST' }],
+			invalidatesTags: [
+				{ type: 'Story', id: 'LIST' },
+				{ type: 'Activity', id: 'LIST' },
+			],
 		}),
 		updateStory: builder.mutation<StoryResponse, UpdateStoryArgs>({
 			query: ({ id, payload }) => ({
@@ -117,6 +121,7 @@ export const storyApi = createApi({
 			invalidatesTags: (_result, _error, arg) => [
 				{ type: 'Story', id: arg.id },
 				{ type: 'Story', id: 'LIST' },
+				{ type: 'Activity', id: 'LIST' },
 			],
 		}),
 		deleteStory: builder.mutation<{ deleted: boolean; previous?: StoryResponse }, DeleteStoryArgs>({
@@ -128,6 +133,7 @@ export const storyApi = createApi({
 			invalidatesTags: (_result, _error, arg) => [
 				{ type: 'Story', id: arg.id },
 				{ type: 'Story', id: 'LIST' },
+				{ type: 'Activity', id: 'LIST' },
 			],
 		}),
 	}),

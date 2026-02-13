@@ -8,7 +8,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Platform, StyleSheet, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Alert, Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import RenderHtml from 'react-native-render-html';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -47,6 +47,8 @@ const LocateSubmission = () => {
     const [nextDistanceFromCurrent, setNextDistanceFromCurrent] = React.useState<number>();
     const isLoadingFromAPI = useRef(false);
     const isRefreshingLocation = useRef(false);
+    const isCreatingContext = useRef(false);
+    const isUserSelection = useRef(false);
     const { width } = useWindowDimensions();
     const htmlContentWidth = width - 100;
 
@@ -101,6 +103,20 @@ const LocateSubmission = () => {
             }
         };
         fetchUserId();
+
+        // Cleanup function to reset all state when component unmounts
+        return () => {
+            setUserId(undefined);
+            setNextLocation(undefined);
+            setCurrentLocation(undefined);
+            setPreviousLocation(undefined);
+            setCurrentDistanceFromPrev(undefined);
+            setNextDistanceFromCurrent(undefined);
+            isLoadingFromAPI.current = false;
+            isRefreshingLocation.current = false;
+            isCreatingContext.current = false;
+            isUserSelection.current = false;
+        };
     }, []);
 
     const refreshLocation = async (isArrived: boolean = false) => {
@@ -160,6 +176,7 @@ const LocateSubmission = () => {
                         arrived_at: isArrived ? new Date().toISOString() : '',
                     }
                 }
+
                 const result = await createRoutePoint(payload);
                 if (result && result.data) {
                     // router.back();
@@ -183,6 +200,7 @@ const LocateSubmission = () => {
         const unsubscribeLocation = subscribeLocationSelected((selection) => {
             if (selection && selection.purpose === 'next-location') {
                 isLoadingFromAPI.current = false;
+                isUserSelection.current = true; // Mark as user selection
                 setNextLocation({
                     ...selection,
                     latitude: truncateCoordinate(selection.latitude),
@@ -198,8 +216,10 @@ const LocateSubmission = () => {
 
     useEffect(() => {
         const mounted = async () => {
-            // Only create route context if the location was set by user, not from API
-            if (nextLocation && !isLoadingFromAPI.current) {
+            // Only create route context if the location was set by user via subscribeLocationSelected
+            if (nextLocation && isUserSelection.current && !isCreatingContext.current) {
+                isCreatingContext.current = true;
+                
                 // calculate distance
                 if (currentLocation) {
                     const distance = distanceInMeters(
@@ -219,19 +239,33 @@ const LocateSubmission = () => {
                         next_longitude: truncateCoordinate(nextLocation?.longitude),
                         next_place_name: nextLocation?.placeName,
                         started_at: new Date().toISOString(),
+                        status: 'active',
                     }
                 }
-                const result = await createRouteContext(payload);
-                if (result && result.data) {
-                    // router.back();
+                
+                try {
+                    const result = await createRouteContext(payload);
+                    if (result && result.data) {
+                        Toast.show({
+                            type: 'success',
+                            text1: 'Information',
+                            text2: 'Destination saved successfully',
+                        });
+                        refetchRouteContext(); // Refresh the route context data
+                    }
+                } catch (error) {
+                    console.error('Failed to create route context:', error);
                     Toast.show({
-                        type: 'success',
-                        text1: 'Information',
-                        text2: 'Destination saved successfully',
+                        type: 'error',
+                        text1: 'Error',
+                        text2: 'Failed to save destination',
                     });
+                } finally {
+                    isCreatingContext.current = false;
+                    isUserSelection.current = false; // Reset flag after processing
                 }
             } else if (nextLocation && currentLocation) {
-                // Just calculate distance if loaded from API
+                // Just calculate distance (for both API-loaded and user-selected locations)
                 const distance = distanceInMeters(
                     { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
                     { latitude: nextLocation?.latitude, longitude: nextLocation?.longitude }
@@ -241,7 +275,7 @@ const LocateSubmission = () => {
             }
         }
         mounted();
-    }, [nextLocation]);
+    }, [nextLocation, currentLocation]);
 
     useEffect(() => {
         const mounted = async () => {
@@ -277,7 +311,7 @@ const LocateSubmission = () => {
 
                     // Get the second latest point (previous location)
                     if (routePointData.length > 1) {
-                        const previousPoint = routePointData[0];
+                        const previousPoint = routePointData[1];
                         const prevMeta = previousPoint.secondary_item.meta;
                         if (prevMeta.latitude && prevMeta.longitude) {
                             setPreviousLocation({
@@ -419,12 +453,13 @@ const LocateSubmission = () => {
                                 <Button 
                                     size={currentLocation ? '$2' : '$4'}
                                     bg={currentLocation ? '$blue4' : '$blue4'}
-                                    icon={<MaterialCommunityIcons name="refresh" size={20} />}
+                                    icon={createPointLoading ? <ActivityIndicator size="small" /> : <MaterialCommunityIcons name="refresh" size={20} />}
                                     style={currentLocation ? styles.actionButton : styles.setLocationButton}
                                     marginBlockStart={currentLocation ? 0 : 8}
                                     onPress={async () => await refreshLocation()}
+                                    disabled={createPointLoading}
                                 >
-                                    Refresh
+                                    {createPointLoading ? 'Updating...' : 'Refresh'}
                                 </Button>
                             </XStack>
                         </YStack>
@@ -482,38 +517,78 @@ const LocateSubmission = () => {
                                 <Button 
                                     size={nextLocation ? '$2' : '$4'}
                                     bg={nextLocation ? '$blue4' : '$blue4'}
-                                    icon={<MaterialCommunityIcons name="map-marker-radius-outline" size={20} />}
+                                    icon={createContextLoading ? <ActivityIndicator size="small" /> : <MaterialCommunityIcons name="map-marker-radius-outline" size={20} />}
                                     style={nextLocation ? styles.actionButton : styles.setLocationButton}
                                     marginBlockStart={nextLocation ? 0 : 8}
                                     onPress={() => router.push({
                                         pathname: '/modals/map',
                                         params: {
                                             purpose: 'next-location',
-                                            place_name: nextLocation?.placeName,
+                                            initialPlaceName: nextLocation?.placeName,
                                             initialLat: nextLocation?.latitude,
                                             initialLng: nextLocation?.longitude,
                                         }
                                     })}
+                                    disabled={createContextLoading}
                                 >
-                                    {nextLocation ? 'Change' : 'Set Destination'}
+                                    {createContextLoading ? 'Saving...' : (nextLocation ? 'Change' : 'Set Destination')}
                                 </Button>
                             </XStack>
                             
-                            {nextLocation && currentLocation ?
+                            {nextLocation && currentLocation && !createContextLoading ?
                                 <Button 
                                     size={'$4'}
                                     bg={'$blue4'}
-                                    icon={<MaterialCommunityIcons name="map-marker-radius-outline" size={20} />}
+                                    icon={createPointLoading ? <ActivityIndicator size="small" /> : <MaterialCommunityIcons name="map-marker-radius-outline" size={20} />}
                                     marginBlockStart={8}
-                                    onPress={() => refreshLocation(true)}
+                                    onPress={() => {
+                                        // Check if distance is available and within 500m
+                                        if (nextDistanceFromCurrent === undefined || nextDistanceFromCurrent > 500) {
+                                            const distanceKm = nextDistanceFromCurrent ? Math.round((nextDistanceFromCurrent / 1000) * 100) / 100 : '-';
+                                            const distanceM = nextDistanceFromCurrent ? Math.round(nextDistanceFromCurrent) : 0;
+                                            Alert.alert(
+                                                'Too Far From Destination',
+                                                `You are ${distanceKm} km (${distanceM} meters) away from your destination. Please get within 500 meters to mark arrival.`,
+                                                [{ text: 'OK', style: 'default' }]
+                                            );
+                                            return;
+                                        }
+
+                                        // If within 500m, show confirmation
+                                        Alert.alert(
+                                            'Mark Arrival',
+                                            'Have you arrived at your destination?',
+                                            [
+                                                {
+                                                    text: 'Cancel',
+                                                    style: 'cancel',
+                                                },
+                                                {
+                                                    text: 'Yes, I Arrived',
+                                                    onPress: () => refreshLocation(true),
+                                                    style: 'default',
+                                                },
+                                            ]
+                                        );
+                                    }}
+                                    disabled={createPointLoading}
                                 >
-                                    Arrived!
+                                    {createPointLoading ? 'Marking Arrival...' : 'Arrived!'}
                                 </Button>
                                 : null
                             }
                         </YStack>
                     </YStack>
                 </KeyboardAwareScrollView>
+
+                {(routeContextLoading || routePointLoading) && (
+                    <View style={styles.loadingOverlay}>
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color="#1F3D2B" />
+                            <Text style={styles.loadingText}>Loading your location data...</Text>
+                        </View>
+                    </View>
+                )}
             </SafeAreaView>
         </>
 	);
@@ -601,5 +676,38 @@ const styles = StyleSheet.create({
     },
     setLocationButton: {
         width: '100%',
-    }
+    },
+    loadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+    },
+    loadingContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+        gap: 12,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+            },
+            android: {
+                elevation: 8,
+            },
+        }),
+    },
+    loadingText: {
+        fontSize: 14,
+        color: '#1F3D2B',
+        opacity: 0.7,
+    },
 });

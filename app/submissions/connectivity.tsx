@@ -65,6 +65,7 @@ const ConnectivitySubmission = () => {
 		}
 
 		const result = await submitConnectivity(payload);
+		console.log('Connectivity submission result:', result);
 		if (result && result.data) {
 			router.back();
 			reset();
@@ -275,7 +276,11 @@ const ConnectivitySubmission = () => {
 
             <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
                 <Text opacity={0.8}>All values (location, carrier, signal strength) are required to ensure data accuracy.</Text>
-				<Button onPress={handleSubmit(onSubmit)} style={styles.submitButton} disabled={isLoading ? true : false}>
+				<Button 
+					onPress={handleSubmit(onSubmit)} 
+					style={styles.submitButton} 
+					disabled={isLoading || !signalInfo?.lat || !signalInfo?.lng ? true : false}
+				>
 					{isLoading ? <ActivityIndicator color={'#fff'} /> : null}
                     <Text color={'white'} fontSize={20}>Share</Text>
                 </Button>

@@ -42,7 +42,7 @@ const ScanReceipt = () => {
     const [recognizedText, setRecognizedText] = useState('');
     const scanAnim = useRef(new Animated.Value(0)).current;
     const [ocrBlocks, setOCRBlocks] = useState<Block[] | null>(null);
-    const [extractItems, result] = useGetItemsMutation({ 
+    const [extractItems, { isLoading: isExtracting }] = useGetItemsMutation({ 
         fixedCacheKey: 'receipt-process',
     });
 
@@ -261,10 +261,20 @@ const ScanReceipt = () => {
 
                 <View style={{ marginTop: 'auto', paddingHorizontal: 20, paddingBlockEnd: 6 }}>
                     <XStack gap="$4">
-                        <Button onPress={handleCapture} flex={1} icon={<MaterialCommunityIcons name="camera-plus" size={20} />}>
+                        <Button 
+                            onPress={handleCapture} 
+                            flex={1} 
+                            icon={isProcessing || isExtracting ? <ActivityIndicator size="small" color="#fff" /> : <MaterialCommunityIcons name="camera-plus" size={20} />}
+                            disabled={isProcessing || isExtracting}
+                        >
                             <Text>Capture</Text>
                         </Button>
-                        <Button onPress={handlePickImage} flex={1} icon={<MaterialCommunityIcons name="file-image-plus" size={20} />}>
+                        <Button 
+                            onPress={handlePickImage} 
+                            flex={1} 
+                            icon={isProcessing || isExtracting ? <ActivityIndicator size="small" color="#fff" /> : <MaterialCommunityIcons name="file-image-plus" size={20} />}
+                            disabled={isProcessing || isExtracting}
+                        >
                             <Text>Gallery</Text>
                         </Button>
                     </XStack>

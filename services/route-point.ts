@@ -23,6 +23,7 @@ const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 export const routePointApi = createApi({
   reducerPath: 'routePointApi',
+  keepUnusedDataFor: 0,
   baseQuery: fetchBaseQuery({
       baseUrl,
       prepareHeaders: async (headers) => {
@@ -33,7 +34,7 @@ export const routePointApi = createApi({
           return headers;
       },
   }),
-  tagTypes: ['RoutePoint'],
+  tagTypes: ['RoutePoint', 'Activity'],
   endpoints: (builder) => ({
     getRoutePoints: builder.query<RoutePoint[], void>({
       query: () => '/wp/v2/route-points',
@@ -55,7 +56,10 @@ export const routePointApi = createApi({
         method: 'POST',
         body,
       }),
-      invalidatesTags: [{ type: 'RoutePoint', id: 'LIST' }],
+      invalidatesTags: [
+        { type: 'RoutePoint', id: 'LIST' },
+        { type: 'Activity', id: 'LIST' },
+      ],
     }),
     updateRoutePoint: builder.mutation<RoutePoint, { id: number; data: RoutePointPayload }>({
       query: ({ id, data }) => ({
@@ -66,6 +70,7 @@ export const routePointApi = createApi({
       invalidatesTags: (result, error, { id }) => [
         { type: 'RoutePoint', id },
         { type: 'RoutePoint', id: 'LIST' },
+        { type: 'Activity', id: 'LIST' },
       ],
     }),
     deleteRoutePoint: builder.mutation<{ success: boolean }, number>({
@@ -76,6 +81,7 @@ export const routePointApi = createApi({
       invalidatesTags: (result, error, id) => [
         { type: 'RoutePoint', id },
         { type: 'RoutePoint', id: 'LIST' },
+        { type: 'Activity', id: 'LIST' },
       ],
     }),
   }),

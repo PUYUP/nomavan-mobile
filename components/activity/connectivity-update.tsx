@@ -1,9 +1,8 @@
-import { BPActivityResponse } from '@/services/activity';
+import { BPActivityResponse, useFavoriteActivityMutation } from '@/services/activity';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'expo-router';
-import { Linking, Platform, Pressable, StyleSheet } from 'react-native';
-import { Avatar, Button, Card, Separator, Text, View, XStack, YStack } from 'tamagui';
+import { Image, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 const SIGNAL_COLORS = {
     bad: '#ff817b',
@@ -57,6 +56,8 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
     const strengthRange = signalLevelToDbmRange(strengthLevel ?? 0);
     const strengthColor = strengthLevel === null ? SIGNAL_COLORS.inactive : getSignalColor(strengthLevel);
     const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
+    const [favoriteActivity, { isLoading: isFavoriting }] = useFavoriteActivityMutation();
+    
     const handleOpenDirections = (item: BPActivityResponse | null) => {
         const latitude = item?.secondary_item?.meta?.latitude;
         const longitude = item?.secondary_item?.meta?.longitude;
@@ -72,99 +73,122 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
         Linking.openURL(url)
     }
 
+    const favoriteHandler = async (item: BPActivityResponse) => {
+        try {
+            await favoriteActivity(item.id).unwrap();
+        } catch (error) {
+            console.error('Failed to favorite activity:', error);
+        }
+    }
+
     return (
-        <>
-            <Card style={styles.card}>
-                <XStack gap="$2" style={styles.row}>
-                    <MaterialCommunityIcons style={styles.mainIcon} color={strengthColor} name='access-point-network' />
-                    <YStack style={styles.strengthCol}>
-                        <XStack items={'center'} gap={'$2'}>
-                            <Text style={[styles.title, { color: strengthColor }]}>
-                                {strengthRange.min}
-                            </Text>
-                            <Text style={styles.subtitle}>to</Text>
-                            <Text style={[styles.title, { color: strengthColor }]}>
-                                {strengthRange.max}
-                            </Text>
-                        </XStack>
-                        <Text style={styles.subtitle}>dBm</Text>
-                    </YStack>
-
-                    <YStack>
-                        <Text style={[styles.title, { fontWeight: 'normal' }]} numberOfLines={1} maxW={130}>{activity.secondary_item.meta.carrier} hari merdeka raya</Text>
-                        <Text style={[styles.subtitle, { textAlign: 'left'}]}>Carrier</Text>
-                    </YStack>
-
-                    <View style={styles.signalGraph}>
-                        {[28, 28, 28, 28, 28].map((height, index) => {
-                            const isActive = strengthLevel !== null && strengthLevel > 0 && index < strengthLevel;
-                            const barColor = isActive ? strengthColor : SIGNAL_COLORS.inactive;
-
-                            return (
-                                <View
-                                    key={`bar-${index}`}
-                                    height={height}
-                                    style={[styles.signalBar, { backgroundColor: barColor }]}
-                                />
-                            )
-                        })}
+        <View style={styles.card}>
+            <View style={styles.row}>
+                <MaterialCommunityIcons style={styles.mainIcon} color={strengthColor} name='access-point-network' />
+                <View style={styles.strengthCol}>
+                    <View style={styles.strengthRow}>
+                        <Text style={[styles.title, { color: strengthColor }]}>
+                            {strengthRange.min}
+                        </Text>
+                        <Text style={styles.subtitle}>to</Text>
+                        <Text style={[styles.title, { color: strengthColor }]}>
+                            {strengthRange.max}
+                        </Text>
                     </View>
-                </XStack>
+                    <Text style={styles.subtitle}>dBm</Text>
+                </View>
 
-                <Separator my={10} />
-                
-                <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
-                    <XStack style={styles.contributorRow}>
-                        <Avatar circular size="$4" style={styles.avatar}>
-                            <Avatar.Image
-                                src={'https:' + activity.user_avatar.thumb}
-                                accessibilityLabel="Contributor avatar"
+                <View style={styles.carrierContainer}>
+                    <Text style={styles.carrierName} numberOfLines={1}>{activity.secondary_item.meta.carrier} hari merdeka raya</Text>
+                    <Text style={styles.carrierLabel}>Carrier</Text>
+                </View>
+
+                <View style={styles.signalGraph}>
+                    {[28, 28, 28, 28, 28].map((height, index) => {
+                        const isActive = strengthLevel !== null && strengthLevel > 0 && index < strengthLevel;
+                        const barColor = isActive ? strengthColor : SIGNAL_COLORS.inactive;
+
+                        return (
+                            <View
+                                key={`bar-${index}`}
+                                style={[styles.signalBar, { height, backgroundColor: barColor }]}
                             />
-                            <Avatar.Fallback />
-                        </Avatar>
+                        )
+                    })}
+                </View>
+            </View>
 
-                        <YStack style={styles.contributorInfo}>
-                            <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
-                            <Text style={styles.contributorMeta}>1.276 contribs.</Text>
-                        </YStack>
+            <View style={styles.separator} />
+            
+            <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
+                <View style={styles.contributorRow}>
+                    <View style={styles.avatarContainer}>
+                        <Image
+                            source={{ uri: 'https:' + activity.user_avatar.thumb }}
+                            style={styles.avatar}
+                        />
+                    </View>
 
-                        <YStack style={styles.locationColumn}>
-                            <XStack style={styles.locationRow}>
-                                <MaterialCommunityIcons name="map-marker-radius" size={16} />
-                                <Text style={styles.locationText} numberOfLines={1}>
-                                    {activity.secondary_item.meta.place_name}
-                                </Text>
-                            </XStack>
-                            <Text style={styles.postedTime}>{postedTime}</Text>
-                        </YStack>
-                    </XStack>
-                </Pressable>
+                    <View style={styles.contributorInfo}>
+                        <Text style={styles.contributorName}>{activity.user_profile.name}</Text>
+                        <Text style={styles.contributorMeta}>1.276 contribs.</Text>
+                    </View>
 
-                <Separator my={10} />
-
-                <XStack style={styles.thanksRow}>
-                    <XStack style={styles.thanksLeft}>
-                        <Button size="$2" style={styles.thanksButton}>
-                            <XStack style={styles.thanksContent}>
-                                <MaterialCommunityIcons name="thumb-up" size={14} />
-                                <Text style={styles.thanksText}>Say Thanks</Text>
-                            </XStack>
-                        </Button>
-
-                        <View style={styles.thanksCount}>
-                            <Text style={styles.thanksCountText}>130 thanks</Text>
+                    <View style={styles.locationColumn}>
+                        <View style={styles.locationRow}>
+                            <MaterialCommunityIcons name="map-marker-radius" size={16} color="#000" />
+                            <Text style={styles.locationText} numberOfLines={1}>
+                                {activity.secondary_item.meta.place_name}
+                            </Text>
                         </View>
-                    </XStack>
+                        <Text style={styles.postedTime}>{postedTime}</Text>
+                    </View>
+                </View>
+            </Pressable>
 
-                    <Button size="$2" style={styles.viewLocationButton} onPress={() => handleOpenDirections(activity)}>
-                        <XStack style={styles.thanksContent}>
-                            <MaterialCommunityIcons name="map" size={14} />
-                            <Text style={styles.thanksText}>Location</Text>
-                        </XStack>
-                    </Button>
-                </XStack>
-            </Card>
-        </>
+            <View style={styles.separator} />
+
+            <View style={styles.thanksRow}>
+                <View style={styles.thanksLeft}>
+                    <Pressable 
+                        style={[
+                            styles.thanksButton,
+                            activity.favorited && styles.thanksButtonActive,
+                            isFavoriting && styles.thanksButtonDisabled
+                        ]}
+                        onPress={async () => favoriteHandler(activity)}
+                        disabled={isFavoriting}
+                    >
+                        <View style={styles.thanksContent}>
+                            <MaterialCommunityIcons 
+                                name={activity.favorited ? "thumb-up" : "thumb-up-outline"} 
+                                size={14} 
+                                color={activity.favorited ? "#3b82f6" : "#000"} 
+                            />
+                            <Text style={[
+                                styles.thanksText,
+                                activity.favorited && styles.thanksTextActive
+                            ]}>
+                                {activity.favorited ? 'Thanked' : 'Say Thanks'}
+                            </Text>
+                        </View>
+                    </Pressable>
+                    
+                    {activity.favorited_count > 0 &&
+                        <View style={styles.thanksCount}>
+                            <Text style={styles.thanksCountText}>{activity.favorited_count} thanks</Text>
+                        </View>
+                    }
+                </View>
+
+                <Pressable style={styles.viewLocationButton} onPress={() => handleOpenDirections(activity)}>
+                    <View style={styles.thanksContent}>
+                        <MaterialCommunityIcons name="map" size={14} color="#3b82f6" />
+                        <Text style={styles.viewLocationText}>Location</Text>
+                    </View>
+                </Pressable>
+            </View>
+        </View>
     )
 }
 
@@ -175,14 +199,32 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 12,
         backgroundColor: '#fff',
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
     },
     row: {
+        flexDirection: 'row',
         alignItems: 'center',
+        gap: 8,
     },
     strengthCol: {
         borderRightColor: '#e5e5e5',
         borderRightWidth: 1,
         paddingRight: 6,
+    },
+    strengthRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
     mainIcon: {
         fontSize: 32,
@@ -190,11 +232,28 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 14,
         fontWeight: '800',
+        color: '#000',
     },
     subtitle: {
         fontSize: 10,
         opacity: 0.8,
         textAlign: 'center',
+        color: '#000',
+    },
+    carrierContainer: {
+        flex: 1,
+    },
+    carrierName: {
+        fontSize: 14,
+        fontWeight: '400',
+        color: '#000',
+        maxWidth: 130,
+    },
+    carrierLabel: {
+        fontSize: 10,
+        opacity: 0.8,
+        textAlign: 'left',
+        color: '#000',
     },
     badSignalColor: {
         color: SIGNAL_COLORS.bad,
@@ -227,13 +286,27 @@ const styles = StyleSheet.create({
     signalBarInactive: {
         backgroundColor: SIGNAL_COLORS.inactive,
     },
+    separator: {
+        height: 1,
+        backgroundColor: '#e5e5e5',
+        marginVertical: 10,
+    },
     contributorRow: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
     },
-    avatar: {
+    avatarContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         borderWidth: 1,
         borderColor: '#e5e5e5',
+        overflow: 'hidden',
+    },
+    avatar: {
+        width: '100%',
+        height: '100%',
     },
     contributorInfo: {
         flex: 1,
@@ -242,10 +315,12 @@ const styles = StyleSheet.create({
     contributorName: {
         fontSize: 14,
         fontWeight: '700',
+        color: '#000',
     },
     contributorMeta: {
         fontSize: 12,
         opacity: 0.8,
+        color: '#000',
     },
     locationRow: {
         flexDirection: 'row',
@@ -261,32 +336,49 @@ const styles = StyleSheet.create({
     locationText: {
         fontSize: 12,
         opacity: 0.9,
+        color: '#000',
     },
     postedTime: {
         fontSize: 11,
         opacity: 0.7,
+        color: '#000',
     },
     thanksButton: {
         height: 30,
         paddingHorizontal: 10,
         borderRadius: 16,
         backgroundColor: '#f3f4f6',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    thanksButtonActive: {
+        backgroundColor: '#dbeafe',
+    },
+    thanksButtonDisabled: {
+        opacity: 0.5,
     },
     thanksRow: {
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
     },
     thanksLeft: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
     },
     thanksContent: {
+        flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
     },
     thanksText: {
         fontSize: 12,
         fontWeight: '600',
+        color: '#000',
+    },
+    thanksTextActive: {
+        color: '#3b82f6',
     },
     thanksCount: {
         alignItems: 'center',
@@ -294,11 +386,19 @@ const styles = StyleSheet.create({
     thanksCountText: {
         fontSize: 12,
         opacity: 0.7,
+        color: '#000',
     },
     viewLocationButton: {
         height: 30,
         paddingHorizontal: 10,
         borderRadius: 16,
         backgroundColor: '#eef2ff',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    viewLocationText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#3b82f6',
     },
 })

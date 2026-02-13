@@ -41,8 +41,8 @@ export default function TabLayout() {
   }, [open]);
 
   const quickActions = [
-    { label: 'New Meetup', key: 'meetup', icon: 'account-group' as const },
-    { label: 'Add Spot', key: 'add-pin', icon: 'map-marker-plus' as const },
+    { label: 'Meetup', key: 'meetup', icon: 'account-group' as const },
+    { label: 'Spot', key: 'add-pin', icon: 'map-marker-plus' as const },
     { label: 'Locate', key: 'locate', icon: 'map-marker-path' as const },
     { label: 'Expense', key: 'expense', icon: 'basket-plus-outline' as const },
     { label: 'Connectivity', key: 'connectivity', icon: 'access-point-network' as const },

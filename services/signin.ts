@@ -22,6 +22,7 @@ const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 export const signinApi = createApi({
 	reducerPath: 'signinApi',
+	keepUnusedDataFor: 0,
 	baseQuery: fetchBaseQuery({ baseUrl }),
 	endpoints: (builder) => ({
 		createSignin: builder.mutation<SigninResponse, SigninPayload>({
