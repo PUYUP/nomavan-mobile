@@ -1,6 +1,6 @@
-import { useGetActivityQuery } from '@/services/activity';
+import { useGetActivityQuery } from '@/services/apis/activity-api';
+import { JoinPayload, LeavePayload, MembershipPayload, useJoinMeetupMutation, useLeaveMeetupMutation, useRequestMembershipMutation } from '@/services/apis/meetup-api';
 import { getAuth } from '@/services/auth-storage';
-import { JoinPayload, LeavePayload, MembershipPayload, useJoinMeetupMutation, useLeaveMeetupMutation, useRequestMembershipMutation } from '@/services/meetup';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Calendar, Clock, MapPin, Users } from '@tamagui/lucide-icons';
 import { format, isSameDay, isValid } from 'date-fns';

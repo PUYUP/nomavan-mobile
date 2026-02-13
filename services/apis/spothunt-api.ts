@@ -1,5 +1,4 @@
-import { getAuth } from '@/services/auth-storage';
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { baseApi } from '../base-api';
 
 export type SpothuntStatus = 'publish' | 'draft' | 'private';
 
@@ -62,45 +61,8 @@ export type DeleteSpothuntArgs = {
 	force?: boolean;
 };
 
-const rawBaseUrl = process.env.EXPO_PUBLIC_BP_API_BASE ?? '';
-const baseUrl = rawBaseUrl.replace(/\/$/, '');
-
-export const spothuntApi = createApi({
-	reducerPath: 'spothuntApi',
-	keepUnusedDataFor: 0,
-	baseQuery: fetchBaseQuery({
-		baseUrl,
-		prepareHeaders: async (headers) => {
-			const auth = await getAuth();
-			if (auth?.token) {
-				headers.set('Authorization', `Bearer ${auth.token}`);
-			}
-			return headers;
-		},
-	}),
-	tagTypes: ['Spothunt', 'Activity'],
+export const spothuntApi = baseApi.injectEndpoints({
 	endpoints: (builder) => ({
-		getSpothunts: builder.query<SpothuntResponse[], SpothuntFilterArgs | void>({
-			query: (args) => ({
-				url: '/wp/v2/spothunts',
-				method: 'GET',
-				params: args ?? {},
-			}),
-			providesTags: (result) =>
-				result
-					? [
-						{ type: 'Spothunt' as const, id: 'LIST' },
-						...result.map((item) => ({ type: 'Spothunt' as const, id: item.id })),
-					]
-					: [{ type: 'Spothunt' as const, id: 'LIST' }],
-		}),
-		getSpothuntById: builder.query<SpothuntResponse, number>({
-			query: (id) => ({
-				url: `/wp/v2/spothunts/${id}`,
-				method: 'GET',
-			}),
-			providesTags: (_result, _error, id) => [{ type: 'Spothunt', id }],
-		}),
 		createSpothunt: builder.mutation<SpothuntResponse, SpothuntPayload>({
 			query: (body) => ({
 				url: '/wp/v2/spothunts',
@@ -140,8 +102,6 @@ export const spothuntApi = createApi({
 });
 
 export const {
-	useGetSpothuntsQuery,
-	useGetSpothuntByIdQuery,
 	useCreateSpothuntMutation,
 	useUpdateSpothuntMutation,
 	useDeleteSpothuntMutation,

@@ -1,13 +1,13 @@
 import { MarkerCallout } from '@/components/map/marker-callout';
 import SignalMarker from '@/components/map/signal-marker';
-import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
+import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/apis/activity-api';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Location from 'expo-location';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, BackHandler, StyleSheet } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Sheet, Text, View, XStack, YStack } from 'tamagui';
 
 type MarkerData = {
@@ -24,6 +24,7 @@ type MarkerData = {
 
 const MapViewScreen = () => {
     const params = useLocalSearchParams<{ component?: string; type?: string; title?: string }>();
+    const insets = useSafeAreaInsets();
     
     const activitiesQueryArgs: BPActivityFilterArgs = { 
         page: 1,
@@ -210,7 +211,7 @@ const MapViewScreen = () => {
     }, [sheetOpen]);
 
     return (
-        <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+        <SafeAreaView style={styles.safeArea} edges={[]}>
             <Stack.Screen 
                 options={{ 
                     title: params.title || 'Map View', 
@@ -362,11 +363,11 @@ const styles = StyleSheet.create({
     },
     infoPanel: {
         position: 'absolute',
-        bottom: 16,
+        top: 16,
         left: 16,
-        right: 16,
+        right: 80,
         backgroundColor: '#fff',
-        padding: 12,
+        padding: 8,
         borderRadius: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },

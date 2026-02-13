@@ -1,5 +1,4 @@
-import { getAuth } from '@/services/auth-storage';
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { baseApi } from '../base-api';
 
 export type StoryStatus = 'publish' | 'draft' | 'private';
 
@@ -62,45 +61,8 @@ export type DeleteStoryArgs = {
 	force?: boolean;
 };
 
-const rawBaseUrl = process.env.EXPO_PUBLIC_BP_API_BASE ?? '';
-const baseUrl = rawBaseUrl.replace(/\/$/, '');
-
-export const storyApi = createApi({
-	reducerPath: 'storyApi',
-	keepUnusedDataFor: 0,
-	baseQuery: fetchBaseQuery({
-		baseUrl,
-		prepareHeaders: async (headers) => {
-			const auth = await getAuth();
-			if (auth?.token) {
-				headers.set('Authorization', `Bearer ${auth.token}`);
-			}
-			return headers;
-		},
-	}),
-	tagTypes: ['Story', 'Activity'],
+export const storyApi = baseApi.injectEndpoints({
 	endpoints: (builder) => ({
-		getStories: builder.query<StoryResponse[], StoryFilterArgs | void>({
-			query: (args) => ({
-				url: '/wp/v2/stories',
-				method: 'GET',
-				params: args ?? {},
-			}),
-			providesTags: (result) =>
-				result
-					? [
-						{ type: 'Story' as const, id: 'LIST' },
-						...result.map((item) => ({ type: 'Story' as const, id: item.id })),
-					]
-					: [{ type: 'Story' as const, id: 'LIST' }],
-		}),
-		getStoryById: builder.query<StoryResponse, number>({
-			query: (id) => ({
-				url: `/wp/v2/stories/${id}`,
-				method: 'GET',
-			}),
-			providesTags: (_result, _error, id) => [{ type: 'Story', id }],
-		}),
 		createStory: builder.mutation<StoryResponse, StoryPayload>({
 			query: (body) => ({
 				url: '/wp/v2/stories',
@@ -140,8 +102,6 @@ export const storyApi = createApi({
 });
 
 export const {
-	useGetStoriesQuery,
-	useGetStoryByIdQuery,
 	useCreateStoryMutation,
 	useUpdateStoryMutation,
 	useDeleteStoryMutation,

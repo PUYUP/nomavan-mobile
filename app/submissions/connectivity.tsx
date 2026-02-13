@@ -1,4 +1,4 @@
-import { ConnectivityPayload, useCreateConnectivityMutation } from '@/services/connectivity';
+import { ConnectivityPayload, useCreateConnectivityMutation } from '@/services/apis/connectivity-api';
 import { subscribeLocationSelected } from '@/utils/location-selector';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import NetInfo from '@react-native-community/netinfo';
@@ -8,7 +8,7 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { ActivityIndicator, Platform, StyleSheet, Switch } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Input, Label, RadioGroup, Text, View, XStack, YStack } from 'tamagui';
+import { Button, Label, RadioGroup, Text, View, XStack, YStack } from 'tamagui';
 
 interface SignalInfo {
 	type: string; // such as celular, wifi, etc
@@ -45,7 +45,7 @@ const ConnectivitySubmission = () => {
 	const router = useRouter();
 	const [signalInfo, setSignalInfo] = useState<SignalInfo>();
     const [placeName, setPlaceName] = useState('');
-	const [submitConnectivity, { isLoading }] = useCreateConnectivityMutation({ fixedCacheKey: 'submit-connectivity-process' });
+	const [submitConnectivity, { isLoading }] = useCreateConnectivityMutation();
 
 	const { control, handleSubmit, setValue, reset } = useForm<SignalInfo>();
 	const onSubmit: SubmitHandler<SignalInfo> = async (data) => {
@@ -56,7 +56,7 @@ const ConnectivitySubmission = () => {
 				latitude: data.lat,
 				longitude: data.lng,
 				place_name: placeName,
-				carrier: data.carrier,
+				carrier: data.carrier ? data.carrier : '',
 				generation: data.cellularGeneration,
 				type: data.type,
 				strength: data.strength ? parseFloat(data.strength) : 0,
@@ -65,6 +65,7 @@ const ConnectivitySubmission = () => {
 		}
 
 		const result = await submitConnectivity(payload);
+		console.log('Connectivity submission result:', result);
 		if (result && result.data) {
 			router.back();
 			reset();
@@ -132,7 +133,7 @@ const ConnectivitySubmission = () => {
 		<SafeAreaView style={styles.safeArea} edges={['bottom']}>
 			<Stack.Screen 
                 options={{ 
-                    title: 'Connectivity', 
+                    title: 'Signals Map', 
                     headerTitleStyle: {
                         fontSize: 22,
                         fontFamily: 'Inter-Black',
@@ -197,31 +198,12 @@ const ConnectivitySubmission = () => {
 						</XStack>
 					</XStack>
 
-					<Controller
-						control={control}
-						name={'carrier'}
-						rules={{ required: true }}
-						render={({ field: { onChange, value } }) => (
-							<XStack style={styles.inputStack}>
-								<MaterialCommunityIcons name='access-point-network' size={26} style={styles.inputIcon} />
-								{signalInfo?.carrier
-									? <View width={200}><Text fontSize={14} numberOfLines={1} ellipsizeMode='tail' overflow='hidden'>{value}</Text></View>
-									: <Input
-										style={styles.input}
-										onChangeText={onChange}
-										value={value}
-										flex={1}
-										size="$3"
-										placeholder={'Carrier'}
-										autoCapitalize="none"
-										autoComplete="off"
-										spellCheck={false}
-										autoCorrect={false}
-									/>
-								}
-							</XStack>
-						)}
-					/>
+					{signalInfo?.carrier && (
+						<XStack style={styles.inputStack}>
+							<MaterialCommunityIcons name='access-point-network' size={26} style={styles.inputIcon} />
+							<View width={200}><Text fontSize={14} numberOfLines={1} ellipsizeMode='tail' overflow='hidden'>{value}</Text></View>
+						</XStack>
+					)}
 
 					<Controller
 						control={control}
@@ -274,7 +256,7 @@ const ConnectivitySubmission = () => {
 			</KeyboardAwareScrollView>
 
             <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
-                <Text opacity={0.8}>All values (location, carrier, signal strength) are required to ensure data accuracy.</Text>
+                <Text opacity={0.8}>All values (location and signal strength) are required to ensure data accuracy.</Text>
 				<Button 
 					onPress={handleSubmit(onSubmit)} 
 					style={styles.submitButton} 

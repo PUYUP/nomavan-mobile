@@ -1,8 +1,10 @@
-import { BPActivityResponse, useFavoriteActivityMutation } from '@/services/activity';
+import { BPActivityResponse } from '@/services/apis/activity-api';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'expo-router';
-import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import RenderHTML from 'react-native-render-html';
+import { FavoriteButton } from '../favoriting';
 
 type StoryUpdateProps = {
     activity: BPActivityResponse;
@@ -16,15 +18,7 @@ const StoryUpdate = ({ activity }: StoryUpdateProps) => {
     }
 
     const router = useRouter();
-    const [favoriteActivity, { isLoading: isFavoriting }] = useFavoriteActivityMutation();
-
-    const favoriteHandler = async (item: BPActivityResponse) => {
-        try {
-            await favoriteActivity(item.id).unwrap();
-        } catch (error) {
-            console.error('Failed to favorite activity:', error);
-        }
-    }
+    const { width } = useWindowDimensions();
 
     const contentText = activity.secondary_item.content.rendered
         ? stripHtml(activity.secondary_item.content.rendered)
@@ -33,11 +27,9 @@ const StoryUpdate = ({ activity }: StoryUpdateProps) => {
     const componentLabel = activity.secondary_item.meta.place_name || null;
     return (
         <View style={styles.card}>
-            <View>
-                <Text style={styles.contentText}>{contentText || activity.title || '-'}</Text>
+            <View style={{ marginBottom: 10 }}>
+                <RenderHTML baseStyle={{ fontSize: 16 }} contentWidth={width - 58} source={{ html: activity.secondary_item.content.rendered || activity.content.rendered || '' }} />
             </View>
-
-            <View style={styles.separator} />
 
             <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
                 <View style={styles.contributorRow}>
@@ -69,34 +61,7 @@ const StoryUpdate = ({ activity }: StoryUpdateProps) => {
             <View style={styles.separator} />
 
             <View style={styles.thanksRow}>
-                <View style={styles.thanksLeft}>
-                    <Pressable 
-                        style={[
-                            styles.thanksButton,
-                            activity.favorited && styles.thanksButtonActive,
-                            isFavoriting && styles.thanksButtonDisabled
-                        ]}
-                        onPress={() => favoriteHandler(activity)}
-                        disabled={isFavoriting}
-                    >
-                        <View style={styles.thanksContent}>
-                            <MaterialCommunityIcons 
-                                name={activity.favorited ? "thumb-up" : "thumb-up-outline"} 
-                                size={14} 
-                                color={activity.favorited ? "#3b82f6" : "#000"} 
-                            />
-                            <Text style={[styles.thanksText, activity.favorited && styles.thanksTextActive]}>
-                                {activity.favorited ? 'Thanked' : 'Say Thanks'}
-                            </Text>
-                        </View>
-                    </Pressable>
-                    
-                    {activity.favorited_count > 0 &&
-                        <View style={styles.thanksCount}>
-                            <Text style={styles.thanksCountText}>{activity.favorited_count} thanks</Text>
-                        </View>
-                    }           
-                </View>
+                <FavoriteButton activity={activity} />
             </View>
         </View>
     )
@@ -206,49 +171,9 @@ const styles = StyleSheet.create({
         opacity: 0.7,
         color: '#000',
     },
-    thanksButton: {
-        height: 30,
-        paddingHorizontal: 10,
-        borderRadius: 16,
-        backgroundColor: '#f3f4f6',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    thanksButtonActive: {
-        backgroundColor: '#dbeafe',
-    },
-    thanksButtonDisabled: {
-        opacity: 0.5,
-    },
     thanksRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-    },
-    thanksLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    thanksContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    thanksText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#000',
-    },
-    thanksTextActive: {
-        color: '#3b82f6',
-    },
-    thanksCount: {
-        alignItems: 'center',
-    },
-    thanksCountText: {
-        fontSize: 12,
-        opacity: 0.7,
-        color: '#000',
     },
 })

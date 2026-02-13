@@ -14,7 +14,6 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const [selectedFilter, setSelectedFilter] = React.useState<string[]>([]);
   const [activeFilter, setActiveFilter] = React.useState<string>('all');
 
   // Subscribe to activity filter changes
@@ -45,7 +44,7 @@ export default function TabLayout() {
     { label: 'Spot', key: 'add-pin', icon: 'map-marker-plus' as const },
     { label: 'Locate', key: 'locate', icon: 'map-marker-path' as const },
     { label: 'Expense', key: 'expense', icon: 'basket-plus-outline' as const },
-    { label: 'Connectivity', key: 'connectivity', icon: 'access-point-network' as const },
+    { label: 'Signal', key: 'connectivity', icon: 'access-point-network' as const },
     { label: 'Story', key: 'story', icon: 'post' as const },
   ];
 
@@ -57,7 +56,7 @@ export default function TabLayout() {
       all: { type: [], title: 'Activities Map' },
       expenses: { type: ['new_expense'], title: 'Expenses Map' },
       routes: { type: ['new_route_point'], title: 'Routes Map' },
-      connections: { type: ['new_connectivity'], title: 'Connectivity Map' },
+      connections: { type: ['new_connectivity'], title: 'Signal Map' },
       meetups: { type: ['created_group'], title: 'Meetups Map' },
       stories: { type: ['new_story'], title: 'Stories Map' },
       spothunts: { type: ['new_spothunt'], title: 'Spot Hunts Map' },
@@ -73,17 +72,40 @@ export default function TabLayout() {
     // close quick action sheet
     setOpen(false);
 
+    const auth = await getAuth();
+    if (!auth) {
+      alert('Please log in to perform this action.');
+      return;
+    }
+
+    const userId = auth.user?.id;
+
     switch (action.key) {
       case 'connectivity':
-        router.push('/submissions/connectivity');
+        router.push({
+          pathname: '/submissions/connectivity',
+          params: {
+            userId: userId?.toString() || '0',
+          }
+        });
         break;
 
       case 'locate':
-        router.push('/submissions/locate');
+        router.push({
+          pathname: '/submissions/locate',
+          params: {
+            userId: userId?.toString() || '0',
+          }
+        });
         break;
       
       case 'story':
-        router.push('/submissions/story');
+        router.push({
+          pathname: '/submissions/story',
+          params: {
+            userId: userId?.toString() || '0',
+          }
+        });
         break;
       
       case 'add-pin':
@@ -244,7 +266,18 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <MaterialCommunityIcons size={28} name="highway" color={color} />,
             headerTitleAlign: 'left',
             headerRight: () => (
-              <Pressable style={{ marginRight: 16 }} onPress={() => router.push('/submissions/locate')}>
+              <Pressable 
+                style={{ marginRight: 16 }} 
+                onPress={async () => {
+                  const auth = await getAuth();
+                  router.push({
+                    pathname: '/submissions/locate',
+                    params: {
+                      userId: auth ? auth.user?.id?.toString() : '0',
+                    }
+                  });
+                }}
+              >
                 <View
                   style={{
                     height: 30,
@@ -328,14 +361,6 @@ export default function TabLayout() {
             ),
           }}
         />
-        <Tabs.Screen
-          name="explore"
-          options={{
-            title: 'Jobs',
-            tabBarIcon: ({ color }) => <MaterialCommunityIcons size={28} name="account-hard-hat" color={color} />,
-            href: null,
-          }}
-        />
       </Tabs>
 
       {/* Action sheet for create a feed (shortcut) */}
@@ -357,10 +382,10 @@ export default function TabLayout() {
         <Sheet.Frame justify="flex-start" items="flex-start">
           <XStack style={[styles.grid, {padding: 16}]}>
             {quickActions.map((action) => (
-              <Pressable key={action.label} style={styles.gridButton} onPress={() => quickActionHandler(action)}>
+              <Pressable key={action.label} style={styles.gridButton} onPress={async () => await quickActionHandler(action)}>
                 <YStack style={styles.gridButtonContent}>
                   <MaterialCommunityIcons name={action.icon} size={28} color="#1F3D2B" />
-                  <Text style={styles.gridButtonText} width={'100%'}>{action.label}</Text>
+                  <Text style={styles.gridButtonText} numberOfLines={1}>{action.label}</Text>
                 </YStack>
               </Pressable>
             ))}
@@ -399,15 +424,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#eef2ff',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 4,
   },
   gridButtonContent: {
     alignItems: 'center',
     gap: 9,
+    width: '100%',
   },
   gridButtonText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#1F3D2B',
     textAlign: 'center',
+    width: '100%',
   },
 });

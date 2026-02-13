@@ -1,9 +1,7 @@
 import ArrivedOnSite from '@/components/activity/arrived-on-site';
 import OnTheWay from '@/components/activity/on-the-way';
-import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
-import { useCreateRouteContextMutation } from '@/services/route-context';
-import { useCreateRoutePointMutation } from '@/services/route-point';
-import React, { useEffect } from 'react';
+import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/apis/activity-api';
+import React from 'react';
 import { ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Text, YStack } from 'tamagui';
@@ -16,20 +14,6 @@ export default function EnRouteScreen() {
     type: ['new_route_point'],
   };
   const { data, isLoading, error, refetch } = useGetActivitiesQuery(activitiesQueryArgs);
-  const [, createRouteContextResult] = useCreateRouteContextMutation({ fixedCacheKey: 'create-route-context-process' });
-  const [, createRoutePointResult] = useCreateRoutePointMutation({ fixedCacheKey: 'create-route-point-process' });
-  
-  useEffect(() => {
-    if (
-      createRouteContextResult.isSuccess 
-      || createRoutePointResult.isSuccess
-    ) {
-      refetch();
-    }
-  }, [
-    createRouteContextResult.isSuccess,
-    createRoutePointResult.isSuccess,
-  ]);
 
   return (
     <Animated.ScrollView style={{ padding: 16 }}>

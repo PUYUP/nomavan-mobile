@@ -1,4 +1,4 @@
-import { MeetupPayload, useCreateMeetupMutation } from "@/services/meetup";
+import { MeetupPayload, useCreateMeetupMutation } from "@/services/apis/meetup-api";
 import { subscribeDateTimeSelected } from "@/utils/datetime-selector";
 import { LocationSelection, subscribeLocationSelected } from '@/utils/location-selector';
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -36,7 +36,7 @@ const CreateMeetupSubmission = () => {
     const [location, setLocation] = useState<LocationSelection | undefined>();
     const [startAt, setStartAt] = useState<string>('');
     const [endAt, setEndAt] = useState<string>('');
-    const [createMeetup, { isLoading }] = useCreateMeetupMutation({ fixedCacheKey: 'create-meetup-process' });
+    const [createMeetup, { isLoading }] = useCreateMeetupMutation();
     const onSubmit: SubmitHandler<Meetup> = async (data) => {
         const payload: MeetupPayload = {
             name: data.name,
@@ -52,9 +52,9 @@ const CreateMeetupSubmission = () => {
             status: 'public',
             invite_status: 'members',
         }
-        const result = await createMeetup(payload);
+        const result = await createMeetup(payload).unwrap();
    
-        if (result && result.data) {
+        if (result) {
             Toast.show({
                type: 'success',
                text1: 'Meetup created' ,

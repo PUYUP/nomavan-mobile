@@ -1,8 +1,9 @@
-import { BPActivityResponse, useFavoriteActivityMutation } from '@/services/activity';
+import { BPActivityResponse } from '@/services/apis/activity-api';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { Image, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FavoriteButton } from '../favoriting';
 
 type ExpenseUpdateProps = {
     activity?: BPActivityResponse | null;
@@ -16,7 +17,6 @@ const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
     const router = useRouter();
     const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
     const total = activity.secondary_item.meta.expense_items_inline.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
-    const [favoriteActivity, { isLoading: isFavoriting }] = useFavoriteActivityMutation();
 
     const handleOpenDirections = (item: BPActivityResponse | null) => {
         const latitude = item?.secondary_item?.meta?.latitude;
@@ -31,14 +31,6 @@ const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
             : `https://www.google.com/maps/search/?api=1&query=${query}`
 
         Linking.openURL(url)
-    }
-
-    const favoriteHandler = async (item: BPActivityResponse) => {
-        try {
-            await favoriteActivity(item.id).unwrap();
-        } catch (error) {
-            console.error('Failed to favorite activity:', error);
-        }
     }
 
     return (
@@ -113,44 +105,7 @@ const ExpenseUpdate = ({ activity = null }: ExpenseUpdateProps) => {
             <View style={styles.separator} />
 
             <View style={styles.thanksRow}>
-                <View style={styles.thanksLeft}>
-                    <Pressable 
-                        style={[
-                            styles.thanksButton,
-                            activity.favorited && styles.thanksButtonActive,
-                            isFavoriting && styles.thanksButtonDisabled
-                        ]} 
-                        onPress={async () => favoriteHandler(activity)}
-                        disabled={isFavoriting}
-                    >
-                        <View style={styles.thanksContent}>
-                            <MaterialCommunityIcons 
-                                name={activity.favorited ? "thumb-up" : "thumb-up-outline"} 
-                                size={14} 
-                                color={activity.favorited ? "#3b82f6" : "#000"} 
-                            />
-                            <Text style={[
-                                styles.thanksText,
-                                activity.favorited && styles.thanksTextActive
-                            ]}>
-                                {activity.favorited ? 'Thanked' : 'Say Thanks'}
-                            </Text>
-                        </View>
-                    </Pressable>
-                    
-                    {activity.favorited_count > 0 &&
-                        <View style={styles.thanksCount}>
-                            <Text style={styles.thanksCountText}>{activity.favorited_count} thanks</Text>
-                        </View>
-                    }
-                </View>
-
-                <Pressable style={styles.viewLocationButton} onPress={() => handleOpenDirections(activity)}>
-                    <View style={styles.thanksContent}>
-                        <MaterialCommunityIcons name="map" size={14} color="#3b82f6" />
-                        <Text style={styles.viewLocationText}>Location</Text>
-                    </View>
-                </Pressable>
+                <FavoriteButton activity={activity} />
             </View>
         </View>
     )

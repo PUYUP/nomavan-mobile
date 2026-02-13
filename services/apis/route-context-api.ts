@@ -1,5 +1,4 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { getAuth } from './auth-storage';
+import { baseApi } from '../base-api';
 
 export interface RouteContextMeta {
   [key: string]: any;
@@ -18,38 +17,9 @@ export interface RouteContext extends RouteContextPayload {
   updatedAt?: string;
 }
 
-const rawBaseUrl = process.env.EXPO_PUBLIC_BP_API_BASE ?? '';
-const baseUrl = rawBaseUrl.replace(/\/$/, '');
-
-export const routeContextApi = createApi({
-    reducerPath: 'routeContextApi',
-    keepUnusedDataFor: 0,
-    baseQuery: fetchBaseQuery({
-        baseUrl,
-        prepareHeaders: async (headers) => {
-            const auth = await getAuth();
-            if (auth?.token) {
-                headers.set('Authorization', `Bearer ${auth.token}`);
-            }
-            return headers;
-        },
-    }),
-    tagTypes: ['RouteContext', 'Activity'],
+export const routeContextApi = baseApi.injectEndpoints({
+    overrideExisting: false,
     endpoints: (builder) => ({
-        getRouteContexts: builder.query<RouteContext[], void>({
-            query: () => '/wp/v2/route-contexts',
-            providesTags: (result) =>
-                result
-                ? [
-                    ...result.map(({ id }) => ({ type: 'RouteContext' as const, id })),
-                    { type: 'RouteContext', id: 'LIST' },
-                    ]
-                : [{ type: 'RouteContext', id: 'LIST' }],
-        }),
-        getRouteContext: builder.query<RouteContext, number>({
-            query: (id) => `/wp/v2/route-contexts/${id}`,
-            providesTags: (result, error, id) => [{ type: 'RouteContext', id }],
-        }),
         createRouteContext: builder.mutation<RouteContext, RouteContextPayload>({
             query: (body) => ({
                 url: '/wp/v2/route-contexts',
@@ -88,8 +58,6 @@ export const routeContextApi = createApi({
 });
 
 export const {
-  useGetRouteContextsQuery,
-  useGetRouteContextQuery,
   useCreateRouteContextMutation,
   useUpdateRouteContextMutation,
   useDeleteRouteContextMutation,

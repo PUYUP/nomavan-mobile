@@ -1,4 +1,4 @@
-import { BPActivityResponse } from '@/services/activity';
+import { BPActivityResponse } from '@/services/apis/activity-api';
 import { presentPaywall } from '@/utils/paywall';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';

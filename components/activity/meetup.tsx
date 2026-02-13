@@ -1,6 +1,6 @@
-import { BPActivityResponse } from '@/services/activity'
+import { BPActivityResponse } from '@/services/apis/activity-api'
+import { JoinPayload, LeavePayload, MembershipPayload, useJoinMeetupMutation, useLeaveMeetupMutation, useRequestMembershipMutation } from '@/services/apis/meetup-api'
 import { getAuth } from '@/services/auth-storage'
-import { JoinPayload, LeavePayload, MembershipPayload, useJoinMeetupMutation, useLeaveMeetupMutation, useRequestMembershipMutation } from '@/services/meetup'
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { format, formatDistanceToNow, isSameDay, isValid } from 'date-fns'
 import { useRouter } from 'expo-router'

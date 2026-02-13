@@ -1,7 +1,6 @@
 import Meetup from '@/components/activity/meetup';
-import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
-import { useCreateMeetupMutation, useJoinMeetupMutation, useLeaveMeetupMutation } from '@/services/meetup';
-import React, { useEffect } from 'react';
+import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/apis/activity-api';
+import React from 'react';
 import { ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Text, YStack } from 'tamagui';
@@ -14,24 +13,7 @@ export default function MeetupScreen() {
     type: ['created_group'],
   };
   const { data, isLoading, error, refetch } = useGetActivitiesQuery(activitiesQueryArgs);
-  const [, joinMeetupResult] = useJoinMeetupMutation({ fixedCacheKey: 'join-meetup-process' });
-  const [, leaveMeetupResult] = useLeaveMeetupMutation({ fixedCacheKey: 'leave-meetup-process' });
-  const [, createMeetupResult] = useCreateMeetupMutation({ fixedCacheKey: 'create-meetup-process' });
-
-  useEffect(() => {
-    if (
-      joinMeetupResult.isSuccess 
-      || leaveMeetupResult.isSuccess 
-      || createMeetupResult.isSuccess
-    ) {
-      refetch();
-    }
-  }, [
-    joinMeetupResult.isSuccess,
-    leaveMeetupResult.isSuccess,
-    createMeetupResult.isSuccess,
-  ]);
-
+  
   return (
     <Animated.ScrollView style={{ padding: 16 }}>
       {isLoading ? (

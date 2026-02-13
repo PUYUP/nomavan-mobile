@@ -1,4 +1,4 @@
-import { useGetMembersQuery } from '@/services/members-api';
+import { useGetMembersQuery } from '@/services/apis/members-api';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';

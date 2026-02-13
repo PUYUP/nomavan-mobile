@@ -1,4 +1,4 @@
-import { StoryPayload, useCreateStoryMutation } from "@/services/story";
+import { StoryPayload, useCreateStoryMutation } from "@/services/apis/story-api";
 import { LocationSelection, subscribeLocationSelected } from "@/utils/location-selector";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Stack, useRouter } from "expo-router";
@@ -18,10 +18,10 @@ export interface Story {
 
 const StorySubmission = () => {
     const router = useRouter();
-    const [shareStory, { isLoading }] = useCreateStoryMutation({ fixedCacheKey: 'share-story-process' });
+    const [shareStory, { isLoading }] = useCreateStoryMutation();
     const { control, handleSubmit, setValue, reset } = useForm<Story>();
     const [placeName, setPlaceName] = useState<string | undefined>('');
-    const [location, setLocation] = useState<LocationSelection | null>();
+    const [location, setLocation] = useState<LocationSelection | null>(null);
     
     const onSubmit: SubmitHandler<Story> = async (data) => {
         const trimmedContent = data.content.trim();
@@ -56,9 +56,9 @@ const StorySubmission = () => {
                 setLocation(selection);
                 setPlaceName(selection.placeName);
 
-                setValue('placeName', selection?.placeName ? location?.placeName as string : '');
-                setValue('latitude', location?.latitude ? location.latitude : 0);
-                setValue('longitude', location?.longitude ? location.longitude : 0);
+                setValue('placeName', selection?.placeName ? selection.placeName as string : '');
+                setValue('latitude', selection?.latitude ? selection.latitude : 0);
+                setValue('longitude', selection?.longitude ? selection.longitude : 0);
             }
         }, { emitLast: false });
 

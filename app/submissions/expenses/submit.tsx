@@ -1,14 +1,14 @@
-import { ExpensePayload, useCreateExpenseMutation } from "@/services/expense";
+import { ExpensePayload, useCreateExpenseMutation } from "@/services/apis/expense-api";
 import { useGetItemsMutation } from "@/services/receipt-extractor";
 import { LocationSelection, subscribeLocationSelected } from "@/utils/location-selector";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import { ActivityIndicator, BackHandler, Platform, StyleSheet } from "react-native";
+import { ActivityIndicator, BackHandler, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Dialog, Input, Text, TextArea, View, XStack, YStack } from "tamagui";
+import { Dialog, Input, TextArea } from "tamagui";
 
 interface Expense {
     items: Item[]
@@ -51,7 +51,7 @@ const ExpenseSubmission = () => {
     const [location, setLocation] = useState<LocationSelection | undefined>();
     const [storeName, setStoreName] = useState<string | undefined>('');
     const [, result] = useGetItemsMutation({ fixedCacheKey: 'receipt-process' });
-    const [submitExpense, { isLoading }] = useCreateExpenseMutation({ fixedCacheKey: 'submit-expense-process' });
+    const [submitExpense, { isLoading }] = useCreateExpenseMutation();
 
     const onSubmit: SubmitHandler<Item> = (data) => {
         if (selectedItemIndex != null) {
@@ -74,7 +74,7 @@ const ExpenseSubmission = () => {
 
     const updateItem = (index: number, patch: Partial<Item>) => {
         setItems((prev) =>
-            prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item))
+            prev.map((item, id) => (id === index ? { ...item, ...patch } : item))
         );
     };
 
@@ -82,7 +82,7 @@ const ExpenseSubmission = () => {
         if (selectedItemIndex === null) {
             return;
         }
-        setItems((prev) => prev.filter((_, idx) => idx !== selectedItemIndex));
+        setItems((prev) => prev.filter((_, id) => id !== selectedItemIndex));
         setEditorOpen(false);
         setSelectedItem(null);
         setSelectedItemIndex(null);
@@ -96,8 +96,8 @@ const ExpenseSubmission = () => {
 
     const updateQtyBy = (index: number, delta: number) => {
         setItems((prev) =>
-            prev.map((item, idx) =>
-                idx === index
+            prev.map((item, id) =>
+                id === index
                     ? { ...item, qty: Math.max(0, parseFloat(item.qty) + delta)?.toString() }
                     : item
             )
@@ -209,34 +209,32 @@ const ExpenseSubmission = () => {
                         title: '', 
                         headerLeft: () => {
                             return (
-                                <XStack items={'center'} gap="$3">
-                                    <Button size="$3" onPress={() => router.back()} circular>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                    <Pressable onPress={() => router.back()} style={styles.backButton}>
                                         <MaterialCommunityIcons name="chevron-left" size={30} />
-                                    </Button>
-                                    <Text fontFamily={'Inter-Black'} fontSize={22} color={'#1F3D2B'}>Expense</Text>
-                                </XStack>
+                                    </Pressable>
+                                    <Text style={styles.headerTitle}>Expense</Text>
+                                </View>
                             )
                         },
                         headerRight: () => {
                             return (
-                                <XStack width={160} gap="$2" items="center">
-                                    <Button
-                                        size="$2"
-                                        flex={1}
+                                <View style={{ flexDirection: 'row', width: 160, gap: 8, alignItems: 'center' }}>
+                                    <Pressable
                                         onPress={() => addItem()}
-                                        icon={<MaterialCommunityIcons name="basket-plus-outline" size={20} />}
+                                        style={styles.headerButton}
                                     >
-                                        Entry
-                                    </Button>
-                                    <Button
-                                        size="$2"
-                                        flex={1}
+                                        <MaterialCommunityIcons name="basket-plus-outline" size={20} />
+                                        <Text style={styles.headerButtonText}>Entry</Text>
+                                    </Pressable>
+                                    <Pressable
                                         onPress={() => router.push('/submissions/expenses/scan-receipt')}
-                                        icon={<MaterialCommunityIcons name="receipt-text-plus-outline" size={20} />}
+                                        style={styles.headerButton}
                                     >
-                                        Scan
-                                    </Button>
-                                </XStack>
+                                        <MaterialCommunityIcons name="receipt-text-plus-outline" size={20} />
+                                        <Text style={styles.headerButtonText}>Scan</Text>
+                                    </Pressable>
+                                </View>
                             )
                         }
                     }} 
@@ -251,104 +249,93 @@ const ExpenseSubmission = () => {
                     showsVerticalScrollIndicator={false}
                     contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'never' : 'automatic'}
                 >
-                    <YStack gap="$2">
+                    <View style={{ gap: 8 }}>
                         {items.length === 0 ? (
                             <Text style={styles.emptyNote}>
                                 Currently empty, entry manually or scan receipt
                             </Text>
                         ) : null}
                         {items.map((item: Item, index) => (
-                            <XStack 
+                            <View 
                                 key={`${index}`} 
-                                gap="$2.5" 
-                                marginBlockEnd="$2.5" 
-                                style={styles.item}
+                                style={[styles.item, { flex: 1, justifyContent: 'space-between' }]}
                             >
-                                <View minW={24}>
-                                    <Text fontSize={14} opacity={0.75} fontWeight={700}>{index + 1}.</Text>
+                                <View style={{ minWidth: 20 }}>
+                                    <Text style={styles.itemNumber}>{index + 1}.</Text>
                                 </View>
 
-                                <YStack width={'55%'}>
-                                    <View>
-                                        <Text>{item.name}</Text>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.itemName}>{item.name}</Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
+                                        <MaterialCommunityIcons name="tag-outline" size={16} color="#f97316" />
+                                        <Text style={styles.itemPrice}>{item.price}</Text>
+                                    </View>
+                                </View>
+
+                                <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <Pressable
+                                            onPress={() => updateQtyBy(index, -1)}
+                                            style={[styles.qtyButton, styles.decreaseButton]}
+                                        >
+                                            <MaterialCommunityIcons name="minus" size={20} color="#fff" />
+                                        </Pressable>
+
+                                        <Text style={styles.qtyText}>{item.qty}</Text>
+
+                                        <Pressable
+                                            onPress={() => updateQtyBy(index, 1)}
+                                            style={[styles.qtyButton, styles.increaseButton]}
+                                        >
+                                            <MaterialCommunityIcons name="plus" size={20} color="#fff" />
+                                        </Pressable>
                                     </View>
 
-                                    <View>
-                                        <Text fontWeight={700} opacity={0.8}>{item.price}</Text>
-                                    </View>
-                                </YStack>
-
-                                <XStack style={{ alignItems: 'center' }}>
-                                    <Button
-                                        size="$1"
-                                        onPress={() => updateQtyBy(index, -1)}
-                                        style={[styles.qtyButton, { backgroundColor: styles.decreaseButton.backgroundColor }]}
+                                    <Pressable
+                                        onPress={async () => await editItem(index, item)}
+                                        style={styles.editButton}
                                     >
-                                        <MaterialCommunityIcons name="minus" size={20} />
-                                    </Button>
-
-                                    <Text width={42} style={{ textAlign: 'center' }}>{item.qty}</Text>
-
-                                    <Button
-                                        size="$1"
-                                        onPress={() => updateQtyBy(index, 1)}
-                                        style={[styles.qtyButton, { backgroundColor: styles.increaseButton.backgroundColor }]}
-                                    >
-                                        <MaterialCommunityIcons name="plus" size={20} />
-                                    </Button>
-                                </XStack>
-
-                                <Button
-                                    size="$1"
-                                    onPress={async () => await editItem(index, item)}
-                                    style={styles.qtyButton}
-                                >
-                                    <MaterialCommunityIcons name="playlist-edit" size={22} />
-                                </Button>
-                            </XStack>
+                                        <MaterialCommunityIcons name="playlist-edit" size={22} />
+                                    </Pressable>
+                                </View>
+                            </View>
                         ))}
-                    </YStack>
+                    </View>
                 </KeyboardAwareScrollView>
 
-                <View style={{ borderTopWidth: 1, borderTopColor: '#e5e5e5', paddingTop: 8, marginTop: 'auto', paddingHorizontal: 16, paddingBlockEnd: 6 }}>
-                    <XStack marginBlockEnd="$3" gap="$4" style={{ justifyContent: 'space-between' }}>
-                        <XStack maxW={'60%'} gap="$3">
+                <View style={styles.bottomSection}>
+                    <View style={styles.infoRow}>
+                        <View style={styles.infoLeft}>
                             <MaterialCommunityIcons name="store-settings-outline" size={24} />
-
-                            <Text fontSize={storeName ? '$3' : '$3'} opacity={0.75}>
+                            <Text style={styles.infoText}>
                                 {storeName ? storeName: 'Not set yet'}
                             </Text>
-                        </XStack>
-
-                        <Button size={'$2'} width={98} onPress={() => setStoreNameOpen(true)}>
-                            <Text>{storeName ? 'Change' : 'Set store'}</Text>
-                        </Button>
-                    </XStack>
+                        </View>
+                        <Pressable onPress={() => setStoreNameOpen(true)} style={styles.actionButton}>
+                            <Text style={styles.actionButtonText}>{storeName ? 'Change' : 'Set store'}</Text>
+                        </Pressable>
+                    </View>
                     
-                    <XStack marginBlockEnd="$3" gap="$4" style={{ justifyContent: 'space-between' }}>
-                        <XStack maxW={'60%'} gap="$3">
+                    <View style={styles.infoRow}>
+                        <View style={styles.infoLeft}>
                             <MaterialCommunityIcons name="note-edit-outline" size={24} />
-
-                            <Text fontSize={content ? '$2' : '$3'} opacity={0.75}>
+                            <Text style={styles.infoText}>
                                 {content ? content: 'Not set yet'}
                             </Text>
-                        </XStack>
+                        </View>
+                        <Pressable onPress={() => setNoteOpen(true)} style={styles.actionButton}>
+                            <Text style={styles.actionButtonText}>{content ? 'Change' : 'Add note'}</Text>
+                        </Pressable>
+                    </View>
 
-                        <Button size={'$2'} width={98} onPress={() => setNoteOpen(true)}>
-                            <Text>{content ? 'Change' : 'Add note'}</Text>
-                        </Button>
-                    </XStack>
-
-                    <XStack marginBlockEnd="$5" gap="$4" style={{ justifyContent: 'space-between' }}>
-                        <XStack maxW={'60%'} gap="$3">
+                    <View style={styles.infoRow}>
+                        <View style={styles.infoLeft}>
                             <MaterialCommunityIcons name="map-marker-radius-outline" size={24} />
-
-                            <Text fontSize={placeName ? '$2' : '$3'} opacity={0.75}>
+                            <Text style={styles.infoText}>
                                 {placeName ? placeName : 'Not set yet'}
                             </Text>
-                        </XStack>
-
-                        <Button size={'$2'} width={98} onPress={() => router.push({
+                        </View>
+                        <Pressable onPress={() => router.push({
                             pathname: '/modals/map',
                             params: {
                                 purpose: 'expense',
@@ -356,19 +343,19 @@ const ExpenseSubmission = () => {
                                 initialLat: location?.latitude,
                                 initialLng: location?.longitude,
                             }
-                        })}>
-                            <Text>{placeName ? 'Change' : 'Locate'}</Text>
-                        </Button>
-                    </XStack>
+                        })} style={styles.actionButton}>
+                            <Text style={styles.actionButtonText}>{placeName ? 'Change' : 'Locate'}</Text>
+                        </Pressable>
+                    </View>
                     
-                    <Button 
+                    <Pressable 
                         onPress={async () => await shareHandler()} 
-                        style={styles.submitButton}
-                        disabled={isLoading ? true : false}
+                        style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+                        disabled={isLoading}
                     >
                         {isLoading ? <ActivityIndicator color={'white'} /> : null}
-                        <Text color={'white'} fontSize={20}>Share</Text>
-                    </Button>
+                        <Text style={styles.submitButtonText}>Share</Text>
+                    </Pressable>
                 </View>
             </SafeAreaView>
             
@@ -402,21 +389,20 @@ const ExpenseSubmission = () => {
                             showsVerticalScrollIndicator={false}
                         >
                             <View style={styles.innerContent}>
-                                <XStack marginBlockEnd="$3" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <Text fontSize={20} style={{ fontFamily: 'Inter-Black' }}>Item editor</Text>
+                                <View style={styles.dialogHeader}>
+                                    <Text style={styles.dialogTitle}>Item editor</Text>
 
                                     <Dialog.Close asChild>
-                                        <Button
-                                            size="$2"
+                                        <Pressable
                                             style={styles.dialogClose}
                                             accessibilityLabel="Close dialog"
                                         >
                                             <MaterialCommunityIcons name="close" size={22} />
-                                        </Button>
+                                        </Pressable>
                                     </Dialog.Close>
-                                </XStack>
+                                </View>
                             
-                                <YStack gap="$3">
+                                <View style={{ gap: 12 }}>
                                     <Controller
                                         name="name"
                                         control={controlItem}
@@ -430,8 +416,8 @@ const ExpenseSubmission = () => {
                                         )}
                                     />
 
-                                    <XStack gap="$3">
-                                        <View flex={1}>
+                                    <View style={{ gap: 12 }}>
+                                        <View style={{ flex: 1 }}>
                                             <Controller
                                                 name="price"
                                                 control={controlItem}
@@ -441,6 +427,7 @@ const ExpenseSubmission = () => {
                                                         onChange={onChange}
                                                         value={value}
                                                         placeholder="Price"
+                                                        keyboardType="decimal-pad"
                                                         autoCapitalize="none"
                                                         autoComplete="off"
                                                         spellCheck={false}
@@ -449,50 +436,24 @@ const ExpenseSubmission = () => {
                                                 )}
                                             />
                                         </View>
+                                    </View>
 
-                                        <View width={100}>
-                                            <Controller
-                                                name="qty"
-                                                control={controlItem}
-                                                rules={{ required: true }}
-                                                render={({ field: { onChange, value } }) => (
-                                                    <Input 
-                                                        onChange={onChange} 
-                                                        value={value} 
-                                                        textAlign="center" 
-                                                        placeholder="Qty" 
-                                                        autoCapitalize="none"
-                                                        autoComplete="off"
-                                                        spellCheck={false}
-                                                        autoCorrect={false}
-                                                    />
-                                                )}
-                                            />
-                                        </View>
-                                    </XStack>
-
-                                    <XStack gap="$3" marginBlockStart="$4" style={{ justifyContent: 'space-between' }}>
+                                    <View style={styles.dialogActions}>
                                         {selectedItemIndex !== null ? (
-                                            <View flex={1}>
-                                                <Button onPress={deleteItem} width="100%">
-                                                    <MaterialCommunityIcons name="delete-empty-outline" size={24} />
-                                                    <Text color="$red10">Delete</Text>
-                                                </Button>
-                                            </View>
+                                            <Pressable onPress={deleteItem} style={[styles.dialogButton, styles.deleteButton]}>
+                                                <MaterialCommunityIcons name="delete-empty-outline" size={20} color="#dc2626" />
+                                                <Text style={styles.deleteButtonText}>Delete</Text>
+                                            </Pressable>
                                         ) : null}
 
-                                        <View flex={1}>
-                                            <Button 
-                                                onPress={saveItem(onSubmit)} 
-                                                bg="$orange9" 
-                                                pressStyle={{ bg: "$orange10"}} 
-                                                hoverStyle={{ bg: "$orange10" }}
-                                            >
-                                                <Text color="$white">Save</Text>
-                                            </Button>
-                                        </View>
-                                    </XStack>   
-                                </YStack>
+                                        <Pressable 
+                                            onPress={saveItem(onSubmit)} 
+                                            style={[styles.dialogButton, styles.saveButton, selectedItemIndex === null && { flex: 1 }]}
+                                        >
+                                            <Text style={styles.saveButtonText}>Save</Text>
+                                        </Pressable>
+                                    </View>   
+                                </View>
                             </View>
                         </KeyboardAwareScrollView>
                     </Dialog.Content>
@@ -528,21 +489,20 @@ const ExpenseSubmission = () => {
                             showsVerticalScrollIndicator={false}
                         >
                             <View style={styles.innerContent}>
-                                <XStack marginBlockEnd="$3" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <Text fontSize={20} style={{ fontFamily: 'Inter-Black' }}>Note editor</Text>
+                                <View style={styles.dialogHeader}>
+                                    <Text style={styles.dialogTitle}>Note editor</Text>
 
                                     <Dialog.Close asChild>
-                                        <Button
-                                            size="$2"
+                                        <Pressable
                                             style={styles.dialogClose}
                                             accessibilityLabel="Close dialog"
                                         >
                                             <MaterialCommunityIcons name="close" size={22} />
-                                        </Button>
+                                        </Pressable>
                                     </Dialog.Close>
-                                </XStack>
+                                </View>
                             
-                                <YStack gap="$3">
+                                <View style={{ gap: 12 }}>
                                     <Controller
                                         name="content"
                                         control={controlNote}
@@ -556,19 +516,15 @@ const ExpenseSubmission = () => {
                                         )}
                                     />
 
-                                    <XStack gap="$3" marginBlockStart="$4" style={{ justifyContent: 'space-between' }}>
-                                        <View flex={1}>
-                                            <Button 
-                                                onPress={saveNote(onNoteSubmit)} 
-                                                bg="$orange9" 
-                                                pressStyle={{ bg: "$orange10"}} 
-                                                hoverStyle={{ bg: "$orange10" }}
-                                            >
-                                                <Text color="$white">Save</Text>
-                                            </Button>
-                                        </View>
-                                    </XStack>   
-                                </YStack>
+                                    <View style={styles.dialogActions}>
+                                        <Pressable 
+                                            onPress={saveNote(onNoteSubmit)} 
+                                            style={[styles.dialogButton, styles.saveButton, { flex: 1 }]}
+                                        >
+                                            <Text style={styles.saveButtonText}>Save</Text>
+                                        </Pressable>
+                                    </View>   
+                                </View>
                             </View>
                         </KeyboardAwareScrollView>
                     </Dialog.Content>
@@ -604,21 +560,20 @@ const ExpenseSubmission = () => {
                             showsVerticalScrollIndicator={false}
                         >
                             <View style={styles.innerContent}>
-                                <XStack marginBlockEnd="$3" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <Text fontSize={20} style={{ fontFamily: 'Inter-Black' }}>Store name editor</Text>
+                                <View style={styles.dialogHeader}>
+                                    <Text style={styles.dialogTitle}>Store name editor</Text>
 
                                     <Dialog.Close asChild>
-                                        <Button
-                                            size="$2"
+                                        <Pressable
                                             style={styles.dialogClose}
                                             accessibilityLabel="Close dialog"
                                         >
                                             <MaterialCommunityIcons name="close" size={22} />
-                                        </Button>
+                                        </Pressable>
                                     </Dialog.Close>
-                                </XStack>
+                                </View>
                             
-                                <YStack gap="$3">
+                                <View style={{ gap: 12 }}>
                                     <Controller
                                         name="storeName"
                                         control={controlStoreName}
@@ -632,19 +587,15 @@ const ExpenseSubmission = () => {
                                         )}
                                     />
 
-                                    <XStack gap="$3" marginBlockStart="$4" style={{ justifyContent: 'space-between' }}>
-                                        <View flex={1}>
-                                            <Button 
-                                                onPress={saveStoreName(onStoreNameSubmit)} 
-                                                bg="$orange9" 
-                                                pressStyle={{ bg: "$orange10"}} 
-                                                hoverStyle={{ bg: "$orange10" }}
-                                            >
-                                                <Text color="$white">Save</Text>
-                                            </Button>
-                                        </View>
-                                    </XStack>   
-                                </YStack>
+                                    <View style={styles.dialogActions}>
+                                        <Pressable 
+                                            onPress={saveStoreName(onStoreNameSubmit)} 
+                                            style={[styles.dialogButton, styles.saveButton, { flex: 1 }]}
+                                        >
+                                            <Text style={styles.saveButtonText}>Save</Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
                             </View>
                         </KeyboardAwareScrollView>
                     </Dialog.Content>
@@ -661,27 +612,65 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
     },
-    safeAreaScroll: {
-        flexGrow: 1,
-    },
     scrollContent: {
         padding: 16,
         paddingBottom: 16,
         flexGrow: 1,
     },
-    submitButton: {
-		backgroundColor: '#00bcd4',
-		color: '#fff',
-		marginTop: 'auto',
-	},
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerTitle: {
+        fontFamily: 'Inter-Black',
+        fontSize: 22,
+        color: '#1F3D2B',
+    },
+    headerButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 8,
+        paddingVertical: 6,
+        gap: 4,
+        backgroundColor: '#f3f4f6',
+        borderRadius: 8,
+    },
+    headerButtonText: {
+        fontSize: 13,
+        fontWeight: '500',
+    },
+    item: { 
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 10,
+        marginBottom: 10,
+        flex: 1,
+        display: 'flex',
+    },
+    itemNumber: {
+        fontSize: 14,
+        opacity: 0.75,
+        fontWeight: '700',
+    },
+    itemName: {
+        fontSize: 14,
+    },
+    itemPrice: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#f97316',
+    },
     qtyButton: {
         width: 26,
         height: 26,
-        borderRadius: 16,
-    },
-    editButton: {
-        backgroundColor: '#00bcd4',
-		color: '#fff',
+        borderRadius: 13,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     increaseButton: {
         backgroundColor: '#3cdca6',
@@ -689,19 +678,91 @@ const styles = StyleSheet.create({
     decreaseButton: {
         backgroundColor: '#ff989f',
     },
-    item: { 
-        alignItems: 'flex-start',
+    qtyText: {
+        width: 38,
+        textAlign: 'center',
+        fontSize: 14,
+    },
+    editButton: {
+        width: 26,
+        height: 26,
+        borderRadius: 13,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f8d04c',
+        marginLeft: 10,
+    },
+    bottomSection: {
+        borderTopWidth: 1,
+        borderTopColor: '#e5e5e5',
+        paddingTop: 8,
+        marginTop: 'auto',
+        paddingHorizontal: 16,
+        paddingBottom: 6,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+        gap: 16,
+    },
+    infoLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        flex: 1,
+        maxWidth: '60%',
+    },
+    infoText: {
+        fontSize: 13,
+        opacity: 0.75,
+        flex: 1,
+    },
+    actionButton: {
+        width: 98,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        backgroundColor: '#f3f4f6',
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    actionButtonText: {
+        fontSize: 13,
+        fontWeight: '500',
+    },
+    submitButton: {
+        backgroundColor: '#00bcd4',
+        paddingVertical: 14,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        gap: 8,
+        marginTop: 8,
+    },
+    submitButtonDisabled: {
+        opacity: 0.6,
+    },
+    submitButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '600',
+    },
+    emptyNote: {
+        opacity: 0.7,
+        fontSize: 14,
+        textAlign: 'center',
+        paddingVertical: 12,
     },
     dialogClose: {
         width: 36,
         height: 36,
-        borderRadius: 15,
-        zIndex: 9999,
-    },
-    dialogAvoid: {
-        flex: 1,
+        borderRadius: 18,
+        alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 16,
+        backgroundColor: '#f3f4f6',
     },
     dialogScrollContent: {
         paddingBottom: 12,
@@ -711,10 +772,44 @@ const styles = StyleSheet.create({
         padding: 24,
         borderRadius: 16,
     },
-    emptyNote: {
-        opacity: 0.7,
-        fontSize: 14,
-        textAlign: 'center',
+    dialogHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    dialogTitle: {
+        fontSize: 20,
+        fontFamily: 'Inter-Black',
+    },
+    dialogActions: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 16,
+        justifyContent: 'space-between',
+    },
+    dialogButton: {
+        flex: 1,
         paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        gap: 6,
+    },
+    deleteButton: {
+        backgroundColor: '#fee2e2',
+    },
+    deleteButtonText: {
+        color: '#dc2626',
+        fontWeight: '600',
+    },
+    saveButton: {
+        backgroundColor: '#f97316',
+    },
+    saveButtonText: {
+        color: '#fff',
+        fontWeight: '600',
     },
 })

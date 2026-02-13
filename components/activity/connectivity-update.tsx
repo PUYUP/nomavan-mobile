@@ -1,8 +1,9 @@
-import { BPActivityResponse, useFavoriteActivityMutation } from '@/services/activity';
+import { BPActivityResponse } from '@/services/apis/activity-api';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { Image, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FavoriteButton } from '../favoriting';
 
 const SIGNAL_COLORS = {
     bad: '#ff817b',
@@ -45,7 +46,7 @@ const getSignalColor = (strength: number) => {
     }
 };
 
-const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
+const ConnectivityUpdate = ({ activity = null }: { activity?: BPActivityResponse | null }) => {
     if (!activity) {
         return null;
     }
@@ -56,8 +57,7 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
     const strengthRange = signalLevelToDbmRange(strengthLevel ?? 0);
     const strengthColor = strengthLevel === null ? SIGNAL_COLORS.inactive : getSignalColor(strengthLevel);
     const postedTime = activity.date ? formatDistanceToNow(new Date(activity.date), { addSuffix: false, includeSeconds: true }) : '';
-    const [favoriteActivity, { isLoading: isFavoriting }] = useFavoriteActivityMutation();
-    
+
     const handleOpenDirections = (item: BPActivityResponse | null) => {
         const latitude = item?.secondary_item?.meta?.latitude;
         const longitude = item?.secondary_item?.meta?.longitude;
@@ -73,17 +73,9 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
         Linking.openURL(url)
     }
 
-    const favoriteHandler = async (item: BPActivityResponse) => {
-        try {
-            await favoriteActivity(item.id).unwrap();
-        } catch (error) {
-            console.error('Failed to favorite activity:', error);
-        }
-    }
-
     return (
         <View style={styles.card}>
-            <View style={styles.row}>
+            <View style={[styles.row, { marginBottom: 16 }]}>
                 <MaterialCommunityIcons style={styles.mainIcon} color={strengthColor} name='access-point-network' />
                 <View style={styles.strengthCol}>
                     <View style={styles.strengthRow}>
@@ -99,7 +91,9 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
                 </View>
 
                 <View style={styles.carrierContainer}>
-                    <Text style={styles.carrierName} numberOfLines={1}>{activity.secondary_item.meta.carrier}</Text>
+                    <Text style={styles.carrierName} numberOfLines={1}>
+                        {activity.secondary_item.meta.carrier ? activity.secondary_item.meta.carrier : 'Unknown'}
+                    </Text>
                     <Text style={styles.carrierLabel}>Carrier</Text>
                 </View>
 
@@ -118,8 +112,6 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
                 </View>
             </View>
 
-            <View style={styles.separator} />
-            
             <Pressable onPress={() => router.push(`/profile/${activity.user_id}`)}>
                 <View style={styles.contributorRow}>
                     <View style={styles.avatarContainer}>
@@ -149,44 +141,7 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
             <View style={styles.separator} />
 
             <View style={styles.thanksRow}>
-                <View style={styles.thanksLeft}>
-                    <Pressable 
-                        style={[
-                            styles.thanksButton,
-                            activity.favorited && styles.thanksButtonActive,
-                            isFavoriting && styles.thanksButtonDisabled
-                        ]}
-                        onPress={async () => favoriteHandler(activity)}
-                        disabled={isFavoriting}
-                    >
-                        <View style={styles.thanksContent}>
-                            <MaterialCommunityIcons 
-                                name={activity.favorited ? "thumb-up" : "thumb-up-outline"} 
-                                size={14} 
-                                color={activity.favorited ? "#3b82f6" : "#000"} 
-                            />
-                            <Text style={[
-                                styles.thanksText,
-                                activity.favorited && styles.thanksTextActive
-                            ]}>
-                                {activity.favorited ? 'Thanked' : 'Say Thanks'}
-                            </Text>
-                        </View>
-                    </Pressable>
-                    
-                    {activity.favorited_count > 0 &&
-                        <View style={styles.thanksCount}>
-                            <Text style={styles.thanksCountText}>{activity.favorited_count} thanks</Text>
-                        </View>
-                    }
-                </View>
-
-                <Pressable style={styles.viewLocationButton} onPress={() => handleOpenDirections(activity)}>
-                    <View style={styles.thanksContent}>
-                        <MaterialCommunityIcons name="map" size={14} color="#3b82f6" />
-                        <Text style={styles.viewLocationText}>Location</Text>
-                    </View>
-                </Pressable>
+                <FavoriteButton activity={activity} />
             </View>
         </View>
     )
@@ -255,15 +210,6 @@ const styles = StyleSheet.create({
         textAlign: 'left',
         color: '#000',
     },
-    badSignalColor: {
-        color: SIGNAL_COLORS.bad,
-    },
-    mediumSignalColor: {
-        color: SIGNAL_COLORS.medium,
-    },
-    goodSignalColor: {
-        color: SIGNAL_COLORS.good,
-    },
     signalGraph: {
         flexDirection: 'row',
         alignItems: 'flex-end',
@@ -273,18 +219,6 @@ const styles = StyleSheet.create({
     signalBar: {
         width: 7,
         borderRadius: 4,
-    },
-    signalBarBad: {
-        backgroundColor: SIGNAL_COLORS.bad,
-    },
-    signalBarMedium: {
-        backgroundColor: SIGNAL_COLORS.medium,
-    },
-    signalBarGood: {
-        backgroundColor: SIGNAL_COLORS.good,
-    },
-    signalBarInactive: {
-        backgroundColor: SIGNAL_COLORS.inactive,
     },
     separator: {
         height: 1,
@@ -343,62 +277,9 @@ const styles = StyleSheet.create({
         opacity: 0.7,
         color: '#000',
     },
-    thanksButton: {
-        height: 30,
-        paddingHorizontal: 10,
-        borderRadius: 16,
-        backgroundColor: '#f3f4f6',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    thanksButtonActive: {
-        backgroundColor: '#dbeafe',
-    },
-    thanksButtonDisabled: {
-        opacity: 0.5,
-    },
     thanksRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-    },
-    thanksLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    thanksContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    thanksText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#000',
-    },
-    thanksTextActive: {
-        color: '#3b82f6',
-    },
-    thanksCount: {
-        alignItems: 'center',
-    },
-    thanksCountText: {
-        fontSize: 12,
-        opacity: 0.7,
-        color: '#000',
-    },
-    viewLocationButton: {
-        height: 30,
-        paddingHorizontal: 10,
-        borderRadius: 16,
-        backgroundColor: '#eef2ff',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    viewLocationText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#3b82f6',
     },
 })

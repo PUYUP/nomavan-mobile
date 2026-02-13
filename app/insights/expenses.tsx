@@ -1,5 +1,5 @@
-import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
 import ExpenseUpdate from '@/components/activity/expense-update';
+import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/apis/activity-api';
 import { Stack } from 'expo-router';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

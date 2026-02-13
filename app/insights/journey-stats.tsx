@@ -18,7 +18,7 @@ const STATS_CATEGORIES = [
     { id: 'stories', label: 'Stories', icon: 'book-open-page-variant', color: '#3b82f6', value: '12' },
     { id: 'spothunts', label: 'Spot Hunts', icon: 'magnify', color: '#ec4899', value: '8' },
     { id: 'meetups', label: 'Meetups', icon: 'account-group', color: '#14b8a6', value: '5' },
-    { id: 'connectivity', label: 'Connectivity', icon: 'wifi', color: '#06b6d4', value: '18' },
+    { id: 'connectivity', label: 'Signals', icon: 'wifi', color: '#06b6d4', value: '18' },
     { id: 'photos', label: 'Photos', icon: 'camera', color: '#f97316', value: '47' },
 ];
 

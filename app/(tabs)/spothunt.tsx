@@ -1,51 +1,11 @@
 import SpotHuntPin from '@/components/activity/spothunt-pin';
-import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
-import { useCreateSpothuntMutation } from '@/services/spothunt';
-import React, { useEffect } from 'react';
+import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/apis/activity-api';
+import React from 'react';
 import { ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Text, YStack } from 'tamagui';
 
-export default function TabTwoScreen() {
-  const pins = [
-    {
-      title: 'Spot Hunt Pin Dropped',
-      coordinates: '34.9121, -111.7114',
-      timeAgo: '2 min ago',
-      photos: [
-        'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300&q=80',
-        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=300&q=80',
-        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=300&q=80',
-      ],
-      morePhotosLabel: '+7',
-      placeLabel: 'Placed near Oak Creek',
-      visitorsLabel: '10 were here',
-      viewPinLabel: 'Find Spot',
-      contributorName: 'Samuel Rizal',
-      contributorMeta: '1.276 contribs.',
-      pinsAddedLabel: '36 Pin Added',
-      contributorTimeAgo: '2 minutes ago',
-    },
-    {
-      title: 'Canyon Ridge Pin Spotted',
-      coordinates: '34.8653, -111.7635',
-      timeAgo: '12 min ago',
-      photos: [
-        'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=300&q=80',
-        'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=300&q=80',
-        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=300&q=80',
-      ],
-      morePhotosLabel: '+3',
-      placeLabel: 'Placed near Cathedral Rock',
-      visitorsLabel: '18 were here',
-      viewPinLabel: 'Find Spot',
-      contributorName: 'Ava Noura',
-      contributorMeta: '842 contribs.',
-      pinsAddedLabel: '19 Pin Added',
-      contributorTimeAgo: '18 minutes ago',
-    },
-  ]
-
+export default function SpotHuntScreen() {
   const activitiesQueryArgs: BPActivityFilterArgs = { 
     page: 1,
     per_page: 50,
@@ -53,15 +13,6 @@ export default function TabTwoScreen() {
     type: ['new_spothunt'],
   };
   const { data, isLoading, error, refetch } = useGetActivitiesQuery(activitiesQueryArgs);
-  const [, submitSpothuntResult] = useCreateSpothuntMutation({ fixedCacheKey: 'submit-spothunt-process' });
-
-  useEffect(() => {
-    if (submitSpothuntResult.isSuccess) {
-      refetch();
-    }
-  }, [
-    submitSpothuntResult.isSuccess,
-  ]);
 
   return (
     <Animated.ScrollView style={{ padding: 16 }}>

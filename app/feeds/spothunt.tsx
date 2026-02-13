@@ -1,4 +1,4 @@
-import { useGetActivityQuery } from '@/services/activity';
+import { useGetActivityQuery } from '@/services/apis/activity-api';
 import { Calendar, MapPin, MapPinned, User } from '@tamagui/lucide-icons';
 import * as Location from 'expo-location';
 import { Stack, useLocalSearchParams } from 'expo-router';

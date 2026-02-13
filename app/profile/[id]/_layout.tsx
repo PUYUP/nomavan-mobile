@@ -1,38 +1,17 @@
+import { useGetProfileQuery } from "@/services/apis/profile-api";
 import { logout } from "@/services/auth-storage";
-import { useGetProfileQuery } from "@/services/profile-api";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Slot, Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-
-const ACTIVITY_FILTERS = [
-    { type: 'all', label: 'All', icon: 'format-list-bulleted' },
-    { type: 'expenses', label: 'Expenses', icon: 'cart-arrow-down' },
-    { type: 'routes', label: 'Routes', icon: 'map-marker-path' },
-    { type: 'spothunts', label: 'Spot hunts', icon: 'magnify' },
-    { type: 'meetups', label: 'Meetups', icon: 'account-group' },
-    { type: 'connections', label: 'Connectivity', icon: 'microsoft-internet-explorer' },
-    { type: 'stories', label: 'Stories', icon: 'book-open-page-variant' },
-] as const;
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function ProfileLayout() {
     const { id, isMe } = useLocalSearchParams();
     const profileId = typeof id === 'string' ? parseInt(id, 10) : undefined;
     const router = useRouter();
-    const [filterType, setFilterType] = useState<string>('all');
-    
+
     const { data: profile, isLoading, error } = useGetProfileQuery(profileId!, {
         skip: !profileId,
     });
-
-    // Update route params when filterType changes
-    useEffect(() => {
-        router.setParams({ filterType });
-    }, [filterType]);
-
-    const getActivity = async (type: string) => {
-        setFilterType(type);
-    }
 
     // Logout handler
     const logoutHandler = async () => {
@@ -53,15 +32,21 @@ export default function ProfileLayout() {
                     headerBackButtonDisplayMode: 'minimal',
                     headerRight: () => (
                         <>  
-                            {isMe === 'true' ?
-                                <Pressable 
-                                    style={styles.logoutButton}
-                                    onPress={async () => await logoutHandler()}
-                                >
-                                    <MaterialCommunityIcons name="logout" size={20} color="#c1121f" />
-                                    <Text style={styles.logoutText}>Logout</Text>
-                                </Pressable>
-                            :   null
+                            {isMe === 'true' 
+                                ?
+                                    <Pressable 
+                                        style={styles.logoutButton}
+                                        onPress={async () => await logoutHandler()}
+                                    >
+                                        <MaterialCommunityIcons name="logout" size={20} color="#c1121f" />
+                                        <Text style={styles.logoutText}>Logout</Text>
+                                    </Pressable>
+                                :   <Pressable 
+                                        style={styles.watchButton}
+                                    >
+                                        <MaterialCommunityIcons name="account-tie-voice" size={20} color="#d8a109" />
+                                        <Text style={styles.watchText}>Watch</Text>
+                                    </Pressable>
                             }
                         </>
                     ),
@@ -82,7 +67,7 @@ export default function ProfileLayout() {
                 )}
                 
                 {profile && (
-                    <View style={{ backgroundColor: '#fff', padding: 16 }}>
+                    <View style={{ backgroundColor: '#fff', paddingHorizontal: 16, paddingTop: 16 }}>
                         <View style={styles.profileContainer}>
                             <Image 
                                 source={{ uri: 'https:' + profile.avatar_urls.full }}
@@ -92,45 +77,7 @@ export default function ProfileLayout() {
                                 <Text style={styles.name}>{profile.name}</Text>
                                 <Text style={styles.username}>@{profile.mention_name}</Text>
                             </View>
-
-                            {isMe !== 'true' && (
-                                <Pressable 
-                                    style={styles.watchButton}
-                                >
-                                    <MaterialCommunityIcons name="account-tie-voice" size={20} color="#d8a109" />
-                                    <Text style={styles.watchText}>Watch</Text>
-                                </Pressable>
-                            )}
                         </View>
-
-                        <ScrollView 
-                            horizontal 
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.filterScrollContent}
-                        >
-                            {ACTIVITY_FILTERS.map((filter) => (
-                                <Pressable 
-                                    key={filter.type}
-                                    style={[
-                                        styles.filterButton,
-                                        filterType === filter.type && styles.filterButtonActive
-                                    ]}
-                                    onPress={() => getActivity(filter.type)}
-                                >
-                                    <MaterialCommunityIcons 
-                                        name={filter.icon as any} 
-                                        size={14} 
-                                        color={filterType === filter.type ? '#1F3D2B' : '#6B7280'} 
-                                    />
-                                    <Text style={[
-                                        styles.filterButtonText,
-                                        filterType === filter.type && styles.filterButtonTextActive
-                                    ]}>
-                                        {filter.label}
-                                    </Text>
-                                </Pressable>
-                            ))}
-                        </ScrollView>
                     </View>
                 )}
             </View>
@@ -149,7 +96,6 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
-        padding: 16,
     },
     centerContainer: {
         flex: 1,

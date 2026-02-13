@@ -1,5 +1,4 @@
-import { getAuth } from '@/services/auth-storage';
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { baseApi } from '@/services/base-api';
 import qs from "qs";
 import { ReactNode } from 'react';
 
@@ -130,26 +129,12 @@ export type BPActivityScope =
     | "favorites"
     | "mentions";
 
-const rawBaseUrl = process.env.EXPO_PUBLIC_BP_API_BASE ?? '';
-const baseUrl = rawBaseUrl.replace(/\/$/, '');
-
-export const activityApi = createApi({
-    reducerPath: 'activityApi',
-    keepUnusedDataFor: 0,
-    tagTypes: ['Activity'],
-    baseQuery: fetchBaseQuery({
-        baseUrl,
-        prepareHeaders: async (headers) => {
-            const auth = await getAuth();
-            if (auth?.token) {
-                headers.set('Authorization', `Bearer ${auth.token}`);
-            }
-            return headers;
-        },
-    }),
+export const activityApi = baseApi.injectEndpoints({
+    overrideExisting: true,
     endpoints: (builder) => ({
         getActivities: builder.query<BPActivityResponse[], BPActivityFilterArgs | void>({
             query: (args) => {
+                console.log('Activity API Args:', args);
                 return {
                     url: '/buddypress/v1/activity?' + qs.stringify(args, {
                         encode: false,
@@ -173,17 +158,6 @@ export const activityApi = createApi({
             }),
             providesTags: (result, error, id) => [{ type: 'Activity', id }],
         }),
-        createActivity: builder.mutation<BPActivityResponse, BPActivityPayload>({
-            query: (body) => ({
-                url: '/buddypress/v1/activity',
-                method: 'POST',
-                body: {
-                    ...body,
-                    types: 'activity',
-                }
-            }),
-            invalidatesTags: [{ type: 'Activity', id: 'LIST' }],
-        }),
         favoriteActivity: builder.mutation<BPActivityResponse, number>({
             query: (activityId) => ({
                 url: `/buddypress/v1/activity/${activityId}/favorite`,
@@ -197,4 +171,8 @@ export const activityApi = createApi({
     }),
 });
 
-export const { useGetActivitiesQuery, useGetActivityQuery, useCreateActivityMutation, useFavoriteActivityMutation } = activityApi;
+export const { 
+    useGetActivitiesQuery, 
+    useGetActivityQuery, 
+    useFavoriteActivityMutation
+} = activityApi;

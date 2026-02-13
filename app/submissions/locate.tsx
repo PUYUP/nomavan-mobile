@@ -1,13 +1,12 @@
-import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/activity';
-import { getAuth } from '@/services/auth-storage';
+import { BPActivityFilterArgs, useGetActivitiesQuery } from '@/services/apis/activity-api';
+import { RouteContextPayload, useCreateRouteContextMutation } from '@/services/apis/route-context-api';
+import { RoutePointPayload, useCreateRoutePointMutation } from '@/services/apis/route-point-api';
 import { getCurrentLocation, reverseGeocodeLocation } from '@/services/location';
-import { RouteContextPayload, useCreateRouteContextMutation } from '@/services/route-context';
-import { RoutePointPayload, useCreateRoutePointMutation } from '@/services/route-point';
 import { LocationSelection, subscribeLocationSelected } from '@/utils/location-selector';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { formatDistanceToNow } from 'date-fns';
-import { Stack, useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef } from 'react';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, Alert, Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import RenderHtml from 'react-native-render-html';
@@ -38,8 +37,8 @@ interface LocationSelectionExtended extends LocationSelection {
 }
 
 const LocateSubmission = () => {
+    const { userId } = useLocalSearchParams();
     const router = useRouter();
-    const [userId, setUserId] = React.useState<number>();
     const [nextLocation, setNextLocation] = React.useState<LocationSelectionExtended>();
     const [currentLocation, setCurrentLocation] = React.useState<LocationSelectionExtended>();
     const [previousLocation, setPreviousLocation] = React.useState<LocationSelectionExtended>();
@@ -51,13 +50,14 @@ const LocateSubmission = () => {
     const isUserSelection = useRef(false);
     const { width } = useWindowDimensions();
     const htmlContentWidth = width - 100;
+    const authorId = typeof userId === 'string' ? parseInt(userId) : 0;
 
     const routeContextQueryArgs: BPActivityFilterArgs = {
         page: 1,
         per_page: 1,
         // component: 'activity',
         type: ['new_route_context'],
-        user_id: userId,
+        user_id: authorId,
         secondary_item_meta_query: [
             { key: 'status', value: 'active' }
         ],
@@ -68,56 +68,27 @@ const LocateSubmission = () => {
         per_page: 2,
         // component: 'activity',
         type: ['new_route_point'],
-        user_id: userId,
+        user_id: authorId,
     }
     
-    const [createRouteContext, { isLoading: createContextLoading }] = useCreateRouteContextMutation({ fixedCacheKey: 'create-route-context-process' });
-    const [createRoutePoint, { isLoading: createPointLoading }] = useCreateRoutePointMutation({ fixedCacheKey: 'create-route-point-process' });
+    const [createRouteContext, { isLoading: createContextLoading }] = useCreateRouteContextMutation();
+    const [createRoutePoint, { isLoading: createPointLoading }] = useCreateRoutePointMutation();
     const { 
         data: routeContextData, 
         isLoading: routeContextLoading, 
         error, 
         refetch: refetchRouteContext
-    } = useGetActivitiesQuery(routeContextQueryArgs);
+    } = useGetActivitiesQuery(routeContextQueryArgs, {
+        skip: !authorId,
+    });
 
     const { 
         data: routePointData, 
         isLoading: routePointLoading, 
         refetch: refetchRoutePoint
-    } = useGetActivitiesQuery(routePointQueryArgs);
-
-    // Refetch data setiap kali screen di-focus
-    useFocusEffect(
-        useCallback(() => {
-            refetchRouteContext();
-            refetchRoutePoint();
-        }, [])
-    );
-
-    // Get user_id from auth storage
-    useEffect(() => {
-        const fetchUserId = async () => {
-            const auth = await getAuth();
-            if (auth && auth.user && typeof auth.user.id === 'number') {
-                setUserId(auth.user.id);
-            }
-        };
-        fetchUserId();
-
-        // Cleanup function to reset all state when component unmounts
-        return () => {
-            setUserId(undefined);
-            setNextLocation(undefined);
-            setCurrentLocation(undefined);
-            setPreviousLocation(undefined);
-            setCurrentDistanceFromPrev(undefined);
-            setNextDistanceFromCurrent(undefined);
-            isLoadingFromAPI.current = false;
-            isRefreshingLocation.current = false;
-            isCreatingContext.current = false;
-            isUserSelection.current = false;
-        };
-    }, []);
+    } = useGetActivitiesQuery(routePointQueryArgs, {
+        skip: !authorId,
+    });
 
     const refreshLocation = async (isArrived: boolean = false) => {
         isRefreshingLocation.current = true;
@@ -185,7 +156,6 @@ const LocateSubmission = () => {
                         text1: 'Information',
                         text2: 'Your location updated successfully',
                     });
-                    refetchRoutePoint();
                 }
 
                 if (isArrived) {
@@ -251,7 +221,6 @@ const LocateSubmission = () => {
                             text1: 'Information',
                             text2: 'Destination saved successfully',
                         });
-                        refetchRouteContext(); // Refresh the route context data
                     }
                 } catch (error) {
                     console.error('Failed to create route context:', error);

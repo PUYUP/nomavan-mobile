@@ -1,6 +1,5 @@
-import { getAuth } from '@/services/auth-storage';
 import { BPGroup } from '@/utils/interfaces';
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { baseApi } from '../base-api';
 
 export type MeetupType = 'meetup';
 export type MeetupStatus = 'public' | 'private';
@@ -48,23 +47,7 @@ export interface MembershipPayload {
     message?: string;
 }
 
-const rawBaseUrl = process.env.EXPO_PUBLIC_BP_API_BASE ?? '';
-const baseUrl = rawBaseUrl.replace(/\/$/, '');
-
-export const meetupApi = createApi({
-	reducerPath: 'meetupApi',
-	keepUnusedDataFor: 0,
-	tagTypes: ['Meetup', 'Activity'],
-	baseQuery: fetchBaseQuery({
-        baseUrl,
-        prepareHeaders: async (headers) => {
-            const auth = await getAuth();
-            if (auth?.token) {
-                headers.set('Authorization', `Bearer ${auth.token}`);
-            }
-            return headers;
-        },
-    }),
+export const meetupApi = baseApi.injectEndpoints({
 	endpoints: (builder) => ({
 		createMeetup: builder.mutation<MeetupResponse, MeetupPayload>({
 			query: (body) => ({
@@ -86,7 +69,10 @@ export const meetupApi = createApi({
                     ...body,
                 }
 			}),
-			invalidatesTags: [{ type: 'Activity', id: 'LIST' }],
+			invalidatesTags: (_result, _error, arg) => [
+                { type: 'Meetup', id: arg.group_id },
+                { type: 'Activity', id: 'LIST' }
+            ],
 		}),
         // private meetup
         requestMembership: builder.mutation<MeetupResponse, MembershipPayload>({
@@ -97,7 +83,10 @@ export const meetupApi = createApi({
                     ...body,
                 }
 			}),
-			invalidatesTags: [{ type: 'Activity', id: 'LIST' }],
+			invalidatesTags: (_result, _error, arg) => [
+                { type: 'Meetup', id: arg.group_id },
+                { type: 'Activity', id: 'LIST' }
+            ],
 		}),
         leaveMeetup: builder.mutation<MeetupResponse, LeavePayload>({
 			query: (body) => {
@@ -109,7 +98,10 @@ export const meetupApi = createApi({
                     }
                 }
 			},
-			invalidatesTags: [{ type: 'Activity', id: 'LIST' }],
+			invalidatesTags: (_result, _error, arg) => [
+                { type: 'Meetup', id: arg.group_id },
+                { type: 'Activity', id: 'LIST' }
+            ],
 		}),
 	}),
 });

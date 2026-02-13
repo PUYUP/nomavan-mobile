@@ -1,6 +1,6 @@
+import { SpothuntPayload, useCreateSpothuntMutation } from '@/services/apis/spothunt-api';
 import { getCurrentLocation, reverseGeocodeLocation } from '@/services/location';
 import { MediaUploadPayload, useUploadMediaMutation } from '@/services/media';
-import { SpothuntPayload, useCreateSpothuntMutation } from '@/services/spothunt';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useRouter } from "expo-router";
@@ -41,7 +41,7 @@ const AddPinSubmission = () => {
     const isRevertingRef = useRef(false);
     const isDraggingRef = useRef(false);
     const hasInitialized = useRef(false);
-    const [submitSpothunt, { isLoading: submitSpothuntLoading }] = useCreateSpothuntMutation({ fixedCacheKey: 'submit-spothunt-process' });
+    const [submitSpothunt, { isLoading: submitSpothuntLoading }] = useCreateSpothuntMutation();
     const [uploadMdia, { isLoading: uploadMediaLoading }] = useUploadMediaMutation();
     
     const onSubmit: SubmitHandler<Marker> = async (data) => {

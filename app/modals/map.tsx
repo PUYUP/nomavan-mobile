@@ -4,7 +4,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, StyleSheet } from 'react-native';
-import MapView, { Region } from 'react-native-maps';
+import MapView, { Region, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Text, View, XStack, YStack } from 'tamagui';
 

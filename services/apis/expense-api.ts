@@ -1,5 +1,4 @@
-import { getAuth } from '@/services/auth-storage';
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { baseApi } from '../base-api';
 
 export interface ExpensePayload {
     content: string
@@ -55,45 +54,9 @@ export type DeleteExpenseArgs = {
     force?: boolean
 }
 
-const rawBaseUrl = process.env.EXPO_PUBLIC_BP_API_BASE ?? '';
-const baseUrl = rawBaseUrl.replace(/\/$/, '');
-
-export const expenseApi = createApi({
-    reducerPath: 'expenseApi',
-    keepUnusedDataFor: 0,
-    baseQuery: fetchBaseQuery({
-        baseUrl,
-        prepareHeaders: async (headers) => {
-            const auth = await getAuth();
-            if (auth?.token) {
-                headers.set('Authorization', `Bearer ${auth.token}`);
-            }
-            return headers;
-        },
-    }),
-    tagTypes: ['Expense', 'Activity'],
+export const expenseApi = baseApi.injectEndpoints({
+    overrideExisting: true,
     endpoints: (builder) => ({
-        getExpenses: builder.query<ExpenseResponse[], ExpenseFilterArgs | void>({
-            query: (args) => ({
-                url: '/wp/v2/expenses',
-                method: 'GET',
-                params: args ?? {},
-            }),
-            providesTags: (result) =>
-                result
-                    ? [
-                        { type: 'Expense' as const, id: 'LIST' },
-                        ...result.map((item) => ({ type: 'Expense' as const, id: item.id })),
-                    ]
-                    : [{ type: 'Expense' as const, id: 'LIST' }],
-        }),
-        getExpense: builder.query<ExpenseResponse, number>({
-            query: (id) => ({
-                url: `/wp/v2/expenses/${id}`,
-                method: 'GET',
-            }),
-            providesTags: (_result, _error, id) => [{ type: 'Expense', id }],
-        }),
         createExpense: builder.mutation<ExpenseResponse, ExpensePayload>({
             query: (body) => ({
                 url: '/wp/v2/expenses',
@@ -113,7 +76,6 @@ export const expenseApi = createApi({
             }),
             invalidatesTags: (_result, _error, arg) => [
                 { type: 'Expense', id: arg.id },
-                { type: 'Expense', id: 'LIST' },
                 { type: 'Activity', id: 'LIST' },
             ],
         }),
@@ -125,7 +87,6 @@ export const expenseApi = createApi({
             }),
             invalidatesTags: (_result, _error, arg) => [
                 { type: 'Expense', id: arg.id },
-                { type: 'Expense', id: 'LIST' },
                 { type: 'Activity', id: 'LIST' },
             ],
         }),
@@ -133,8 +94,6 @@ export const expenseApi = createApi({
 });
 
 export const {
-    useGetExpensesQuery,
-    useGetExpenseQuery,
     useCreateExpenseMutation,
     useUpdateExpenseMutation,
     useDeleteExpenseMutation,
