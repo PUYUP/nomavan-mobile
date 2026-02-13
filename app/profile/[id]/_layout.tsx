@@ -1,6 +1,5 @@
 import { logout } from "@/services/auth-storage";
 import { useGetProfileQuery } from "@/services/profile-api";
-import { presentPaywall } from "@/utils/paywall";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Slot, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -35,16 +34,6 @@ export default function ProfileLayout() {
         setFilterType(type);
     }
 
-    // Subscription handler
-    const subscribeHandler = async () => {
-        const success = await presentPaywall();
-        if (success) {
-            // Handle successful purchase or restoration
-        } else {
-            // Handle cancellation or error
-        }
-    }
-
     // Logout handler
     const logoutHandler = async () => {
         await logout();
@@ -72,13 +61,7 @@ export default function ProfileLayout() {
                                     <MaterialCommunityIcons name="logout" size={20} color="#c1121f" />
                                     <Text style={styles.logoutText}>Logout</Text>
                                 </Pressable>
-                            :   <Pressable 
-                                    style={styles.unlockButton}
-                                    onPress={async () => await subscribeHandler()}
-                                >
-                                    <MaterialCommunityIcons name="lock-check" size={20} color="white" />
-                                    <Text style={styles.unlockText}>Unlock</Text>
-                                </Pressable>
+                            :   null
                             }
                         </>
                     ),

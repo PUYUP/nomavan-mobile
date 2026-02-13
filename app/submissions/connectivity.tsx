@@ -65,7 +65,6 @@ const ConnectivitySubmission = () => {
 		}
 
 		const result = await submitConnectivity(payload);
-		console.log('Connectivity submission result:', result);
 		if (result && result.data) {
 			router.back();
 			reset();

@@ -99,7 +99,7 @@ const ConnectivityUpdate = ({ activity = null }: ConnectivityUpdateProps) => {
                 </View>
 
                 <View style={styles.carrierContainer}>
-                    <Text style={styles.carrierName} numberOfLines={1}>{activity.secondary_item.meta.carrier} hari merdeka raya</Text>
+                    <Text style={styles.carrierName} numberOfLines={1}>{activity.secondary_item.meta.carrier}</Text>
                     <Text style={styles.carrierLabel}>Carrier</Text>
                 </View>
 

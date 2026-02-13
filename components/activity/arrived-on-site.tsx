@@ -31,10 +31,20 @@ const ArrivedOnSite = ({ activity = null }: ComponentProps) => {
     const postedTime = (activity.secondary_item?.meta?.previous_route_point_id ? formatDistanceToNow(new Date(activity?.secondary_item.meta?.previous_route_point_id?.date)) : '-').replace('about', '');
     
     const handleUnlock = async () => {
+        // router.push({
+        //     pathname: '/insights/journey-stats',
+        //     params: { activityId: activity.id.toString() },
+        // });
+        // return;
+
         const success = await presentPaywall();
         if (success) {
             // User purchased or restored
             // You can add logic here to refresh data or unlock features
+            router.push({
+                pathname: '/insights/journey-stats',
+                params: { activityId: activity.id.toString() },
+            });
         }
     };
     
@@ -101,7 +111,7 @@ const ArrivedOnSite = ({ activity = null }: ComponentProps) => {
                     <View style={styles.statBox}>
                         <MaterialCommunityIcons name="map-marker-account" size={20} color="#22c55e" />
                         <Text style={styles.statValue}>24</Text>
-                        <Text style={styles.statLabel}>Checkpoints</Text>
+                        <Text style={styles.statLabel}>Route Points</Text>
                     </View>
                     
                     <View style={styles.statBox}>
@@ -401,7 +411,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: '#f9fafb',
         paddingVertical: 8,
-        paddingHorizontal: 8,
+        paddingHorizontal: 4,
         borderRadius: 8,
         borderWidth: 1,
         borderColor: '#e5e7eb',
