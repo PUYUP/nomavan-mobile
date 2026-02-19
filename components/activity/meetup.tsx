@@ -146,6 +146,16 @@ const Meetup = ({
         }
     }
 
+    // Edit meetup handler
+    const editHandler = async (activity: BPActivityResponse) => {
+        router.push({
+            pathname: '/submissions/create-meetup',
+            params: {
+                activityId: activity.id,
+            }
+        });
+    }
+
     return (
         <View style={styles.card}>
             <View style={styles.contentContainer}>
@@ -153,7 +163,7 @@ const Meetup = ({
                     <View style={styles.headerRow}>
                         <Text style={styles.meetupTitle}>{activity?.primary_item?.name}</Text>
                         {activity?.primary_item?.member_detail?.is_creator 
-                            ?   <Pressable style={styles.actionButton} onPress={async () => {}}>
+                            ?   <Pressable style={styles.actionButton} onPress={async () => await editHandler(activity)}>
                                     <View style={styles.buttonContent}>
                                         <MaterialCommunityIcons 
                                             name="file-document-edit-outline" 

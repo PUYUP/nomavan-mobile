@@ -53,6 +53,8 @@ const MapViewScreen = () => {
         longitudeDelta: 2,
     };
 
+    console.log('MapViewScreen rendered with params:', StyleSheet.absoluteFillObject);
+
     // Get user's current location on mount
     useEffect(() => {
         refetch(); // Ensure fresh data on mount

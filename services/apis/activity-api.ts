@@ -144,14 +144,14 @@ export const activityApi = baseApi.injectEndpoints({
                 }
             },
             providesTags: (result) =>
-                result
+                result && Array.isArray(result)
                     ? [
                         ...result.map(({ id }) => ({ type: 'Activity' as const, id })),
                         { type: 'Activity', id: 'LIST' },
                     ]
                     : [{ type: 'Activity', id: 'LIST' }],
         }),
-        getActivity: builder.query<BPActivityResponse, number>({
+        getActivity: builder.query<BPActivityResponse[], number>({
             query: (activityId) => ({
                 url: `/buddypress/v1/activity/${activityId}`,
                 method: 'GET',

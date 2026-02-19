@@ -1,9 +1,11 @@
+import { BPActivityResponse, useGetActivityQuery } from "@/services/apis/activity-api";
 import { MeetupPayload, useCreateMeetupMutation } from "@/services/apis/meetup-api";
 import { subscribeDateTimeSelected } from "@/utils/datetime-selector";
 import { LocationSelection, subscribeLocationSelected } from '@/utils/location-selector';
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { format } from 'date-fns';
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { ActivityIndicator, Platform, StyleSheet } from "react-native";
@@ -26,17 +28,22 @@ export interface Meetup {
 
 const CreateMeetupSubmission = () => {
     const router = useRouter();
+    const { activityId } = useLocalSearchParams<{ activityId?: string }>();
+    const aId = typeof activityId === 'string' ? parseInt(activityId, 10) : undefined;
+    
     const { control, handleSubmit, setValue, reset } = useForm<Meetup>({
         defaultValues: {
             capacity: 10,
             coverageRadius: 1000,
         }
     });
+    const [currentActivity, setCurrentActivity] = useState<BPActivityResponse | null>(null);
     const [placeName, setPlaceName] = useState<string | undefined>('');
     const [location, setLocation] = useState<LocationSelection | undefined>();
     const [startAt, setStartAt] = useState<string>('');
     const [endAt, setEndAt] = useState<string>('');
     const [createMeetup, { isLoading }] = useCreateMeetupMutation();
+    const { data: activityData, isLoading: loadingGetActivity } = useGetActivityQuery(aId ?? skipToken);
     const onSubmit: SubmitHandler<Meetup> = async (data) => {
         const payload: MeetupPayload = {
             name: data.name,
@@ -101,12 +108,38 @@ const CreateMeetupSubmission = () => {
         };
     }, []);
 
+    useEffect(() => {
+        if (activityData && activityData?.length > 0) {
+            const activity = activityData[0];
+
+            setCurrentActivity(activity);
+            setPlaceName(activity.primary_item.place_name);
+            setLocation({
+                latitude: parseFloat(activity.primary_item.latitude),
+                longitude: parseFloat(activity.primary_item.longitude),
+                placeName: activity.primary_item.place_name,
+                purpose: 'meetup',
+            });
+
+            const start = activity.primary_item.start_at;
+            const end = activity.primary_item.end_at;
+
+            setStartAt(start);
+            setEndAt(end);
+
+            setValue('name', activity.primary_item.name);
+            setValue('description', activity.primary_item.description.raw);
+            setValue('capacity', activity.primary_item.capacity);
+            setValue('coverageRadius', activity.primary_item.coverage_radius);
+        }
+    }, [activityData, setValue]);
+
     return (
         <>
             <SafeAreaView style={styles.safeArea} edges={['bottom']}>
                 <Stack.Screen 
                     options={{ 
-                        title: 'Create a Meetup', 
+                        title: activityId ? 'Edit Meetup' : 'Create a Meetup', 
                         headerTitleStyle: {
                             fontSize: 22,
                             fontFamily: 'Inter-Black',
@@ -116,177 +149,185 @@ const CreateMeetupSubmission = () => {
                     }} 
                 />
 
-                <KeyboardAwareScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    enableOnAndroid
-                    extraScrollHeight={24}
-                    keyboardOpeningTime={0}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
-                    contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'never' : 'automatic'}
-                >
-                    <YStack gap="$4">
-                        <XStack flex={1}>
-                            <Controller
-                                control={control}
-                                name={'name'}
-                                rules={{ required: true }}
-                                render={({ field: { onChange, value } }) => (
-                                    <Input 
-                                        onChange={onChange} 
-                                        placeholder="Meetup name…" 
-                                        borderWidth={1} 
-                                        value={value} 
-                                        width={'100%'} 
-                                        autoCapitalize="none"
-                                        autoComplete="off"
-                                        spellCheck={false}
-                                        autoCorrect={false}
+                {loadingGetActivity ? (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <ActivityIndicator size="large" />
+                    </View>
+                ) : (
+                    <>
+                        <KeyboardAwareScrollView
+                            contentContainerStyle={styles.scrollContent}
+                            enableOnAndroid
+                            extraScrollHeight={24}
+                            keyboardOpeningTime={0}
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={false}
+                            contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'never' : 'automatic'}
+                        >
+                            <YStack gap="$4">
+                                <XStack flex={1}>
+                                    <Controller
+                                        control={control}
+                                        name={'name'}
+                                        rules={{ required: true }}
+                                        render={({ field: { onChange, value } }) => (
+                                            <Input 
+                                                onChange={onChange} 
+                                                placeholder="Meetup name…" 
+                                                borderWidth={1} 
+                                                value={value} 
+                                                width={'100%'} 
+                                                autoCapitalize="none"
+                                                autoComplete="off"
+                                                spellCheck={false}
+                                                autoCorrect={false}
+                                            />
+                                        )}
                                     />
-                                )}
-                            />
-                        </XStack>
+                                </XStack>
 
-                        <XStack flex={1}>
-                            <Controller
-                                control={control}
-                                name={'description'}
-                                rules={{ required: true }}
-                                render={({ field: { onChange, value } }) => (
-                                    <TextArea 
-                                        onChange={onChange} 
-                                        rows={4} 
-                                        placeholder="Description" 
-                                        borderWidth={1} 
-                                        value={value} 
-                                        width={'100%'} 
-                                        autoCapitalize="none"
-                                        autoComplete="off"
-                                        spellCheck={false}
+                                <XStack flex={1}>
+                                    <Controller
+                                        control={control}
+                                        name={'description'}
+                                        rules={{ required: true }}
+                                        render={({ field: { onChange, value } }) => (
+                                            <TextArea 
+                                                onChange={onChange} 
+                                                rows={4} 
+                                                placeholder="Description" 
+                                                borderWidth={1} 
+                                                value={value} 
+                                                width={'100%'} 
+                                                autoCapitalize="none"
+                                                autoComplete="off"
+                                                spellCheck={false}
+                                            />
+                                        )}
                                     />
-                                )}
-                            />
-                        </XStack>
+                                </XStack>
 
-                        <XStack gap="$4" style={{ justifyContent: 'space-between' }}>
-                            <XStack gap="$3" style={{ alignItems: 'center' }}>
-                                <MaterialCommunityIcons name="calendar-cursor-outline" size={28} />
-                                <Text>Start</Text>
-                            </XStack>
+                                <XStack gap="$4" style={{ justifyContent: 'space-between' }}>
+                                    <XStack gap="$3" style={{ alignItems: 'center' }}>
+                                        <MaterialCommunityIcons name="calendar-cursor-outline" size={28} />
+                                        <Text>Start</Text>
+                                    </XStack>
 
-                            <XStack style={{ alignItems: 'center'}} gap="$3">
-                                <Text>{startAt ? format(startAt, 'EEE, dd MMM yyyy HH:mm') : 'Not selected yet'}</Text>
-                                <Button width={64} size="$2" onPress={() => router.push({
-                                    pathname: '/modals/datetime',
-                                    params: { purpose: 'start', initialISO: startAt }
-                                })}>{startAt ? 'Change' : 'Select'}</Button>
-                            </XStack>
-                        </XStack>
+                                    <XStack style={{ alignItems: 'center'}} gap="$3">
+                                        <Text>{startAt ? format(startAt, 'EEE, dd MMM yyyy HH:mm') : 'Not selected yet'}</Text>
+                                        <Button width={64} size="$2" onPress={() => router.push({
+                                            pathname: '/modals/datetime',
+                                            params: { purpose: 'start', initialISO: startAt }
+                                        })}>{startAt ? 'Change' : 'Select'}</Button>
+                                    </XStack>
+                                </XStack>
 
-                        <XStack gap="$4" style={{ justifyContent: 'space-between' }}>
-                            <XStack gap="$3" style={{ alignItems: 'center' }}>
-                                <MaterialCommunityIcons name="calendar-check-outline" size={28} />
-                                <Text>End</Text>
-                            </XStack>
+                                <XStack gap="$4" style={{ justifyContent: 'space-between' }}>
+                                    <XStack gap="$3" style={{ alignItems: 'center' }}>
+                                        <MaterialCommunityIcons name="calendar-check-outline" size={28} />
+                                        <Text>End</Text>
+                                    </XStack>
 
-                            <XStack style={{ alignItems: 'center'}} gap="$3">
-                                <Text>{endAt ? format(endAt, 'EEE, dd MMM yyyy HH:mm') : 'Not selected yet'}</Text>
-                                <Button width={64} size="$2" onPress={() => router.push({
-                                    pathname: '/modals/datetime',
-                                    params: { purpose: 'end', initialISO: endAt }
-                                })}>{endAt ? 'Change' : 'Select'}</Button>
-                            </XStack>
-                        </XStack>
+                                    <XStack style={{ alignItems: 'center'}} gap="$3">
+                                        <Text>{endAt ? format(endAt, 'EEE, dd MMM yyyy HH:mm') : 'Not selected yet'}</Text>
+                                        <Button width={64} size="$2" onPress={() => router.push({
+                                            pathname: '/modals/datetime',
+                                            params: { purpose: 'end', initialISO: endAt }
+                                        })}>{endAt ? 'Change' : 'Select'}</Button>
+                                    </XStack>
+                                </XStack>
 
-                        <XStack gap="$4" style={{ justifyContent: 'space-between' }}>
-                            <XStack gap="$3" style={{ alignItems: 'center' }} maxW={'70%'}>
-                                <MaterialCommunityIcons name="map-marker-radius-outline" size={28} />
-                                <Text>{placeName ? placeName : 'Not selected yet'}</Text>
-                            </XStack>
+                                <XStack gap="$4" style={{ justifyContent: 'space-between' }}>
+                                    <XStack gap="$3" style={{ alignItems: 'center' }} maxW={'70%'}>
+                                        <MaterialCommunityIcons name="map-marker-radius-outline" size={28} />
+                                        <Text>{placeName ? placeName : 'Not selected yet'}</Text>
+                                    </XStack>
 
-                            <XStack style={{ alignItems: 'center'}} gap="$3">
-                                <Button width={64} size="$2" onPress={() => router.push({
-                                    pathname: '/modals/map',
-                                    params: {
-                                        purpose: 'meetup',
-                                        placeName: location?.placeName,
-                                        initialLat: location?.latitude,
-                                        initialLng: location?.longitude,
-                                    }
-                                })}>
-                                    {placeName ? 'Change' : 'Select'}
-                                </Button>
-                            </XStack>
-                        </XStack>
+                                    <XStack style={{ alignItems: 'center'}} gap="$3">
+                                        <Button width={64} size="$2" onPress={() => router.push({
+                                            pathname: '/modals/map',
+                                            params: {
+                                                purpose: 'meetup',
+                                                placeName: location?.placeName,
+                                                initialLat: location?.latitude,
+                                                initialLng: location?.longitude,
+                                            }
+                                        })}>
+                                            {placeName ? 'Change' : 'Select'}
+                                        </Button>
+                                    </XStack>
+                                </XStack>
 
-                        <XStack gap="$4" style={{ justifyContent: 'space-between' }}>
-                            <XStack gap="$3" style={{ alignItems: 'center' }}>
-                                <MaterialCommunityIcons name="nature-people-outline" size={28} />
-                                <Text>Max. guest</Text>
-                            </XStack>
+                                <XStack gap="$4" style={{ justifyContent: 'space-between' }}>
+                                    <XStack gap="$3" style={{ alignItems: 'center' }}>
+                                        <MaterialCommunityIcons name="nature-people-outline" size={28} />
+                                        <Text>Max. guest</Text>
+                                    </XStack>
 
-                            <XStack style={{ alignItems: 'center'}} gap="$3">
-                                <Controller
-                                    control={control}
-                                    name={'capacity'}
-                                    rules={{ required: true }}
-                                    render={({ field: { onChange, value } }) => (
-                                        <Input 
-                                            onChange={onChange} 
-                                            fontSize={12}
-                                            value={String(value)} 
-                                            padding={0}
-                                            height={30}
-                                            width={64} 
-                                            textAlign="center" 
-                                            autoCapitalize="none"
-                                            autoComplete="off"
-                                            spellCheck={false}
-                                            autoCorrect={false}
+                                    <XStack style={{ alignItems: 'center'}} gap="$3">
+                                        <Controller
+                                            control={control}
+                                            name={'capacity'}
+                                            rules={{ required: true }}
+                                            render={({ field: { onChange, value } }) => (
+                                                <Input 
+                                                    onChange={onChange} 
+                                                    fontSize={12}
+                                                    value={String(value)} 
+                                                    padding={0}
+                                                    height={30}
+                                                    width={64} 
+                                                    textAlign="center" 
+                                                    autoCapitalize="none"
+                                                    autoComplete="off"
+                                                    spellCheck={false}
+                                                    autoCorrect={false}
+                                                />
+                                            )}
                                         />
-                                    )}
-                                />
-                            </XStack>
-                        </XStack>
+                                    </XStack>
+                                </XStack>
 
-                        <XStack gap="$4" style={{ justifyContent: 'space-between' }}>
-                            <XStack gap="$3" style={{ alignItems: 'center' }}>
-                                <MaterialCommunityIcons name="radius-outline" size={28} />
-                                <Text>Radius coverage (in meters)</Text>
-                            </XStack>
+                                <XStack gap="$4" style={{ justifyContent: 'space-between' }}>
+                                    <XStack gap="$3" style={{ alignItems: 'center' }}>
+                                        <MaterialCommunityIcons name="radius-outline" size={28} />
+                                        <Text>Radius coverage (in meters)</Text>
+                                    </XStack>
 
-                            <XStack style={{ alignItems: 'center'}} gap="$3">
-                                <Controller
-                                    control={control}
-                                    name={'coverageRadius'}
-                                    rules={{ required: true }}
-                                    render={({ field: { onChange, value } }) => (
-                                        <Input 
-                                            onChange={onChange} 
-                                            fontSize={12}
-                                            value={String(value)}
-                                            padding={0}
-                                            height={30} 
-                                            width={64} 
-                                            textAlign="center" 
-                                            autoCapitalize="none"
-                                            autoComplete="off"
-                                            spellCheck={false}
-                                            autoCorrect={false}
+                                    <XStack style={{ alignItems: 'center'}} gap="$3">
+                                        <Controller
+                                            control={control}
+                                            name={'coverageRadius'}
+                                            rules={{ required: true }}
+                                            render={({ field: { onChange, value } }) => (
+                                                <Input 
+                                                    onChange={onChange} 
+                                                    fontSize={12}
+                                                    value={String(value)}
+                                                    padding={0}
+                                                    height={30} 
+                                                    width={64} 
+                                                    textAlign="center" 
+                                                    autoCapitalize="none"
+                                                    autoComplete="off"
+                                                    spellCheck={false}
+                                                    autoCorrect={false}
+                                                />
+                                            )}
                                         />
-                                    )}
-                                />
-                            </XStack>
-                        </XStack>
-                    </YStack>
-                </KeyboardAwareScrollView>
+                                    </XStack>
+                                </XStack>
+                            </YStack>
+                        </KeyboardAwareScrollView>
 
-                <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
-                    <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton} disabled={isLoading ? true : false}>
-                        {isLoading ? <ActivityIndicator color={'white'} /> : null}
-                        <Text color={'white'} fontSize={20}>Save</Text>
-                    </Button>
-                </View>
+                        <View style={{ marginTop: 'auto', paddingHorizontal: 32, paddingBlockEnd: 6 }}>
+                            <Button onPress={handleSubmit(onSubmit)} style={styles.submitButton} disabled={isLoading ? true : false}>
+                                {isLoading ? <ActivityIndicator color={'white'} /> : null}
+                                <Text color={'white'} fontSize={20}>Save</Text>
+                            </Button>
+                        </View>
+                    </>
+                )}
             </SafeAreaView>
         </>
     )
